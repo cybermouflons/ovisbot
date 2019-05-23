@@ -9,13 +9,16 @@ load_dotenv()
 token = os.getenv("DISCORD_BOT_TOKEN")
 
 client = discord.Client()
+bot = commands.Bot(command_prefix='!')
+bot.remove_command('help')
 
-@client.event
+@bot.event
 async def on_ready():
-    print("I'm in")
-    print(client.user)
+    print(('<' + bot.user.name) + ' Online>')
+    print(discord.__version__)
+    await bot.change_presence(activity=discord.Game(name='Don’t everybody thank me at once.'))
 
-@client.event
+@bot.event
 async def on_message(message):
     if message.author != client.user:
         await message.channel.send(message.content[::-1])
