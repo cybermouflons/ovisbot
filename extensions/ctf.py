@@ -18,7 +18,6 @@ class Ctf(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid command passed.  Use !help.')
     
-    # @commands.has_permissions(manage_channels=True)
     @ctf.command()
     async def create(self, ctx, *params):
         scat = '-'.join(list(params)).replace("'", "").lower()
@@ -32,36 +31,28 @@ class Ctf(commands.Cog):
         else:
             await ctx.channel.send('Re koumpare! This CTF name already exists! Pick another one')
             return
-
         await self.guild.create_text_channel(name='general', category=category)
     
-    @commands.has_permissions(manage_channels=True, manage_roles=True)
     @ctf.command()
+    @commands.has_permissions(manage_channels=True, manage_roles=True)
     async def delete(self, ctx, *params):
         scat = '-'.join(list(params)).replace("'", "").lower()
         category = discord.utils.get(ctx.guild.categories, name=scat)
         if category != None: # Checks if category exists, if it doesn't it will create it.
-            print(self.guild.roles)
             ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+scat)
-            print(ctfrole)
-            print(category.channels)
+            if ctfrole != None: await ctfrole.delete()
             for c in category.channels:
                 await c.delete()
+            await category.delete()
         else:
             await ctx.channel.send('Re koumpare! There is not any ongoing CTF with such a name.')
 
     @ctf.command()
     async def join(self, ctx):
-        if teamdb[str(gid)].find_one({'name': str(ctx.message.channel)}):
-            role = discord.utils.get(ctx.guild.roles, name=str(ctx.message.channel))
-            user = ctx.message.author
-            await user.add_roles(role)
-            await ctx.send(f"{user} has joined the {str(ctx.message.channel)} team!")
-        else:
-            await ctx.send('You must be in a channel created using !ctf create to use this command!')
-    
-
-    
+        role = discord.utils.get(ctx.guild.roles, name=str(ctx.message.channel))
+        user = ctx.message.author
+        await user.add_roles(role)
+        await ctx.send(f"{user} has joined the {str(ctx.message.channel)} team!")
 
 def setup(bot):
     bot.add_cog(Ctf(bot))
