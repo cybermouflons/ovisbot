@@ -1,0 +1,22 @@
+version: "2"
+services:
+  bot:
+    image: python:3.7
+    container_name: "zolobot"
+    volumes:
+      - ./bot:/bot
+    working_dir: /bot
+    command: bash -c "pip install -r requirements.txt && python -u core.py"
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - db-data:/data/db
+volumes:
+  db-data:
+    driver: local

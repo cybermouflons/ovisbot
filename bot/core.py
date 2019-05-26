@@ -1,4 +1,5 @@
 import discord
+import logging
 import os
 import sys
 
@@ -7,10 +8,13 @@ from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions
 from dotenv import load_dotenv
 from help_info import *
-from persistence import *
+from db import *
 
 load_dotenv()
 token = os.getenv("DISCORD_BOT_TOKEN")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 ## Bot Extensions
 extensions = ['ctf']
@@ -38,7 +42,7 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_message(message):
     if bot.user in message.mentions:
-        await message.channel.send('Άφησ\'με! Μεν μου μάσσιεσε...')
+        await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσε...')
     
     await bot.process_commands(message)
 
