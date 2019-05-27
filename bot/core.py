@@ -43,7 +43,6 @@ async def on_command_error(ctx, error):
 async def on_message(message):
     if bot.user in message.mentions:
         await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσε...')
-    
     await bot.process_commands(message)
 
 ## Commands
@@ -51,15 +50,27 @@ async def on_message(message):
 @bot.command()
 async def help(ctx, page=None):
     emb = discord.Embed(description=help_page, colour=4387968)
-    emb.set_author(name='!request "x" - request a feature')
+    # emb.set_author(name='!request "x" - request a feature')
     await ctx.channel.send(embed=emb)
 
 @bot.command()
 async def status(ctx):
-    emb = discord.Embed(description=help_page, colour=4387968)
-    emb.set_author(name='CYberMouflons CTF Status')
-    ctf_categories = [c for c in ctx.guild.categories if c.name != 'Text Channels']
+    status_response = ""
+    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels']
+    sorted(ctfs, key=lambda x: x.created_at)
+    for ctf in ctfs:
+        ctf_doc = serverdb.ctfs.find_one({"channelname": ctf.name})
+        ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
+        status_response += "**{0}**: *{1}*  [{2} Members] ({3}) \n".format(ctf.name,
+                                                                           ctf_doc["description"] if "description" in ctf_doc else "",
+                                                                           len(ctfrole.members),
+                                                                           "active" if ctf_doc["active"] else "finished")
+    emb = discord.Embed(description=status_response, colour=4387968)
     await ctx.channel.send(embed=emb)
+
+@bot.command()
+async def frappe(ctx):
+    await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
 
 def run():
     sys.path.insert(1, os.getcwd() + '/extensions/')
