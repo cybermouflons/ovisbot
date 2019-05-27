@@ -153,12 +153,12 @@ class Ctf(commands.Cog):
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
     
     @ctf.command()
-    async def description(self, ctx, params):
+    async def description(self, ctx, *params):
         channelname = str(ctx.channel.category)
         if serverdb.ctfs.find({"channelname": channelname}).count() > 0:
             if len(params) > 0:
                 serverdb.ctfs.update_one({"channelname": channelname},
-                                         {"$set": {"description": params}})
+                                         {"$set": {"description": ' '.join(params)}})
                 await ctx.channel.send('CTF description set!')
             else:
                 await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf description takes parameters. !help for more info.')
