@@ -6,10 +6,13 @@ Returns a list of past and ongoing ctf still kept in the server.
 Returns a list of ongoing challenges in the ctf
 
 !ctf create <ctf_name>
-create a CTF category with text channel and role in the category for a ctf.
+Create a CTF category with text channel and role in the category for a ctf.
+
+!ctf join <ctf_name>
+Join an ongoing ctf. Use `status` to see available CTFs. 
 
 !ctf delete <ctf_name>
-delete a CTF category with all its channel and its user role.
+Delete a CTF category with all its channel and its user role.
 
 !ctf setcreds <username> <password>
 Sets shared credentials to be used by the team members to login to the CTF

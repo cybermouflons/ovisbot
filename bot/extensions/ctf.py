@@ -16,9 +16,6 @@ class Ctf(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.challenges = {}
-        self.ctfname = ""
-        self.upcoming_l = []
 
     @commands.group()
     async def ctf(self, ctx):
@@ -33,13 +30,13 @@ class Ctf(commands.Cog):
         channelname = str(ctx.channel.category)
         if serverdb.ctfs.find({"channelname": channelname}).count() > 0:
             status_response = """
-            ============ {0} ============
+            =================== {0} ===================
             """.format(channelname)
             ctf_doc = serverdb.ctfs.find_one({"channelname": channelname})
             solved_response, unsolved_response = "> Solved\n", "> Unsolved\n"
             for challenge in ctf_doc['challenges']:
                 if challenge['solved']:
-                    solved_response += ":sparkles: **{0}** ({1}) (Solved by: {2})".format(challenge['name'],
+                    solved_response += ":sparkles: **{0}** ({1}) (Solved by: {2})\n".format(challenge['name'],
                                                                                           challenge['category'],
                                                                                           challenge['solved_by'])
                 else:
@@ -65,7 +62,12 @@ class Ctf(commands.Cog):
             everyone_role = self.guild.get_role(self.gid)
             ctfrole = await self.guild.create_role(name='Team-'+scat, mentionable=True)
             await user.add_roles(ctfrole)
-            category = await self.guild.create_category(name=scat) #TODO: Manage permissions  overwrites={everyone_role: discord.Permissions.none (), ctfrole:523328
+            overwrites = {
+                self.guild.get_role(self.gid): discord.PermissionOverwrite(read_messages=False), #Everyone
+                self.bot.user: discord.PermissionOverwrite(read_messages=True),
+                ctfrole: discord.PermissionOverwrite(read_messages=True)
+            }
+            category = await self.guild.create_category(name=scat, overwrites=overwrites) #TODO: Manage permissions  overwrites={everyone_role: discord.Permissions.none (), ctfrole:523328
         else:
             await ctx.channel.send('Ρε κουμπάρε! This CTF name already exists! Pick another one')
             return
@@ -104,7 +106,35 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def solve(self, ctx, *params):
-        pass
+        chall_name = '-'.join(ctx.channel.name.split('-')[1:]) if '-' in ctx.channel.name else ""
+        ctf_doc = serverdb.ctfs.find_one({"channelname": ctx.channel.category.name,
+                                          "challenges":{"$elemMatch": {"name":chall_name} } })
+        if ctf_doc != None:
+            solved_by = ', '.join([ctx.message.author.name] + [m.name for m in ctx.message.mentions])
+            serverdb.ctfs.update_one(
+                {
+                    "channelname": ctx.channel.category.name,
+                    "challenges.name": chall_name
+                },
+                {"$set":{
+                            "challenges.$.solved": True,
+                            "challenges.$.solved_by": solved_by
+                        } 
+                    }
+            )
+            await ctx.channel.send('Πελλαμός! {0}! Contratz for solving {1}'.format(solved_by, chall_name))
+        else:
+            await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
+
+    @ctf.command()
+    async def join(self, ctx, *params):
+        scat = '-'.join(list(params)).replace("'", "").lower()
+        ctf_category = discord.utils.get(ctx.guild.categories, name=scat)
+        if ctf_category != None:
+            ctfrole = discord.utils.get(self.guild.roles, name='Team-'+scat)
+            await ctx.message.author.add_roles(ctfrole)
+        else:
+            await ctx.channel.send('Εεεε!! Τι κάμνεις? There is no such CTF name. Use `!status`')
 
     @ctf.command()
     async def workon(self, ctx, params):
@@ -176,8 +206,6 @@ class Ctf(commands.Cog):
                 await ctx.channel.send('This CTF has no shared credentials set!')
         else:
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
-
-
 
 def setup(bot):
     bot.add_cog(Ctf(bot))

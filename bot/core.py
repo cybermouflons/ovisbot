@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ## Bot Extensions
-extensions = ['ctf']
+extensions = ['ctf', 'manage']
 
 client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -29,7 +29,7 @@ bot.remove_command('help')
 async def on_ready():
     print(('<' + bot.user.name) + ' Online>')
     print(discord.__version__)
-    await bot.change_presence(activity=discord.Game(name='with your mind'))
+    await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -61,8 +61,8 @@ async def status(ctx):
     for ctf in ctfs:
         ctf_doc = serverdb.ctfs.find_one({"channelname": ctf.name})
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
-        status_response += "**{0}**: *{1}*  [{2} Members] ({3}) \n".format(ctf.name,
-                                                                           ctf_doc["description"] if "description" in ctf_doc else "",
+        status_response += "**{0}**: _{1}_  [{2} Members] ({3}) \n".format(ctf.name,
+                                                                           ctf_doc["description"] if "description" in ctf_doc else "No description",
                                                                            len(ctfrole.members),
                                                                            "active" if ctf_doc["active"] else "finished")
     emb = discord.Embed(description=status_response, colour=4387968)
