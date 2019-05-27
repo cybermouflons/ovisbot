@@ -8,7 +8,7 @@ jobs:
     docker:
       # specify the version you desire here
       # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
-      - image: circleci/python:3.6.1
+      - image: google/cloud-sdk
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -20,29 +20,12 @@ jobs:
     steps:
       - checkout
 
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
       - run:
-          name: install dependencies
+          name: Deploy Bot to GCE
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
-
-      - run:
-          name: Deploy Bot to Heroku
-          command: |
-            git push https://heroku:$HEROKU_AUTH_TOKEN@git.heroku.com/$HEROKU_APP_NAME.git master
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
 
 workflows:
   version: 2
