@@ -72,7 +72,10 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Ρε κουμπάρε! This CTF name already exists! Pick another one')
             return
         await self.guild.create_text_channel(name='general', category=category)
-        serverdb.ctfs.insert_one({"channelname":scat, "active": True, "created_at": datetime.datetime.now()})
+        serverdb.ctfs.insert_one({"channelname":scat, 
+                                  "active": True,
+                                  "created_at": datetime.datetime.now(),
+                                  "challenges": []})
 
     @ctf.command()
     async def addchallenge(self, ctx, *params):

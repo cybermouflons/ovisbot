@@ -25,7 +25,7 @@ jobs:
       - run:
           name: Deploy Bot to GCE
           command: |
-            ssh -o "StrictHostKeyChecking no" -t celestial@$GCE_EXTERNAL_IP "rm -rf KyriosZolo && git clone https://github.com/apogiatzis/KyriosZolo && cd KyriosZolo && pwd && ls && /opt/bin/docker-compose restart"
+            ssh -o "StrictHostKeyChecking no" -t celestial@$GCE_EXTERNAL_IP "rm -rf KyriosZolo && git clone https://github.com/apogiatzis/KyriosZolo && cd KyriosZolo && pwd && ls && /opt/bin/docker-compose up --force-recreate -d"
             
 workflows:
   version: 2

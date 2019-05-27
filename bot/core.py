@@ -56,7 +56,7 @@ async def help(ctx, page=None):
 @bot.command()
 async def status(ctx):
     status_response = ""
-    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels']
+    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels']    
     sorted(ctfs, key=lambda x: x.created_at)
     for ctf in ctfs:
         ctf_doc = serverdb.ctfs.find_one({"channelname": ctf.name})
