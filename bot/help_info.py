@@ -24,5 +24,8 @@ Sets the description of an existing CTF
 Creates a private channel for a challenge. Valid category names are: crypto, web, misc, pwn, reverse, stego 
 
 !ctf workon <chall_name>
-Adds you to the private channel of that challenge. Use !ctf status to see active challenges.
+Adds you to the private channel of that challenge. Use `!ctf status` to see active challenges.
+
+!ctf solve [<member> <member> ...]
+Sets the current challenge as solved by you. Addition of team mates that helped to solve is optional
 '''
