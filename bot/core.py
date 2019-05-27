@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ## Bot Extensions
-extensions = ['ctf', 'manage']
+extensions = ['ctf', 'manage', 'utils']
 
 client = discord.Client()
 bot = commands.Bot(command_prefix='!')

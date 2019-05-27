@@ -31,4 +31,10 @@ Adds you to the private channel of that challenge. Use `!ctf status` to see acti
 
 !ctf solve [<member> <member> ...]
 Sets the current challenge as solved by you. Addition of team mates that helped to solve is optional
+
+!utils stol <string>
+Converts a string to long
+
+!utils ltos <long>
+Converts a logn number to string
 '''
