@@ -112,20 +112,25 @@ class Ctf(commands.Cog):
         chall_name = '-'.join(ctx.channel.name.split('-')[1:]) if '-' in ctx.channel.name else ""
         ctf_doc = serverdb.ctfs.find_one({"channelname": ctx.channel.category.name,
                                           "challenges":{"$elemMatch": {"name":chall_name} } })
-        if ctf_doc != None:
-            solved_by = ', '.join([ctx.message.author.name] + [m.name for m in ctx.message.mentions])
-            serverdb.ctfs.update_one(
-                {
-                    "channelname": ctx.channel.category.name,
-                    "challenges.name": chall_name
-                },
-                {"$set":{
-                            "challenges.$.solved": True,
-                            "challenges.$.solved_by": solved_by
-                        } 
-                    }
-            )
-            await ctx.channel.send('Πελλαμός! {0}! Contratz for solving {1}'.format(solved_by, chall_name))
+        if ctf_doc != None: 
+            if serverdb.ctfs.find_one({"channelname": ctx.channel.category.name,
+                                        "challenges":{"$elemMatch": {"name":chall_name, "solved": True} } }) == None:
+                
+                solved_by = ', '.join([ctx.message.author.name] + [m.name for m in ctx.message.mentions])
+                serverdb.ctfs.update_one(
+                    {
+                        "channelname": ctx.channel.category.name,
+                        "challenges.name": chall_name
+                    },
+                    {"$set":{
+                                "challenges.$.solved": True,
+                                "challenges.$.solved_by": solved_by
+                            } 
+                        }
+                )
+                await ctx.channel.send('Πελλαμός! {0}! Contratz for solving {1}'.format(solved_by, chall_name))
+            else:
+                await ctx.channel.send('Άρκησες! This challenge has already been solved!')
         else:
             await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
 
