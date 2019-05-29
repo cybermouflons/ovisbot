@@ -16,13 +16,20 @@
 
 * `!ctf create <ctf_name>`  This is the command you'll use when you want to begin a new CTF.  This command will make a private category channel with a general text channel in your server, with your supplied name. 
 
+* `!ctf delete <ctf_name>` Deletes category, channels and roles related to the ctf. Note that the data are still kept in the DB.
+**Must have manage channels and roles permissions to do that**
+
  * `!ctf join <ctf_name>` Using this command will either give or remove the role of a created ctf to/from you.
 
 *NOTE: the following ctf specific commands will only be accepted under the category created for that ctf.  This is to avoid clashes with multiple ctfs going on in the same server.*
  
- * `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
- 
  * `!ctf status` This displays the status of the CTF. It displays the added challenges, who's working on what, and if a challenge is solved (and by who).
+
+ * `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
+
+ * `!ctf workon <challenge_name>` Gives you permission to view the text channel of the challenge given and adds you to the members working on it. Note the challenge name must match the exact name from `!ctf status`
+
+ * `!ctf solve [<teammate> <teammate> ...]` Marks the challenge as solved and sets you as the solver. To work you must be in a text channel of a challenge. If other teammates helped solving the challenge you can add them as optional mentions in the arguments and they will be added to the solvers as well.
 
 ---
 ##  Utils 
