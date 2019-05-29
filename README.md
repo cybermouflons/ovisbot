@@ -1,0 +1,35 @@
+# KyriosZolo CTF Discord Bot
+
+>### *A [discord.py](http://discordpy.readthedocs.io/en/latest/) bot focused on providing CTF tools for collaboration in Discord servers.  If you have a feature request, make it a GitHub issue*
+
+
+#  How to Use
+
+## General
+
+* `!help` Displays help information and more information about available commands of the bot
+
+* `!status`  Returns the current status of the server with regards to CTFs. i.e. Information about which CTFs have been finished/are active, how many members are working on it and the number of challenges solved/unsolved.
+
+## CTF 
+>This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs.  But, the main use for NullCTF is to easily set up a CTF for your discord server to play as a team.  The following commands listed are probably going to be used the most.
+
+* `!ctf create <ctf_name>`  This is the command you'll use when you want to begin a new CTF.  This command will make a private category channel with a general text channel in your server, with your supplied name. 
+
+ * `!ctf join <ctf_name>` Using this command will either give or remove the role of a created ctf to/from you.
+
+*NOTE: the following ctf specific commands will only be accepted under the category created for that ctf.  This is to avoid clashes with multiple ctfs going on in the same server.*
+ 
+ * `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
+ 
+ * `!ctf status` This displays the status of the CTF. It displays the added challenges, who's working on what, and if a challenge is solved (and by who).
+
+---
+##  Utils 
+
+ * `!utils stol <string>` Converts a string to long. Useful for crypto challenges
+
+ * `!utils ltos <long>` Converts a long to string
+
+## Have a feature request?  Make a GitHub issue and feel free to contribute.
+
