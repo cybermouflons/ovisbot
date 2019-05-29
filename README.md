@@ -38,5 +38,11 @@
 
  * `!utils ltos <long>` Converts a long to string
 
-## Have a feature request?  Make a GitHub issue and feel free to contribute.
 
+# Contributors
+
+- [apogiatzis](https://github.com/apogiatzis)
+- [kgeorgiou](https://github.com/kgeorgiou)
+
+
+## Have a feature request?  Make a GitHub issue and feel free to contribute.
