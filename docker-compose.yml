@@ -1,8 +1,10 @@
-version: "2"
+version: '2'
 services:
   bot:
     image: python:3.7
-    container_name: "zolobot"
+    container_name: 'zolobot'
+    environment:
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
     volumes:
       - ./bot:/bot
     working_dir: /bot
@@ -11,10 +13,9 @@ services:
       - mongo
   mongo:
     image: mongo
+    ports:
+      - '27017:27017'
     restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
       - db-data:/data/db
 volumes:

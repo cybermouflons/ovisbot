@@ -1,0 +1,55 @@
+import os
+
+from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
+
+connect('mongodb://mongo/serverdb')
+
+
+class Challenge(EmbeddedMongoModel):
+    name = fields.CharField(required=True)
+    created_at = fields.DateTimeField(required=True)
+    tags = fields.ListField(fields.CharField(), default=[])
+    attempted_by = fields.ListField(fields.CharField(), default=[])
+    solved_at = fields.DateTimeField()
+    solved_by = fields.ListField(fields.CharField(), default=[])
+    flag = fields.CharField()
+
+
+class CTF(MongoModel):
+    name = fields.CharField(required=True)
+    description = fields.CharField()
+    created_at = fields.DateTimeField(required=True)
+    finished_at = fields.DateTimeField()
+    url = fields.URLField()
+    username = fields.CharField()
+    password = fields.CharField()
+    challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
+
+    def status(self):
+        fmt_str = '%d/%m/%Y-%H:%M:%S'
+        start_date_str = self.created_at.strftime(fmt_str)
+        end_date_str = self.finished_at.strftime(
+            fmt_str) if self.finished_at else 'Live'
+        description_str = self.description if self.description else '_No description set_'
+
+        div = "-" * len(self.name) * 2
+        return f'{div}\n*{self.name}*\n{div}\n{description_str}\n[{start_date_str} - {end_date_str}]\n'
+
+    def credentials(self):
+        return f'Username: {self.username}\nPassword: {self.password}'
+
+    def challenge_summary(self):
+        if not self.challenges:
+            return 'No challenges found. Try adding one with `!ctf addchallenge <name> <category>`'
+
+        solved_response, unsolved_response = '', ''
+
+        for challenge in self.challenges:
+            challenge_details = f'**{challenge.name}** [{", ".join(challenge.tags)}]'
+            if challenge.solved_at:
+                solved_response += f':white_check_mark: {challenge_details} Solved by: [{", ".join(challenge.solved_by)}]\n'
+            else:
+                unsolved_response += f':thinking: {challenge_details} Attempted by: [{", ".join(challenge.attempted_by)}]\n'
+
+        div = "-" * len(self.name) * 2
+        return f'{div}\n*{self.name}*\n{div}\n' + f'{solved_response}' + f'{unsolved_response}'
