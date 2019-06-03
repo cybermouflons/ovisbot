@@ -76,7 +76,25 @@ class Ctf(commands.Cog):
                                   "active": True,
                                   "created_at": datetime.datetime.now(),
                                   "challenges": []})
-
+    
+    @ctf.command()
+    @commands.has_permissions(manage_channels=True, manage_roles=True)
+    async def finish(self, ctx, *params):
+        if len(params) > 0:
+            ctf_name = '-'.join(list(params)).replace("'", "").lower()
+            ctf_doc = serverdb.ctfs.find_one({"channelname": ctf_name})
+            if ctf_doc != None:
+                if ctf_doc['active']:
+                    serverdb.ctfs.update_one({"channelname": ctf_name},
+                                            {"$set": { "active": False}})
+                    await ctx.channel.send('Ατε.. Μπράβο κοπέλια τζαι κοπέλλες! Να πνάσουμε τζαι εμείς νακκο!')
+                else:
+                    await ctx.channel.send('This CTF has already finished!')
+            else:
+                await ctx.channel.send('Εισαι τζαι εσού χαλασμένος όπως τα διαστημόπλοια του Κίτσιου... There is not such CTF name. Use `!status`')
+        else:
+            await ctx.channel.send('This command takes parameters. Use `!help`')
+    
     @ctf.command()
     async def addchallenge(self, ctx, *params):
         # TODO: I don't like nested ifs for validation... Change them to try catch pattern with exceptions

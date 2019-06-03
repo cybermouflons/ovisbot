@@ -61,16 +61,22 @@ async def status(ctx):
     for ctf in ctfs:
         ctf_doc = serverdb.ctfs.find_one({"channelname": ctf.name})
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
-        status_response += "**{0}**: _{1}_  [{2} Members] ({3}) \n".format(ctf.name,
-                                                                           ctf_doc["description"] if "description" in ctf_doc else "No description",
-                                                                           len(ctfrole.members),
-                                                                           "active" if ctf_doc["active"] else "finished")
+        status_response += "**{0}**: _{1}_  [ {4} solved / {5} total ]  ({3}) - {2} Members \n".format(ctf.name,
+            ctf_doc["description"] if "description" in ctf_doc else "No description",
+            len(ctfrole.members),
+            "active" if ctf_doc["active"] else "finished",
+            len(list(filter(lambda x: x['solved'], ctf_doc['challenges']))),
+            len(ctf_doc['challenges']))
     emb = discord.Embed(description=status_response, colour=4387968)
     await ctx.channel.send(embed=emb)
 
 @bot.command()
 async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
+
+@bot.command()
+async def contribute(ctx):
+    await ctx.channel.send("https://github.com/apogiatzis/KyriosZolo")
 
 def run():
     sys.path.insert(1, os.getcwd() + '/extensions/')
