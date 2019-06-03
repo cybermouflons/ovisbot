@@ -127,7 +127,8 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def solve(self, ctx, *params):
-        chall_name = '-'.join(ctx.channel.name.split('-')[1:]) if '-' in ctx.channel.name else ""
+        chall_name = ctx.channel.name[len(ctx.channel.category.name)+1:] if '-' in ctx.channel.name else ""
+        logger.info(chall_name)
         ctf_doc = serverdb.ctfs.find_one({"channelname": ctx.channel.category.name,
                                           "challenges":{"$elemMatch": {"name":chall_name} } })
         if ctf_doc != None: 

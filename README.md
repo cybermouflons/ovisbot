@@ -32,6 +32,11 @@
  * `!ctf solve [<teammate> <teammate> ...]` Marks the challenge as solved and sets you as the solver. To work you must be in a text channel of a challenge. If other teammates helped solving the challenge you can add them as optional mentions in the arguments and they will be added to the solvers as well.
 
 ---
+## Ctftime
+
+ * `!ctftime upcoming` Returns the 3 most recent upcoming CTFs from ctftime.
+
+---
 ##  Utils 
 
  * `!utils stol <string>` Converts a string to long. Useful for crypto challenges
