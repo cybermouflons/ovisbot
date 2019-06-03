@@ -101,7 +101,7 @@ class Ctf(commands.Cog):
         channelname = str(ctx.channel.category)
         if serverdb.ctfs.find({"channelname": channelname}).count() > 0:
             if (len(params) == 2):
-                chall_name = params[0]
+                chall_name = params[0].lower()
                 category = params[1]
                 if category in CHALLENGE_CATEGORIES:
                     chall_channel = discord.utils.get(ctx.channel.category.channels, name=channelname + '-' + chall_name)
