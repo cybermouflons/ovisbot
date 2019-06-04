@@ -111,9 +111,9 @@ class Ctf(commands.Cog):
                             self.bot.user: discord.PermissionOverwrite(read_messages=True),
                             ctx.message.author: discord.PermissionOverwrite(read_messages=True)
                         }
-                        await ctx.channel.category.create_text_channel(channelname + "-" + chall_name, overwrites=overwrites)
+                        ch = await ctx.channel.category.create_text_channel(channelname + "-" + chall_name, overwrites=overwrites)
                         serverdb.ctfs.update_one({"channelname": channelname},
-                                                 {"$push": {'challenges':{'name': chall_name,
+                                                 {"$push": {'challenges':{'name': ch.name[len(channelname)+1:],
                                                                           'solved': False,
                                                                           'category': category}}})
                     else:
