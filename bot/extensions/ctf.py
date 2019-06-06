@@ -48,6 +48,11 @@ class Ctf(commands.Cog):
                                                                               ', '.join([m.name for m in active_members]))
             status_response += solved_response
             status_response += unsolved_response
+            while len(status_response) > 2000: # Embed has a limit of 2048 chars
+                idx = status_response.index('\n',2000)
+                emb = discord.Embed(description=status_response[:idx], colour=4387968)
+                await ctx.channel.send(embed=emb)
+                status_response = status_response[idx:]
             emb = discord.Embed(description=status_response, colour=4387968)
             await ctx.channel.send(embed=emb)
         else:
