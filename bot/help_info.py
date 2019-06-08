@@ -8,6 +8,9 @@ Returns a list of ongoing challenges in the ctf
 !ctf create <ctf_name>
 Create a CTF category with text channel and role in the category for a ctf.
 
+!ctf finish <ctf_name>
+Marks CTF as finished. (Requires manage channels permissions)
+
 !ctf join <ctf_name>
 Join an ongoing ctf. Use `status` to see available CTFs. 
 
@@ -39,5 +42,10 @@ Returns the 3 most recent upcoming CTFs from ctftime.
 Converts a string to long
 
 !utils ltos <long>
+<<<<<<< HEAD
 Converts a logn number to string
 '''
+=======
+Converts a long number to string
+'''
+>>>>>>> master

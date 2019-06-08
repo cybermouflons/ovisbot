@@ -29,6 +29,7 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def status(self, ctx):
+<<<<<<< HEAD
         channel_name = str(ctx.channel.category)
         try:
             ctf = CTF.objects.get({'name': channel_name})
@@ -38,6 +39,38 @@ class Ctf(commands.Cog):
         emb = discord.Embed(
             description=ctf.challenge_summary(), colour=4387968)
         await ctx.channel.send(embed=emb)
+=======
+        channelname = str(ctx.channel.category)
+        if serverdb.ctfs.find({"channelname": channelname}).count() > 0:
+            status_response = """
+            =================== {0} ===================
+            """.format(channelname)
+            ctf_doc = serverdb.ctfs.find_one({"channelname": channelname})
+            solved_response, unsolved_response = "> Solved\n", "> Unsolved\n"
+            for challenge in ctf_doc['challenges']:
+                if challenge['solved']:
+                    solved_response += ":sparkles: **{0}** ({1}) (Solved by: {2})\n".format(challenge['name'],
+                                                                                          challenge['category'],
+                                                                                          challenge['solved_by'])
+                else:
+                    active_members = discord.utils.get(ctx.channel.category.channels, name=channelname+'-'+challenge['name']).members
+                    active_members = [m for m in active_members if m.bot == False]
+                    unsolved_response += "[{0} active] **{1}** ({2}): {3}\n".format(len(active_members),
+                                                                              challenge['name'],
+                                                                              challenge['category'],
+                                                                              ', '.join([m.name for m in active_members]))
+            status_response += solved_response
+            status_response += unsolved_response
+            while len(status_response) > 2000: # Embed has a limit of 2048 chars
+                idx = status_response.index('\n',2000)
+                emb = discord.Embed(description=status_response[:idx], colour=4387968)
+                await ctx.channel.send(embed=emb)
+                status_response = status_response[idx:]
+            emb = discord.Embed(description=status_response, colour=4387968)
+            await ctx.channel.send(embed=emb)
+        else:
+            await ctx.channel.send('Έφκαλεν η γλώσσα μου μαλιά ρε! For this command you have to be in a channel created by !ctf create.')
+>>>>>>> master
 
     @ctf.command()
     async def create(self, ctx, *params):
@@ -61,6 +94,7 @@ class Ctf(commands.Cog):
         # TODO: Manage permissions  overwrites={everyone_role: discord.Permissions.none (), ctfrole:523328
         category = await self.guild.create_category(name=scat, overwrites=overwrites)
         await self.guild.create_text_channel(name='general', category=category)
+<<<<<<< HEAD
         CTF(name=scat, created_at=datetime.datetime.now()).save()
 
     @ctf.command()
@@ -73,6 +107,59 @@ class Ctf(commands.Cog):
         try:
             ctf = CTF.objects.get({"name": channel_name})
         except CTF.DoesNotExist:
+=======
+        serverdb.ctfs.insert_one({"channelname":scat, 
+                                  "active": True,
+                                  "created_at": datetime.datetime.now(),
+                                  "challenges": []})
+    
+    @ctf.command()
+    @commands.has_permissions(manage_channels=True, manage_roles=True)
+    async def finish(self, ctx, *params):
+        if len(params) > 0:
+            ctf_name = '-'.join(list(params)).replace("'", "").lower()
+            ctf_doc = serverdb.ctfs.find_one({"channelname": ctf_name})
+            if ctf_doc != None:
+                if ctf_doc['active']:
+                    serverdb.ctfs.update_one({"channelname": ctf_name},
+                                            {"$set": { "active": False}})
+                    await ctx.channel.send('Ατε.. Μπράβο κοπέλια τζαι κοπέλλες! Να πνάσουμε τζαι εμείς νακκο!')
+                else:
+                    await ctx.channel.send('This CTF has already finished!')
+            else:
+                await ctx.channel.send('Εισαι τζαι εσού χαλασμένος όπως τα διαστημόπλοια του Κίτσιου... There is not such CTF name. Use `!status`')
+        else:
+            await ctx.channel.send('This command takes parameters. Use `!help`')
+    
+    @ctf.command()
+    async def addchallenge(self, ctx, *params):
+        # TODO: I don't like nested ifs for validation... Change them to try catch pattern with exceptions
+        channelname = str(ctx.channel.category)
+        if serverdb.ctfs.find({"channelname": channelname}).count() > 0:
+            if (len(params) == 2):
+                chall_name = params[0].lower()
+                category = params[1]
+                if category in CHALLENGE_CATEGORIES:
+                    chall_channel = discord.utils.get(ctx.channel.category.channels, name=channelname + '-' + chall_name)
+                    if chall_channel == None:
+                        overwrites = {
+                            self.guild.get_role(self.gid): discord.PermissionOverwrite(read_messages=False),
+                            self.bot.user: discord.PermissionOverwrite(read_messages=True),
+                            ctx.message.author: discord.PermissionOverwrite(read_messages=True)
+                        }
+                        ch = await ctx.channel.category.create_text_channel(channelname + "-" + chall_name, overwrites=overwrites)
+                        serverdb.ctfs.update_one({"channelname": channelname},
+                                                 {"$push": {'challenges':{'name': ch.name[len(channelname)+1:],
+                                                                          'solved': False,
+                                                                          'category': category}}})
+                    else:
+                        await ctx.channel.send('Να μου γελάσεις ρε κοπελλούι; This challenge already exists!')
+                else:
+                    await ctx.channel.send('Not valid challenge category provided. !help for more info')
+            else:
+                await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf addchallenge takes 2 parameters. !help for more info.')
+        else:
+>>>>>>> master
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
             return
 
@@ -109,6 +196,7 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def solve(self, ctx, *params):
+<<<<<<< HEAD
         chall_name = '-'.join(ctx.channel.name.split('-')
                               [1:]) if '-' in ctx.channel.name else ''
         try:
@@ -125,6 +213,32 @@ class Ctf(commands.Cog):
                 break
 
         if not challenge:
+=======
+        chall_name = ctx.channel.name[len(ctx.channel.category.name)+1:] if '-' in ctx.channel.name else ""
+        logger.info(chall_name)
+        ctf_doc = serverdb.ctfs.find_one({"channelname": ctx.channel.category.name,
+                                          "challenges":{"$elemMatch": {"name":chall_name} } })
+        if ctf_doc != None: 
+            if serverdb.ctfs.find_one({"channelname": ctx.channel.category.name,
+                                        "challenges":{"$elemMatch": {"name":chall_name, "solved": True} } }) == None:
+                
+                solved_by = ', '.join([ctx.message.author.name] + [m.name for m in ctx.message.mentions])
+                serverdb.ctfs.update_one(
+                    {
+                        "channelname": ctx.channel.category.name,
+                        "challenges.name": chall_name
+                    },
+                    {"$set":{
+                                "challenges.$.solved": True,
+                                "challenges.$.solved_by": solved_by
+                            } 
+                        }
+                )
+                await ctx.channel.send('Πελλαμός! {0}! Contratz for solving {1}'.format(solved_by, chall_name))
+            else:
+                await ctx.channel.send('Άρκησες! This challenge has already been solved!')
+        else:
+>>>>>>> master
             await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
             return
 
