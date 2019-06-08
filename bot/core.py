@@ -23,7 +23,6 @@ bot.remove_command('help')
 
 # Events
 
-
 @bot.event
 async def on_ready():
     print(('<' + bot.user.name) + ' Online>')
@@ -66,34 +65,21 @@ async def status(ctx):
         except CTF.DoesNotExist:
             continue
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
-<<<<<<< HEAD
         status_response += ctf_doc.status()
 
     if len(status_response) is 0:
         status_response = 'Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου.'
 
-=======
-        status_response += "**{0}**: _{1}_  [ {4} solved / {5} total ]  ({3}) - {2} Members \n".format(ctf.name,
-            ctf_doc["description"] if "description" in ctf_doc else "No description",
-            len(ctfrole.members),
-            "active" if ctf_doc["active"] else "finished",
-            len(list(filter(lambda x: x['solved'], ctf_doc['challenges']))),
-            len(ctf_doc['challenges']))
->>>>>>> master
     emb = discord.Embed(description=status_response, colour=4387968)
     await ctx.channel.send(embed=emb)
-
 
 @bot.command()
 async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
 
-<<<<<<< HEAD
-=======
 @bot.command()
 async def contribute(ctx):
     await ctx.channel.send("https://github.com/apogiatzis/KyriosZolo")
->>>>>>> master
 
 def run():
     sys.path.insert(1, os.getcwd() + '/extensions/')

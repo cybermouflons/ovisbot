@@ -33,14 +33,16 @@ class CTF(MongoModel):
         description_str = self.description if self.description else '_No description set_'
 
         div = "-" * len(self.name) * 2
-        return f'{div}\n*{self.name}*\n{div}\n{description_str}\n[{start_date_str} - {end_date_str}]\n'
+        return  f'{div}\n**{self.name}**\n{div}\n{description_str}\n' +\
+                f'{len(list(filter(lambda x: x.solved_at != None, self.challenges)))} Solved / {len(self.challenges)} Total\n' +\
+                f'[{start_date_str} - {end_date_str}]\n'
 
     def credentials(self):
         return f'Username: {self.username}\nPassword: {self.password}'
 
     def challenge_summary(self):
         if not self.challenges:
-            return 'No challenges found. Try adding one with `!ctf addchallenge <name> <category>`'
+            return ['No challenges found. Try adding one with `!ctf addchallenge <name> <category>`']
 
         solved_response, unsolved_response = '', ''
 
@@ -52,4 +54,11 @@ class CTF(MongoModel):
                 unsolved_response += f':thinking: {challenge_details} Attempted by: [{", ".join(challenge.attempted_by)}]\n'
 
         div = "-" * len(self.name) * 2
-        return f'{div}\n*{self.name}*\n{div}\n' + f'{solved_response}' + f'{unsolved_response}'
+        summary = f'{div}\n*{self.name}*\n{div}\n' + f'{solved_response}' + f'{unsolved_response}'
+        summary_list = []
+        while len(summary) > 1900: # Embed has a limit of 2048 chars 
+            idx = summary.index('\n',1900)
+            summary_list.append(summary[:idx])
+            summary = summary[idx:]
+        summary_list.append(summary) 
+        return summary_list

@@ -42,10 +42,5 @@ Returns the 3 most recent upcoming CTFs from ctftime.
 Converts a string to long
 
 !utils ltos <long>
-<<<<<<< HEAD
-Converts a logn number to string
-'''
-=======
 Converts a long number to string
 '''
->>>>>>> master
