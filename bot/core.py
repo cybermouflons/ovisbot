@@ -8,7 +8,7 @@ from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions
 from dotenv import load_dotenv
 from help_info import *
-from db import *
+from db_models import CTF, Challenge
 
 load_dotenv()
 token = os.getenv("DISCORD_BOT_TOKEN")
@@ -16,19 +16,19 @@ token = os.getenv("DISCORD_BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-## Bot Extensions
+# Bot Extensions
 extensions = ['ctf', 'manage', 'utils', 'ctftime']
 
 client = discord.Client()
 bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
 
-## Events
+# Events
 
 @bot.event
 async def on_ready():
-    print(('<' + bot.user.name) + ' Online>')
-    print(discord.__version__)
+    logger.info(('<' + bot.user.name) + ' Online>')
+    logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
 
 @bot.event
@@ -45,28 +45,34 @@ async def on_message(message):
         await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσε...')
     await bot.process_commands(message)
 
-## Commands
+# Commands
+
 
 @bot.command()
 async def help(ctx, page=None):
     emb = discord.Embed(description=help_page, colour=4387968)
-    # emb.set_author(name='!request "x" - request a feature')
     await ctx.channel.send(embed=emb)
+
 
 @bot.command()
 async def status(ctx):
     status_response = ""
-    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels']    
+    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels']
     sorted(ctfs, key=lambda x: x.created_at)
     for ctf in ctfs:
-        ctf_doc = serverdb.ctfs.find_one({"channelname": ctf.name})
+        try:
+            ctf_doc = CTF.objects.get({"name": ctf.name})
+            logger.info(ctf_doc.finished_at)
+        except CTF.DoesNotExist:
+            await ctx.channel.send(f"{ctf_doc.name} was not in the DB")
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
-        status_response += "**{0}**: _{1}_  [ {4} solved / {5} total ]  ({3}) - {2} Members \n".format(ctf.name,
-            ctf_doc["description"] if "description" in ctf_doc else "No description",
-            len(ctfrole.members),
-            "active" if ctf_doc["active"] else "finished",
-            len(list(filter(lambda x: x['solved'], ctf_doc['challenges']))),
-            len(ctf_doc['challenges']))
+        status_response += ctf_doc.status()
+
+    if len(status_response) is 0:
+        status_response = 'Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου.'
+        await ctx.channel.send(status_response)
+        return
+
     emb = discord.Embed(description=status_response, colour=4387968)
     await ctx.channel.send(embed=emb)
 
@@ -83,6 +89,7 @@ def run():
     for extension in extensions:
         bot.load_extension(extension)
     bot.run(token)
+
 
 if __name__ == '__main__':
     run()
