@@ -9,6 +9,8 @@ from discord.ext.commands.errors import MissingPermissions
 from help_info import *
 from db_models import CTF, Challenge
 
+token = os.getenv("DISCORD_BOT_TOKEN")
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
