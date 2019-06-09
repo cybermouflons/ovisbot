@@ -168,6 +168,10 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Εεεε!! Τι κάμνεις? There is no such CTF name. Use `!status`')
 
     @ctf.command()
+    async def workon(self, ctx, params):
+        await ctx.channel.send('`!ctf workon ` is not supported any more. Use `!ctf attempt` instead')
+
+    @ctf.command()
     async def attempt(self, ctx, params):
         ctf_name = str(ctx.channel.category)
         try:
