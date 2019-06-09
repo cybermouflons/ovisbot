@@ -6,12 +6,8 @@ import sys
 from discord.ext.commands import Bot
 from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions
-from dotenv import load_dotenv
 from help_info import *
 from db_models import CTF, Challenge
-
-load_dotenv()
-token = os.getenv("DISCORD_BOT_TOKEN")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
