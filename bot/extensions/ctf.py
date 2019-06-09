@@ -59,9 +59,9 @@ class Ctf(commands.Cog):
                 ctfrole: discord.PermissionOverwrite(read_messages=True)
             }
             category = await self.guild.create_category(name=scat, overwrites=overwrites)
-            await self.guild.create_text_channel(name='general', category=category)
-            CTF(name=scat, created_at=datetime.datetime.now()).save()
-
+            general_channel = await self.guild.create_text_channel(name='general', category=category)
+            CTF(name=category, created_at=datetime.datetime.now()).save()
+            await general_channel.send(f'@here Καλως ορίσατε στο {category} CTF')
         except CTFAlreadyExistsException:
             await ctx.channel.send('Ρε κουμπάρε! This CTF name already exists! Pick another one')
 
@@ -111,10 +111,10 @@ class Ctf(commands.Cog):
     @commands.has_permissions(manage_channels=True, manage_roles=True)
     async def finish(self, ctx, *params):
         try:
-            if len(params) > 0: raise FewParametersException
+            if len(params) == 0: raise FewParametersException
             ctf_name = '-'.join(list(params)).replace("'", "").lower()
             ctf = CTF.objects.get({"name": ctf_name})
-            if not ctf.finished_at: raise CTFAlreadyFinishedException
+            if ctf.finished_at != None: raise CTFAlreadyFinishedException
             ctf.finished_at = datetime.datetime.now()
             ctf.save()
             await ctx.channel.send('Ατε.. Μπράβο κοπέλια τζαι κοπέλλες! Να πνάσουμε τζαι εμείς νακκο!')

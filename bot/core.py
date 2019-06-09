@@ -6,9 +6,11 @@ import sys
 from discord.ext.commands import Bot
 from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions
+from dotenv import load_dotenv
 from help_info import *
 from db_models import CTF, Challenge
 
+load_dotenv()
 token = os.getenv("DISCORD_BOT_TOKEN")
 
 logging.basicConfig(level=logging.INFO)
@@ -25,10 +27,9 @@ bot.remove_command('help')
 
 @bot.event
 async def on_ready():
-    print(('<' + bot.user.name) + ' Online>')
-    print(discord.__version__)
+    logger.info(('<' + bot.user.name) + ' Online>')
+    logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
-
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -37,7 +38,6 @@ async def on_command_error(ctx, error):
         await ctx.channel.send("Ops! You don't have sufficient permissions to do that. Τζίλα το πάρακατω...")
     else:
         raise error
-
 
 @bot.event
 async def on_message(message):
@@ -62,13 +62,16 @@ async def status(ctx):
     for ctf in ctfs:
         try:
             ctf_doc = CTF.objects.get({"name": ctf.name})
+            logger.info(ctf_doc.finished_at)
         except CTF.DoesNotExist:
-            continue
+            await ctx.channel.send(f"{ctf_doc.name} was not in the DB")
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
         status_response += ctf_doc.status()
 
     if len(status_response) is 0:
         status_response = 'Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου.'
+        await ctx.channel.send(status_response)
+        return
 
     emb = discord.Embed(description=status_response, colour=4387968)
     await ctx.channel.send(embed=emb)
