@@ -89,7 +89,7 @@ class Ctf(commands.Cog):
             new_challenge = Challenge(name=challenge_channel.name,
                                     tags=[category],
                                     created_at=datetime.datetime.now(),
-                                    attempted_by=[ctx.message.author])
+                                    attempted_by=[ctx.message.author.name])
             ctf.challenges.append(new_challenge)
             ctf.save()
             await ctx.channel.send('Εεεφτασέέέ!')

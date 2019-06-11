@@ -54,7 +54,7 @@ class CTF(MongoModel):
                 unsolved_response += f':thinking: {challenge_details} Attempted by: [{", ".join(challenge.attempted_by)}]\n'
 
         div = "-" * len(self.name) * 2
-        summary = f'{div}\n*{self.name}*\n{div}\n' + f'{solved_response}' + f'{unsolved_response}'
+        summary = f'>>> Solved\n{solved_response}' + f'>>> Unsolved\n{unsolved_response}'
         summary_list = []
         while len(summary) > 1900: # Embed has a limit of 2048 chars 
             idx = summary.index('\n',1900)
