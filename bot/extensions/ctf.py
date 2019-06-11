@@ -10,7 +10,6 @@ from exceptions import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler(sys.stdout))
 
 CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego"]
 
@@ -129,7 +128,7 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Ουπς. Κάτι επήε λάθος.')
 
     @ctf.command()
-    async def solve(self, ctx, *params):
+    async def solve(self, ctx):
         try:
             chall_name = ctx.channel.name
             ctf = CTF.objects.get({'name': ctx.channel.category.name})
@@ -138,7 +137,6 @@ class Ctf(commands.Cog):
             challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
 
             if not challenge: raise NotInChallengeChannelException
-
             if challenge.solved_at: raise ChallengeAlreadySolvedException
 
             challenge.solved_by = [ctx.message.author.name] + \
@@ -149,15 +147,35 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:'.format(ctx.message.author.name, chall_name))
             general_channel = discord.utils.get(ctx.channel.category.channels, name="general")
             await general_channel.send(f'{ctx.message.author.name} solved the {chall_name} challenge! :candy: :candy:')
-        except CTF.DoesNotExist:
-            await ctx.channel.send('Ρε πελλοβρεμένε! Εν υπάρχει έτσι CTF.')
-        except NotInChallengeChannelException:
+        except (NotInChallengeChannelException, CTF.DoesNotExist):
             await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
         except ChallengeAlreadySolvedException:
             await ctx.channel.send(f'Άρκησες! This challenge has already been solved by {", ".join(challenge.solved_by)}!')
         except Exception as e:
             logger.error(e)
             await ctx.channel.send('Εσαντανώθηκα. Δοκίμασε ξανά ρε παρέα μου.')
+        
+    @ctf.command()
+    async def unsolve(self, ctx):
+        try:
+            chall_name = ctx.channel.name
+            ctf = CTF.objects.get({'name': ctx.channel.category.name})
+
+            challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+
+            if not challenge: raise NotInChallengeChannelException
+            if not challenge.solved_at: raise ChallengeNotSolvedException
+
+            challenge.solved_by = None
+            challenge.solved_at = None
+            ctf.save()
+        except (NotInChallengeChannelException, CTF.DoesNotExist):
+            await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
+        except ChallengeNotSolvedException:
+            await ctx.channel.send(f'Ρε κουμπάρε.. αφού ένεν λυμένη η ασκηση.')
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Εσαντανώθηκα. Δοκίμασε ξανά ρε τσιάκκο.')
 
     @ctf.command()
     async def join(self, ctx, *params):

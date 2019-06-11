@@ -5,7 +5,7 @@ import sys
 
 from discord.ext.commands import Bot
 from discord.ext import commands
-from discord.ext.commands.errors import MissingPermissions
+from discord.ext.commands.errors import MissingPermissions, CommandNotFound
 from help_info import *
 from db_models import CTF, Challenge
 
@@ -34,13 +34,15 @@ async def on_command_error(ctx, error):
     # Handle missing permissions
     if isinstance(error, MissingPermissions):
         await ctx.channel.send("Ops! You don't have sufficient permissions to do that. Τζίλα το πάρακατω...")
+    elif isinstance(error, CommandNotFound):
+        await ctx.channel.send("Έφυε σου λλίο... Command not found")
     else:
         raise error
 
 @bot.event
 async def on_message(message):
     if bot.user in message.mentions:
-        await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσε...')
+        await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσαι...')
     await bot.process_commands(message)
 
 # Commands
@@ -48,7 +50,13 @@ async def on_message(message):
 
 @bot.command()
 async def help(ctx, page=None):
-    emb = discord.Embed(description=help_page, colour=4387968)
+    help_info = help_page
+    while len(help_info) > 1900: # Embed has a limit of 2048 chars 
+        idx = help_info.index('\n',1900)
+        emb = discord.Embed(description=help_info[:idx], colour=4387968)
+        await ctx.channel.send(embed=emb)
+        summary = summary[idx:]
+    emb = discord.Embed(description=help_info, colour=4387968)
     await ctx.channel.send(embed=emb)
 
 

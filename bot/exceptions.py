@@ -10,6 +10,9 @@ class ChallengeDoesNotExistException(Exception):
 class ChallengeAlreadySolvedException(Exception):
     pass
 
+class ChallengeNotSolvedException(Exception):
+    pass
+
 class UserAlreadyInChallengeChannelException(Exception):
     pass
 

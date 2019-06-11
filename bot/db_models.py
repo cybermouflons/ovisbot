@@ -10,8 +10,8 @@ class Challenge(EmbeddedMongoModel):
     created_at = fields.DateTimeField(required=True)
     tags = fields.ListField(fields.CharField(), default=[])
     attempted_by = fields.ListField(fields.CharField(), default=[])
-    solved_at = fields.DateTimeField()
-    solved_by = fields.ListField(fields.CharField(), default=[])
+    solved_at = fields.DateTimeField(blank=True)
+    solved_by = fields.ListField(fields.CharField(), default=[], blank=True)
     flag = fields.CharField()
 
 

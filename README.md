@@ -31,6 +31,8 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - `!ctf solve [<teammate> <teammate> ...]` Marks the challenge as solved and sets you as the solver. To work you must be in a text channel of a challenge. If other teammates helped solving the challenge you can add them as optional mentions in the arguments and they will be added to the solvers as well.
 
+- `!ctf unsolve` Resets solved status of a challenges. Simarly with the solve command you have to be in the text channel of the challenge. The purpose of this is to allow you to rollback accidental changes when running solve. (Forgot to add teammates, etc..)
+
 ---
 ## Ctftime
 

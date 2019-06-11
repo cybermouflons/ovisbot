@@ -35,6 +35,9 @@ Adds you to the private channel of that challenge. Use `!ctf status` to see acti
 !ctf solve [<member> <member> ...]
 Sets the current challenge as solved by you. Addition of team mates that helped to solve is optional
 
+!ctf unsolve
+Sets the current challenge as unsolved. Allows to to rollback accidental solves.
+
 !ctftime upcoming
 Returns the 3 most recent upcoming CTFs from ctftime.
 
