@@ -47,7 +47,7 @@ class CTF(MongoModel):
         solved_response, unsolved_response = '', ''
 
         for challenge in self.challenges:
-            challenge_details = f'**{challenge.name}** [{", ".join(challenge.tags)}]'
+            challenge_details = f'**{challenge.name[len(self.name)+1:]}** [{", ".join(challenge.tags)}]'
             if challenge.solved_at:
                 solved_response += f':white_check_mark: {challenge_details} Solved by: [{", ".join(challenge.solved_by)}]\n'
             else:

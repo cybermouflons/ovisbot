@@ -131,7 +131,7 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def solve(self, ctx, *params):
         try:
-            chall_name = ctx.channel.name[len(ctx.channel.category.name)+1:] if '-' in ctx.channel.name else ""
+            chall_name = ctx.channel.name
             ctf = CTF.objects.get({'name': ctx.channel.category.name})
 
             # Find challenge in CTF by name
@@ -147,6 +147,8 @@ class Ctf(commands.Cog):
             ctf.save()
 
             await ctx.channel.send('Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:'.format(ctx.message.author.name, chall_name))
+            general_channel = discord.utils.get(ctx.channel.category.channels, name="general")
+            await general_channel.send(f'{ctx.message.author.name} solved the {chall_name} challenge! :candy: :candy:')
         except CTF.DoesNotExist:
             await ctx.channel.send('Ρε πελλοβρεμένε! Εν υπάρχει έτσι CTF.')
         except NotInChallengeChannelException:
@@ -178,19 +180,19 @@ class Ctf(commands.Cog):
             ctf = CTF.objects.get({'name': ctf_name})
 
             chall_name = params
-            challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+            challenge = next((c for c in ctf.challenges if c.name == ctf_name+'-'+chall_name), None)
             if not challenge: raise ChallengeDoesNotExistException
+            if challenge.solved_at: raise ChallengeAlreadySolvedException
+            if ctx.message.author.name in challenge.attempted_by: raise UserAlreadyInChallengeChannelException
+
             chall_channel = discord.utils.get(
                 ctx.channel.category.channels, name=ctf_name + '-' + chall_name)
             await chall_channel.set_permissions(ctx.message.author, read_messages=True)
 
-            if challenge.solved_at: raise ChallengeAlreadySolvedException
-            if ctx.message.author.name in challenge.attempted_by: raise UserAlreadyInChallengeChannelException
-
             # TODO(investigate): ch.attempted_by.append(ctx.message.author.name) mutates all embedded challenges
-            ch.attempted_by = ch.attempted_by + [ctx.message.author.name]
+            challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name]
             ctf.save()
-            await ctx.channel.send(f'Άτε {ctx.message.author.name} μου! Έβαλα σε τζιαι στη λίστα τζείνων που μάχουνται πάνω στο challenge. [{", ".join(ch.attempted_by)}]')
+            await ctx.channel.send(f'Άτε {ctx.message.author.name} μου! Έβαλα σε τζιαι στη λίστα τζείνων που μάχουνται πάνω στο challenge. [{", ".join(challenge.attempted_by)}]')
         except CTF.DoesNotExist:
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except ChallengeDoesNotExistException:
@@ -198,7 +200,7 @@ class Ctf(commands.Cog):
         except ChallengeAlreadySolvedException:
             await ctx.channel.send(f'Ρε μπρο μου... Ελύσαμε το τουτο το challenge αφού.')
         except UserAlreadyInChallengeChannelException:
-            await ctx.channel.send(f'Ρε αρφούι μου... Είσαι ήδη μέσα στη λιστούα. [{", ".join(ch.attempted_by)}]')
+            await ctx.channel.send(f'Ρε αρφούι μου... Είσαι ήδη μέσα στη λιστούα. [{", ".join(challenge.attempted_by)}]')
         except Exception as e:
             logger.error(e)
             await ctx.channel.send(f'Εν τα κατάφερα να σε βάλω μέσα στη λιστούα... Σόρρυ.')
