@@ -8,6 +8,7 @@ from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions, CommandNotFound
 from help_info import *
 from db_models import CTF, Challenge
+import requests
 
 token = os.getenv("DISCORD_BOT_TOKEN")
 
@@ -51,7 +52,7 @@ async def on_message(message):
 @bot.command()
 async def help(ctx, page=None):
     help_info = help_page
-    while len(help_info) > 1900: # Embed has a limit of 2048 chars 
+    while len(help_info) > 1900: # Embed has a limit of 2048 chars
         idx = help_info.index('\n',1900)
         emb = discord.Embed(description=help_info[:idx], colour=4387968)
         await ctx.channel.send(embed=emb)
@@ -85,6 +86,13 @@ async def status(ctx):
 @bot.command()
 async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
+
+@bot.command()
+async def chuckNorris(ctx):
+    joke_url = 'http://api.icndb.com/jokes/random'
+    response = requests.get(joke_url)
+    data = response.json()
+    await ctx.channel.send(data['value']['joke'])
 
 @bot.command()
 async def contribute(ctx):
