@@ -3,10 +3,12 @@ import io
 import logging
 import re
 import requests
+import feedparser
 
 from colorthief import ColorThief
 from discord.ext import commands
 from urllib.request import urlopen
+from exceptions import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ class Ctf(commands.Cog):
     @commands.group()
     async def ctftime(self, ctx):
         self.guild = ctx.guild
-        self.gid = ctx.guild.id 
+        self.gid = ctx.guild.id
 
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid command passed.  Use !help.')
@@ -36,7 +38,7 @@ class Ctf(commands.Cog):
             tohex = '#{:02x}{:02x}{:02x}'.format(r, g, b)
             return tohex
 
-        limit = '3'   
+        limit = '3'
         response = requests.get(upcoming_url, headers=headers, params=limit)
         data = response.json()
 
@@ -50,12 +52,12 @@ class Ctf(commands.Cog):
             ctf_image = data[num]['logo']
             ctf_format = data[num]['format']
             ctf_place = data[num]['onsite']
-            
+
             if ctf_place == False:
                 ctf_place = 'Online'
             else:
                 ctf_place = 'Onsite'
-            
+
             fd = urlopen(default_image)
             f = io.BytesIO(fd.read())
             color_thief = ColorThief(f)
@@ -63,16 +65,45 @@ class Ctf(commands.Cog):
             hexed = str(rgb2hex(rgb_color[0], rgb_color[1], rgb_color[2])).replace('#', '')
             f_color = int(hexed, 16)
             embed = discord.Embed(title=ctf_title, description=ctf_link, color=f_color)
-            
+
             if ctf_image != '':
                 embed.set_thumbnail(url=ctf_image)
             else:
                 embed.set_thumbnail(url=default_image)
-            
+
             embed.add_field(name='Duration', value=((ctf_days + ' days, ') + ctf_hours) + ' hours', inline=True)
             embed.add_field(name='Format', value=(ctf_place + ' ') + ctf_format, inline=True)
             embed.add_field(name='─' * 23, value=(ctf_start + ' -> ') + ctf_end, inline=True)
             await ctx.channel.send(embed=embed)
+
+    @ctftime.command()
+    async def writeups(self, ctx, *params):
+        default_image = 'https://pbs.twimg.com/profile_images/2189766987/ctftime-logo-avatar_400x400.png'
+        writeups_url = 'https://ctftime.org/writeups/rss/'
+        NewsFeed = feedparser.parse(writeups_url)
+        limit = 3
+        if len(params) == 1:
+            try:
+                limit = int(params[0])
+            except:
+                await ctx.channel.send('Έλεος μάθε να μετράς τστστσ. For this command you have to provide an int number')
+                return
+
+
+        if limit > len(NewsFeed.entries):
+            limit = len(NewsFeed.entries)
+        for i in range(limit):
+            entry = NewsFeed.entries[i]
+            writeup_title = entry['title']
+            writeup_summary = re.sub(r'(\n\s*)+\n+', '\n\n', entry['summary'])
+            writeup_url = entry['original_url']
+
+            embed = discord.Embed(title=writeup_title,description=writeup_url, writeup_summary=writeup_summary)
+
+            embed.set_thumbnail(url=default_image)
+
+            await ctx.channel.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Ctf(bot))
