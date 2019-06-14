@@ -95,12 +95,10 @@ class Ctf(commands.Cog):
         for i in range(limit):
             entry = NewsFeed.entries[i]
             writeup_title = entry['title']
-            writeup_summary = re.sub(r'(\n\s*)+\n+', '\n\n', entry['summary'])
+            # writeup_summary = re.sub(r'(\n\s*)+\n+', '\n\n', entry['summary'])
             writeup_url = entry['original_url']
-
-            embed = discord.Embed(title=writeup_title,description=writeup_url, writeup_summary=writeup_summary)
-
-            embed.set_thumbnail(url=default_image)
+            embed = discord.Embed(title=writeup_title,url=writeup_url)
+            # embed.set_thumbnail(url=default_image)
 
             await ctx.channel.send(embed=embed)
 
