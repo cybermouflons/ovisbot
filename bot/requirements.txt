@@ -36,3 +36,4 @@ zc.lockfile==1.4
 ZConfig==3.4.0
 zodbpickle==1.0.3
 zope.interface==4.6.0
+feedparser==5.2.1
