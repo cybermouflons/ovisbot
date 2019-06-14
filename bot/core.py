@@ -49,9 +49,8 @@ async def on_message(message):
 # Commands
 
 
-@bot.command()
-async def help(ctx, page=None):
-    help_info = help_page
+async def send_help_page(ctx,page):
+    help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
     while len(help_info) > 1900: # Embed has a limit of 2048 chars
         idx = help_info.index('\n',1900)
         emb = discord.Embed(description=help_info[:idx], colour=4387968)
@@ -60,6 +59,20 @@ async def help(ctx, page=None):
     emb = discord.Embed(description=help_info, colour=4387968)
     await ctx.channel.send(embed=emb)
 
+@bot.command()
+async def help(ctx, *params):
+    if len(params) > 0:
+        for page in params:
+            if page in help_page.keys():
+                await send_help_page(ctx,page)
+            else:
+                s = 'Μα τι λαλειιιις? Εν εχει ετσί page({})\nAvailable pages:'.format(page)
+                for key in help_page.keys():
+                    s = s + " " + key
+                await ctx.channel.send(s)
+    else:
+        for key in help_page.keys():
+            await send_help_page(ctx,key)
 
 @bot.command()
 async def status(ctx):

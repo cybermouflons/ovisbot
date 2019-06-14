@@ -1,7 +1,24 @@
-help_page = '''
+help_page = {}
+
+help_page['misc'] = '''
+!help [<page1> <page2> ...] (optional)
+Display the help pages(default all pages)
+Current pages are: {}
+
 !status
 Returns a list of past and ongoing ctf still kept in the server.
 
+!chucknorris
+Returns a chuck norris joke
+
+!contribute
+Return the github link for KyriosZolos
+
+!frappe
+Return a frappe for you
+'''
+
+help_page['ctf'] = '''
 !ctf status
 Returns a list of ongoing challenges in the ctf
 
@@ -40,16 +57,26 @@ Sets the current challenge as solved by you. Addition of team mates that helped 
 
 !ctf unsolve
 Sets the current challenge as unsolved. Allows to to rollback accidental solves.
+'''
 
+help_page['ctftime'] = '''
 !ctftime upcoming
 Returns the 3 most recent upcoming CTFs from ctftime.
 
 !ctftime writeups <number>(optional)
 Returns the number(default=3) most recent writeups from ctftime.
+'''
 
+help_page['utils'] = '''
 !utils stol <string>
 Converts a string to long
 
 !utils ltos <long>
 Converts a long number to string
 '''
+
+keys = ""
+for key in help_page.keys():
+    keys = keys + key + " "
+
+help_page['misc'] = help_page['misc'].format(keys)
