@@ -88,7 +88,7 @@ async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
 
 @bot.command()
-async def chuckNorris(ctx):
+async def chucknorris(ctx):
     joke_url = 'http://api.icndb.com/jokes/random'
     response = requests.get(joke_url)
     data = response.json()
