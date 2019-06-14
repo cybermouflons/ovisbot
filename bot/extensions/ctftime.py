@@ -78,29 +78,25 @@ class Ctf(commands.Cog):
 
     @ctftime.command()
     async def writeups(self, ctx, *params):
-        default_image = 'https://pbs.twimg.com/profile_images/2189766987/ctftime-logo-avatar_400x400.png'
         writeups_url = 'https://ctftime.org/writeups/rss/'
-        NewsFeed = feedparser.parse(writeups_url)
-        limit = 3
-        if len(params) == 1:
-            try:
+        try:
+            news_feed = feedparser.parse(writeups_url)
+            limit = 3
+            if len(params) == 1:
                 limit = int(params[0])
-            except:
-                await ctx.channel.send('Έλεος μάθε να μετράς τστστσ. For this command you have to provide an int number')
-                return
-
-
-        if limit > len(NewsFeed.entries):
-            limit = len(NewsFeed.entries)
-        for i in range(limit):
-            entry = NewsFeed.entries[i]
-            writeup_title = entry['title']
-            # writeup_summary = re.sub(r'(\n\s*)+\n+', '\n\n', entry['summary'])
-            writeup_url = entry['original_url']
-            embed = discord.Embed(title=writeup_title,url=writeup_url)
-            # embed.set_thumbnail(url=default_image)
-
-            await ctx.channel.send(embed=embed)
+            if limit > len(news_feed.entries):
+                limit = len(news_feed.entries)
+            for i in range(limit):
+                entry = news_feed.entries[i]
+                writeup_title = entry['title']
+                writeup_url = entry['original_url']
+                embed = discord.Embed(title=writeup_title,url=writeup_url, color=231643)
+                await ctx.channel.send(embed=embed)
+        except ValueError:
+            await ctx.channel.send('Έλεος μάθε να μετράς τστστσ. For this command you have to provide an int number')
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Κατι εν εδούλεψε... Θέλεις ξανα δοκιμασε, θέλεις μεν δοκιμάσεις! Στα @@ μου.')
 
 
 def setup(bot):
