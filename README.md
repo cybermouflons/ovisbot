@@ -36,7 +36,9 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 ---
 ## Ctftime
 
- * `!ctftime upcoming` Returns the 3 most recent upcoming CTFs from ctftime.
+ - `!ctftime upcoming` Returns the 3 most recent upcoming CTFs from ctftime.
+
+ - `!ctftime writeups <number (default:3)>` Returns the most recent writeups from ctftime.
 
 ---
 ##  Utils 
@@ -51,5 +53,6 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - [apogiatzis](https://github.com/apogiatzis)
 - [kgeorgiou](https://github.com/kgeorgiou)
+- [condiom](https://github.com/condiom)
 
 ## Have a feature request? Make a GitHub issue and feel free to contribute.
