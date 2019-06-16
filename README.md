@@ -41,8 +41,6 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
  - `!ctftime writeups <number (default:3)>` Returns the most recent writeups from ctftime.
 
 ---
-##  Utils 
-
 ## Utils
 
 - `!utils stol <string>` Converts a string to long. Useful for crypto challenges

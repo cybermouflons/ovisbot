@@ -48,10 +48,8 @@ async def on_message(message):
 
 # Commands
 
-
-@bot.command()
-async def help(ctx, page=None):
-    help_info = help_page
+async def send_help_page(ctx,page):
+    help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
     while len(help_info) > 1900: # Embed has a limit of 2048 chars
         idx = help_info.index('\n',1900)
         emb = discord.Embed(description=help_info[:idx], colour=4387968)
@@ -60,6 +58,17 @@ async def help(ctx, page=None):
     emb = discord.Embed(description=help_info, colour=4387968)
     await ctx.channel.send(embed=emb)
 
+@bot.command()
+async def help(ctx, *params):
+    if len(params) > 0:
+        for page in params:
+            if page in help_page.keys():
+                await send_help_page(ctx,page)
+            else:
+                await ctx.channel.send('Μπούκκα ρε Τσιούη! Εν υπάρχει ετσί page({0})\nAvailable pages: {1}'.format(page, " ".join(help_page.keys())))
+    else:
+        for key in help_page.keys():
+            await send_help_page(ctx,key)
 
 @bot.command()
 async def status(ctx):
@@ -73,7 +82,7 @@ async def status(ctx):
         except CTF.DoesNotExist:
             await ctx.channel.send(f"{ctf_doc.name} was not in the DB")
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
-        status_response += ctf_doc.status()
+        status_response += ctf_doc.status(len(ctfrole.members))
 
     if len(status_response) is 0:
         status_response = 'Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου.'
