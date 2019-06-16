@@ -38,7 +38,7 @@ class Ctf(commands.Cog):
                 await ctx.channel.send(embed=emb)
         except CTF.DoesNotExist:
             await ctx.channel.send('Έφκαλεν η γλώσσα μου μαλλιά ρε! For this command you have to be in a channel created by !ctf create.')
- 
+
     @ctf.command()
     async def create(self, ctx, *params):
         try:
@@ -71,7 +71,7 @@ class Ctf(commands.Cog):
 
             channel_name = str(ctx.channel.category)
             ctf = CTF.objects.get({"name": channel_name})
-            
+
             challenge_name = params[0].lower()
             category = params[1].lower()
             if category not in CHALLENGE_CATEGORIES: raise ChallengeInvalidCategory
@@ -105,7 +105,7 @@ class Ctf(commands.Cog):
             logger.error(e)
             if ctf.challenges[-1].name == challenge_name: ctf.challenges.pop()
             await ctx.channel.send('Ουπς. Κάτι επήε λάθος.')
-    
+
     @ctf.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)
     async def finish(self, ctx, *params):
@@ -154,7 +154,7 @@ class Ctf(commands.Cog):
         except Exception as e:
             logger.error(e)
             await ctx.channel.send('Εσαντανώθηκα. Δοκίμασε ξανά ρε παρέα μου.')
-        
+
     @ctf.command()
     async def unsolve(self, ctx):
         try:
@@ -198,19 +198,32 @@ class Ctf(commands.Cog):
             ctf = CTF.objects.get({'name': ctf_name})
 
             chall_name = params
-            challenge = next((c for c in ctf.challenges if c.name == ctf_name+'-'+chall_name), None)
-            if not challenge: raise ChallengeDoesNotExistException
-            if challenge.solved_at: raise ChallengeAlreadySolvedException
-            if ctx.message.author.name in challenge.attempted_by: raise UserAlreadyInChallengeChannelException
 
-            chall_channel = discord.utils.get(
-                ctx.channel.category.channels, name=ctf_name + '-' + chall_name)
-            await chall_channel.set_permissions(ctx.message.author, read_messages=True)
+            if chall_name == "--all":
+                for challenge in ctf.challenges:
+                    if ctx.message.author.name in challenge.attempted_by or challenge.solved_at:
+                        continue
+                    challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name]
+                    chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
+                    await chall_channel.set_permissions(ctx.message.author, read_messages=True)
 
-            # TODO(investigate): ch.attempted_by.append(ctx.message.author.name) mutates all embedded challenges
-            challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name]
-            ctf.save()
-            await ctx.channel.send(f'Άτε {ctx.message.author.name} μου! Έβαλα σε τζιαι στη λίστα τζείνων που μάχουνται πάνω στο challenge. [{", ".join(challenge.attempted_by)}]')
+                ctf.save()
+                await ctx.channel.send(f'Γιε μου μα είσαι stalker???')
+            else:
+                challenge = next((c for c in ctf.challenges if c.name == ctf_name+'-'+chall_name), None)
+                if not challenge: raise ChallengeDoesNotExistException
+                if challenge.solved_at: raise ChallengeAlreadySolvedException
+                if ctx.message.author.name in challenge.attempted_by: raise UserAlreadyInChallengeChannelException
+
+                chall_channel = discord.utils.get(
+                    ctx.channel.category.channels, name=ctf_name + '-' + chall_name)
+                await chall_channel.set_permissions(ctx.message.author, read_messages=True)
+
+                # TODO(investigate): ch.attempted_by.append(ctx.message.author.name) mutates all embedded challenges
+                challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name]
+                ctf.save()
+                await ctx.channel.send(f'Άτε {ctx.message.author.name} μου! Έβαλα σε τζιαι στη λίστα τζείνων που μάχουνται πάνω στο challenge. [{", ".join(challenge.attempted_by)}]')
+
         except CTF.DoesNotExist:
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except ChallengeDoesNotExistException:
@@ -230,7 +243,7 @@ class Ctf(commands.Cog):
             if len(params) is 0: raise FewParametersException
             ctf = CTF.objects.get({'name': channel_name})
             ctf.description = ' '.join(params)
-            ctf.save()                
+            ctf.save()
             await ctx.channel.send('CTF description set!')
         except FewParametersException:
             await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf description takes parameters. !help for more info.')
