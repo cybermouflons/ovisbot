@@ -25,15 +25,14 @@ class CTF(MongoModel):
     password = fields.CharField()
     challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
 
-    def status(self):
+    def status(self, members_joined_count):
         fmt_str = '%d/%m/%Y-%H:%M:%S'
         start_date_str = self.created_at.strftime(fmt_str)
         end_date_str = self.finished_at.strftime(
             fmt_str) if self.finished_at else 'Live'
         description_str = self.description if self.description else '_No description set_'
 
-        div = "-" * len(self.name) * 2
-        return  f'{div}\n**{self.name}**\n{div}\n{description_str}\n' +\
+        return  f':triangular_flag_on_post: **{self.name}** ({members_joined_count} Members joined)\n{description_str}\n' +\
                 f'{len(list(filter(lambda x: x.solved_at != None, self.challenges)))} Solved / {len(self.challenges)} Total\n' +\
                 f'[{start_date_str} - {end_date_str}]\n'
 

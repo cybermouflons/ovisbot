@@ -16,7 +16,7 @@ Return the github link for KyriosZolos
 
 !frappe
 Return a frappe for you
-'''
+'''.format(" ".join(help_page.keys()))
 
 help_page['ctf'] = '''
 !ctf status
@@ -74,9 +74,3 @@ Converts a string to long
 !utils ltos <long>
 Converts a long number to string
 '''
-
-keys = ""
-for key in help_page.keys():
-    keys = keys + key + " "
-
-help_page['misc'] = help_page['misc'].format(keys)

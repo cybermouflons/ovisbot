@@ -208,7 +208,7 @@ class Ctf(commands.Cog):
                     await chall_channel.set_permissions(ctx.message.author, read_messages=True)
 
                 ctf.save()
-                await ctx.channel.send(f'Γιε μου μα είσαι stalker???')
+                await ctx.channel.send(f'Άμα είσαι κουνόσσιηλλος...')
             else:
                 challenge = next((c for c in ctf.challenges if c.name == ctf_name+'-'+chall_name), None)
                 if not challenge: raise ChallengeDoesNotExistException
