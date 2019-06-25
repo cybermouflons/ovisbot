@@ -2,16 +2,19 @@ import datetime
 import discord
 import logging
 import sys
+import re
+import requests
 
 from db_models import CTF, Challenge
 from discord.ext import commands
 from pymodm.errors import ValidationError
 from exceptions import *
+from helpers import escape_md, create_corimd_notebook
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego"]
+CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego", "forensics"]
 
 
 class Ctf(commands.Cog):
@@ -38,6 +41,26 @@ class Ctf(commands.Cog):
                 await ctx.channel.send(embed=emb)
         except CTF.DoesNotExist:
             await ctx.channel.send('Έφκαλεν η γλώσσα μου μαλλιά ρε! For this command you have to be in a channel created by !ctf create.')
+
+    @ctf.command()
+    async def archive(self, ctx, *params):
+        ctf_name = '-'.join(list(params)).replace("'", "").lower()
+        try:
+            ctf = CTF.objects.get({'name': ctf_name})
+            category = discord.utils.get(ctx.guild.categories, name=ctf_name)
+            ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf_name)
+            if ctfrole is not None:
+                await ctfrole.delete()
+            for c in category.channels:
+                await c.delete()
+            await category.delete()
+            ctf.name == "__ARCHIVED__" + ctf.name
+            ctf.save()
+        except CTF.DoesNotExist:
+            await ctx.channel.send('Πε μου εσύ αν θορείς κανένα CTF με έτσι όνομα ... Οι πε μου')
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Ουπς. Κάτι επήε λάθος.')
 
     @ctf.command()
     async def create(self, ctx, *params):
@@ -84,15 +107,19 @@ class Ctf(commands.Cog):
                 self.bot.user: discord.PermissionOverwrite(read_messages=True),
                 ctx.message.author: discord.PermissionOverwrite(read_messages=True)
             }
+            notebook_url = create_corimd_notebook()
             challenge_channel = await ctx.channel.category.create_text_channel(channel_name + "-" + challenge_name, overwrites=overwrites)
             new_challenge = Challenge(name=challenge_channel.name,
                                     tags=[category],
                                     created_at=datetime.datetime.now(),
-                                    attempted_by=[ctx.message.author.name])
+                                    attempted_by=[ctx.message.author.name],
+                                    notebook_url=notebook_url)
             ctf.challenges.append(new_challenge)
             ctf.save()
             await ctx.channel.send('Εεεφτασέέέ!')
             await challenge_channel.send('@here Ατε να δούμε δώστου πίεση!')
+            notebook_msg = await challenge_channel.send(f'Ετο τζαι το δευτερούι σου: {notebook_url}')
+            await notebook_msg.pin()
         except FewParametersException:
             await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf addchallenge takes 2 parameters. !help for more info.')
         except CTF.DoesNotExist:
@@ -105,6 +132,54 @@ class Ctf(commands.Cog):
             logger.error(e)
             if ctf.challenges[-1].name == challenge_name: ctf.challenges.pop()
             await ctx.channel.send('Ουπς. Κάτι επήε λάθος.')
+
+    @ctf.command()
+    async def rmchall(self, ctx, *params):
+        try:
+            if len(params) < 1: raise FewParametersException
+
+            channel_name = str(ctx.channel.category)
+            ctf = CTF.objects.get({"name": channel_name})
+
+            challenge_name = params[0].lower()
+            challenges = [c for c in ctf.challenges if c.name == channel_name+'-'+challenge_name]
+            if len(challenges) == 0: raise ChallengeDoesNotExistException
+
+            challenge_channel = discord.utils.get(ctx.channel.category.channels, name=channel_name+'-'+challenge_name)
+            for i, c in enumerate(ctf.challenges):
+                if c.name == channel_name+'-'+challenge_name:
+                    del ctf.challenges[i]
+                    break
+            await challenge_channel.delete()
+            ctf.save()
+        except FewParametersException:
+            await ctx.channel.send('Τελος πάντων, εν θα πω τίποτε... !ctf rmchall takes 1 parameter. !help for more info.')
+        except CTF.DoesNotExist:
+            await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
+        except ChallengeDoesNotExistException:
+            await ctx.channel.send('Παρέα μου... εν κουτσιάς... Εν έσιει έτσι challenge!')
+
+    @ctf.command()
+    async def notes(self, ctx):
+        try:
+            chall_name = ctx.channel.name
+            ctf = CTF.objects.get({'name': ctx.channel.category.name})
+
+            # Find challenge in CTF by name
+            challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+
+            if not challenge: raise NotInChallengeChannelException
+
+            if challenge.notebook_url != "":
+                await ctx.channel.send(f"Notes: {challenge.notebook_url}")
+            else:
+                await ctx.channel.send("Εν έσσιει έτσι πράμα δαμέ...Τζίλα το...")
+        except (NotInChallengeChannelException, CTF.DoesNotExist):
+            await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Εσαντανώθηκα. Δοκίμασε ξανά ρε παρέα μου.')
+
 
     @ctf.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)
@@ -144,9 +219,10 @@ class Ctf(commands.Cog):
             challenge.solved_at = datetime.datetime.now()
             ctf.save()
 
-            await ctx.channel.send('Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:'.format(ctx.message.author.name, chall_name))
+            solvers_str = escape_md(", ".join([ctx.message.author.name] + [m.name for m in ctx.message.mentions]))
+            await ctx.channel.send('Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:'.format(solvers_str, chall_name))
             general_channel = discord.utils.get(ctx.channel.category.channels, name="general")
-            await general_channel.send(f'{ctx.message.author.name} solved the {chall_name} challenge! :candy: :candy:')
+            await general_channel.send(f'{solvers_str} solved the {chall_name} challenge! :candy: :candy:')
         except (NotInChallengeChannelException, CTF.DoesNotExist):
             await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
         except ChallengeAlreadySolvedException:
@@ -187,6 +263,17 @@ class Ctf(commands.Cog):
         except CTF.DoesNotExist:
             await ctx.channel.send('Εεεε!! Τι κάμνεις? There is no such CTF name. Use `!status`')
 
+    @ctf.command()
+    async def leave(self, ctx):
+        try:
+            ctf_name = str(ctx.channel.category)
+            ctf = CTF.objects.get({"name": ctf_name})
+            ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf_name)
+            await ctx.message.author.remove_roles(ctfrole)
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Εκάμαμε τα πούττους! Κάτι εν εδούλεψε!')
+        
     @ctf.command()
     async def workon(self, ctx, params):
         await ctx.channel.send('`!ctf workon ` is not supported any more. Use `!ctf attempt` instead')
@@ -276,15 +363,17 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def setcreds(self, ctx, *params):
         try:
-            if len(params) != 2: raise FewParametersException
+            if len(params) < 2: raise FewParametersException
             channel_name = str(ctx.channel.category)
             ctf = CTF.objects.get({"name": channel_name})
             ctf.username = params[0]
             ctf.password = params[1]
+            if len(params) > 2:
+                ctf.url = params[2]
             ctf.save()
             await ctx.channel.send('CTF shared credentials set!')
         except FewParametersException:
-            await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 parameters. !help for more info.')
+            await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 or more parameters. !help for more info.')
         except CTF.DoesNotExist:
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except Exception as e:
@@ -303,6 +392,42 @@ class Ctf(commands.Cog):
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except CTFSharedCredentialsNotSet:
             await ctx.channel.send('This CTF has no shared credentials set!')
+
+    @ctf.command()
+    async def reminder(self, ctx):
+        channel_name = str(ctx.channel.category)
+        upcoming_url = 'https://ctftime.org/api/v1/events/'
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0',
+        }
+
+        limit = '5'
+        response = requests.get(upcoming_url, headers=headers, params=limit)
+        data = response.json()
+        print(data)
+        date_for_reminder = ""
+        ctf_found = False
+        for num in range(0, int(limit)):
+            ctf_title = data[num]['title']
+            if  channel_name in ctf_title.lower():
+                ctf_found = True
+                date_for_reminder = data[num]['start']
+                print(date_for_reminder)
+                break
+        
+        if not ctf_found:
+            await ctx.channel.send(f'Ε κουμπάρε, έτσι CTF εν υπάρχει μα ιντα όνομα εδοκες στο channel;')
+        else:
+            try:
+                ctf = CTF.objects.get({"name": channel_name})
+                ctf.reminder = True
+                ctf.date_for_reminder = date_for_reminder
+                ctf.save()
+                await ctx.channel.send(f'Εν να σας θυμίσω τουλάχιστον μισή ώρα πριν αρκέψει το {ctf_title}.')
+            except Exception as e:
+                logger.error(e)
+                await ctx.channel.send('Ουπς. Έτα ούλα τζιαμέ...')
+
 
 def setup(bot):
     bot.add_cog(Ctf(bot))

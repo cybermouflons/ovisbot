@@ -10,9 +10,13 @@
 
 - `!status` Returns the current status of the server with regards to CTFs. i.e. Information about which CTFs have been finished/are active, how many members are working on it and the number of challenges solved/unsolved.
 
+- `!wolfram <question>` Calls wolfram API to answer your question/query. Can be used for unit conversion, arithmetic, general queries
+
+- `!chucknorris` Tells you a chunk norris joke 
+
 ## CTF
 
-> This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs. But, the main use for NullCTF is to easily set up a CTF for your discord server to play as a team. The following commands listed are probably going to be used the most.
+> This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs. But, the main use of the bot is to easily set up a CTF for your discord server to play as a team. The following commands listed are probably going to be used the most.
 
 - `!ctf create <ctf_name>` This is the command you'll use when you want to begin a new CTF. This command will make a private category channel with a general text channel in your server, with your supplied name.
 
@@ -21,11 +25,15 @@
 
 - `!ctf join <ctf_name>` Using this command will either give or remove the role of a created ctf to/from you.
 
+- `!ctf archive <ctf_name>` Arcive a CTF to the DB and remove it from discord.
+
 _NOTE: the following ctf specific commands will only be accepted under the category created for that ctf. This is to avoid clashes with multiple ctfs going on in the same server._
 
 - `!ctf status` This displays the status of the CTF. It displays the added challenges, who's working on what, and if a challenge is solved (and by who).
 
 - `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
+
+- `!ctf rmchall <challenge_name>` Removes the challenge with the given name.
 
 - `!ctf attempt <challenge_name>` Gives you permission to view the text channel of the challenge given and adds you to the members working on it. Note the challenge name must match the exact name from `!ctf status`
 
@@ -33,6 +41,13 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - `!ctf unsolve` Resets solved status of a challenges. Simarly with the solve command you have to be in the text channel of the challenge. The purpose of this is to allow you to rollback accidental changes when running solve. (Forgot to add teammates, etc..)
 
+- `!ctf notes` Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
+
+- `!ctf setcreds <username> <password> [<link>]` Sets shared credentials to be used by the team
+
+- `!ctf showcreds` Reveals shared credentials that have been set for the CTF
+
+- `!ctf reminder` Sets a reminder to alert the team members before the CTF starts.
 ---
 ## Ctftime
 
@@ -52,5 +67,6 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 - [apogiatzis](https://github.com/apogiatzis)
 - [kgeorgiou](https://github.com/kgeorgiou)
 - [condiom](https://github.com/condiom)
+- [npitsillos](https://github.com/npitsillos)
 
 ## Have a feature request? Make a GitHub issue and feel free to contribute.

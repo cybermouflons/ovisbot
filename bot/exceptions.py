@@ -1,3 +1,6 @@
+class ChallengeDoesNotExistException(Exception):
+    pass
+
 class ChallengeExistsException(Exception):
     pass
 
