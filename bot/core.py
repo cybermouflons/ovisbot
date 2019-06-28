@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot Extensions
-extensions = ['ctf', 'manage', 'utils', 'ctftime']
+extensions = ['ctf', 'manage', 'utils', 'ctftime', 'stats']
 
 client = discord.Client()
 bot = commands.Bot(command_prefix='!')
@@ -24,11 +24,13 @@ bot.remove_command('help')
 
 # Events
 
+
 @bot.event
 async def on_ready():
     logger.info(('<' + bot.user.name) + ' Online>')
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
+
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -40,6 +42,7 @@ async def on_command_error(ctx, error):
     else:
         raise error
 
+
 @bot.event
 async def on_message(message):
     if bot.user in message.mentions:
@@ -48,27 +51,30 @@ async def on_message(message):
 
 # Commands
 
-async def send_help_page(ctx,page):
+
+async def send_help_page(ctx, page):
     help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
-    while len(help_info) > 1900: # Embed has a limit of 2048 chars
-        idx = help_info.index('\n',1900)
+    while len(help_info) > 1900:  # Embed has a limit of 2048 chars
+        idx = help_info.index('\n', 1900)
         emb = discord.Embed(description=help_info[:idx], colour=4387968)
         await ctx.channel.send(embed=emb)
         summary = summary[idx:]
     emb = discord.Embed(description=help_info, colour=4387968)
     await ctx.channel.send(embed=emb)
 
+
 @bot.command()
 async def help(ctx, *params):
     if len(params) > 0:
         for page in params:
             if page in help_page.keys():
-                await send_help_page(ctx,page)
+                await send_help_page(ctx, page)
             else:
                 await ctx.channel.send('Μπούκκα ρε Τσιούη! Εν υπάρχει ετσί page({0})\nAvailable pages: {1}'.format(page, " ".join(help_page.keys())))
     else:
         for key in help_page.keys():
-            await send_help_page(ctx,key)
+            await send_help_page(ctx, key)
+
 
 @bot.command()
 async def status(ctx):
@@ -92,9 +98,11 @@ async def status(ctx):
     emb = discord.Embed(description=status_response, colour=4387968)
     await ctx.channel.send(embed=emb)
 
+
 @bot.command()
 async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
+
 
 @bot.command()
 async def chucknorris(ctx):
@@ -103,9 +111,11 @@ async def chucknorris(ctx):
     data = response.json()
     await ctx.channel.send(data['value']['joke'])
 
+
 @bot.command()
 async def contribute(ctx):
     await ctx.channel.send("https://github.com/apogiatzis/KyriosZolo")
+
 
 def run():
     sys.path.insert(1, os.getcwd() + '/extensions/')
