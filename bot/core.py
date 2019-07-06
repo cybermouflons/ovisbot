@@ -57,10 +57,10 @@ async def send_help_page(ctx, page):
     while len(help_info) > 1900:  # Embed has a limit of 2048 chars
         idx = help_info.index('\n', 1900)
         emb = discord.Embed(description=help_info[:idx], colour=4387968)
-        await ctx.channel.send(embed=emb)
+        await ctx.author.send(embed=emb)
         summary = summary[idx:]
     emb = discord.Embed(description=help_info, colour=4387968)
-    await ctx.channel.send(embed=emb)
+    await ctx.author.send(embed=emb)
 
 
 @bot.command()
