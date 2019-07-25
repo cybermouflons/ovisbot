@@ -65,16 +65,18 @@ async def send_help_page(ctx, page):
 
 @bot.command()
 async def help(ctx, *params):
-    if len(params) > 0:
-        for page in params:
-            if page in help_page.keys():
-                await send_help_page(ctx, page)
-            else:
-                await ctx.channel.send('Μπούκκα ρε Τσιούη! Εν υπάρχει ετσί page({0})\nAvailable pages: {1}'.format(page, " ".join(help_page.keys())))
+    if isinstance(ctx.channel, discord.DMChannel):
+        if len(params) > 0:
+            for page in params:
+                if page in help_page.keys():
+                    await send_help_page(ctx, page)
+                else:
+                    await ctx.channel.send('Μπούκκα ρε Τσιούη! Εν υπάρχει ετσί page({0})\nAvailable pages: {1}'.format(page, " ".join(help_page.keys())))
+        else:
+            for key in help_page.keys():
+                await send_help_page(ctx, key)
     else:
-        for key in help_page.keys():
-            await send_help_page(ctx, key)
-
+        await ctx.channel.send('Κύριε Βειτερ!! Στείλε DM γιατί έπρησες μας τα!')
 
 @bot.command()
 async def status(ctx):
