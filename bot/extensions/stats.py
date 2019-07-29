@@ -1,6 +1,5 @@
 import logging
 import struct
-from collections import defaultdict
 from ctf import CHALLENGE_CATEGORIES
 from db_models import CTF, Challenge
 from discord.ext import commands
@@ -28,11 +27,11 @@ class Stats(commands.Cog):
             {"$match": {"challenges.solved_by": {"$eq": author}}}
         )
 
-        categories_solved = defaultdict(int)
+        categories_solved = {k: 0 for k in CHALLENGE_CATEGORIES}
         for ctf in ctfs:
             # only look at the first category tag - in case of multiple tags
             tag = ctf['challenges']['tags'][0]
-            if tag.lower() not in CHALLENGE_CATEGORIES:
+            if tag.lower() not in categories_solved:
                 continue
             categories_solved[tag] += 1
 
