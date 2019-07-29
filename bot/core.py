@@ -31,7 +31,6 @@ async def on_ready():
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
 
-
 @bot.event
 async def on_command_error(ctx, error):
     # Handle missing permissions
@@ -42,12 +41,15 @@ async def on_command_error(ctx, error):
     else:
         raise error
 
-
 @bot.event
 async def on_message(message):
     if bot.user in message.mentions:
         await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσαι...')
     await bot.process_commands(message)
+
+@bot.event
+async def on_member_join(member):
+    await member.send("Καλώς τον/την! Εγώ είμαι ο Ζόλος τζαι καμνω τα ούλλα. Στείλε !help να πάρεις μιαν ιδέα.")
 
 # Commands
 
