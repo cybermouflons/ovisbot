@@ -52,5 +52,6 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 - [apogiatzis](https://github.com/apogiatzis)
 - [kgeorgiou](https://github.com/kgeorgiou)
 - [condiom](https://github.com/condiom)
+- [npitsillos](https://github.com/npitsillos)
 
 ## Have a feature request? Make a GitHub issue and feel free to contribute.
