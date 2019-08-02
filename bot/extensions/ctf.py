@@ -11,7 +11,7 @@ from exceptions import *
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego"]
+CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego", "forensics"]
 
 
 class Ctf(commands.Cog):
