@@ -18,15 +18,23 @@ class Ctf(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-
+    
     @commands.group()
     async def ctf(self, ctx):
         self.guild = ctx.guild
         self.gid = ctx.guild.id
-
         if ctx.invoked_subcommand is None:
             await ctx.send('Invalid command passed.  Use !help.')
 
+    @ctf.command()
+    async def addcat(self, ctx, *params)
+         try:
+            CHALLENGE_CATEGORIES.extend([params])
+            await ctx.channel.send('Done!')
+         except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Ουπς. Κάτι επήε λάθος, μάλλον υπάρχει είδη η κατηγορία.')
+    
     @ctf.command()
     async def status(self, ctx):
         channel_name = str(ctx.channel.category)
