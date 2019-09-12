@@ -40,6 +40,26 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Έφκαλεν η γλώσσα μου μαλλιά ρε! For this command you have to be in a channel created by !ctf create.')
 
     @ctf.command()
+    async def archive(self, ctx, *params):
+        ctf_name = '-'.join(list(params)).replace("'", "").lower()
+        try:
+            ctf = CTF.objects.get({'name': ctf_name})
+            category = discord.utils.get(ctx.guild.categories, name=ctf_name)
+            ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf_name)
+            if ctfrole is not None:
+                await ctfrole.delete()
+            for c in category.channels:
+                await c.delete()
+            await category.delete()
+            ctf.name == "__ARCHIVED__" + ctf.name
+            ctf.save()
+        except CTF.DoesNotExist:
+            await ctx.channel.send('Πε μου εσύ αν θορείς κανένα CTF με έτσι όνομα ... Οι πε μου')
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Ουπς. Κάτι επήε λάθος.')
+
+    @ctf.command()
     async def create(self, ctx, *params):
         try:
             scat = '-'.join(list(params)).replace("'", "").lower()
