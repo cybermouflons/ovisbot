@@ -7,6 +7,7 @@ from discord.ext.commands import Bot
 from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions, CommandNotFound
 from help_info import *
+from helpers import chunkify
 from db_models import CTF, Challenge
 import requests
 
@@ -23,7 +24,6 @@ bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
 
 # Events
-
 
 @bot.event
 async def on_ready():
@@ -88,7 +88,6 @@ async def status(ctx):
     for ctf in ctfs:
         try:
             ctf_doc = CTF.objects.get({"name": ctf.name})
-            logger.info(ctf_doc.finished_at)
         except CTF.DoesNotExist:
             await ctx.channel.send(f"{ctf_doc.name} was not in the DB")
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
@@ -99,9 +98,10 @@ async def status(ctx):
         await ctx.channel.send(status_response)
         return
 
-    emb = discord.Embed(description=status_response, colour=4387968)
-    await ctx.channel.send(embed=emb)
-
+    for chunk in chunkify(status_response, 1900):
+        emb = discord.Embed(
+            description=chunk, colour=4387968)
+        await ctx.channel.send(embed=emb)
 
 @bot.command()
 async def frappe(ctx):
