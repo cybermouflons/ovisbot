@@ -208,6 +208,17 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Εεεε!! Τι κάμνεις? There is no such CTF name. Use `!status`')
 
     @ctf.command()
+    async def leave(self, ctx):
+        try:
+            ctf_name = str(ctx.channel.category)
+            ctf = CTF.objects.get({"name": ctf_name})
+            ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf_name)
+            await ctx.message.author.remove_roles(ctfrole)
+        except Exception:
+            logger.error(e)
+            await ctx.channel.send('Εκάμαμε τα πούττους! Κάτι εν εδούλεψε!')
+        
+    @ctf.command()
     async def workon(self, ctx, params):
         await ctx.channel.send('`!ctf workon ` is not supported any more. Use `!ctf attempt` instead')
 
