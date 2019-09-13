@@ -83,7 +83,7 @@ async def help(ctx, *params):
 @bot.command()
 async def status(ctx):
     status_response = ""
-    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels']
+    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels']
     sorted(ctfs, key=lambda x: x.created_at)
     for ctf in ctfs:
         try:

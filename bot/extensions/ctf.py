@@ -214,7 +214,7 @@ class Ctf(commands.Cog):
             ctf = CTF.objects.get({"name": ctf_name})
             ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf_name)
             await ctx.message.author.remove_roles(ctfrole)
-        except Exception:
+        except Exception as e:
             logger.error(e)
             await ctx.channel.send('Εκάμαμε τα πούττους! Κάτι εν εδούλεψε!')
         
