@@ -31,6 +31,9 @@ Marks CTF as finished. (Requires manage channels permissions)
 !ctf join <ctf_name>
 Join an ongoing ctf. Use `status` to see available CTFs.
 
+!ctf leave
+Leave the current CTF.
+
 !ctf delete <ctf_name>
 Delete a CTF category with all its channel and its user role.
 
@@ -57,6 +60,9 @@ Sets the current challenge as solved by you. Addition of team mates that helped 
 
 !ctf unsolve
 Sets the current challenge as unsolved. Allows to to rollback accidental solves.
+
+!ctf archive <ctf_name>
+Arcive a CTF to the DB and remove it from discord.
 '''
 
 help_page['ctftime'] = '''
