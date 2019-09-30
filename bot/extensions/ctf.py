@@ -128,6 +128,32 @@ class Ctf(commands.Cog):
             await ctx.channel.send('Ουπς. Κάτι επήε λάθος.')
 
     @ctf.command()
+    async def rmchall(self, ctx, *params):
+        try:
+            if len(params) < 1: raise FewParametersException
+
+            channel_name = str(ctx.channel.category)
+            ctf = CTF.objects.get({"name": channel_name})
+
+            challenge_name = params[0].lower()
+            challenges = [c for c in ctf.challenges if c.name == channel_name+'-'+challenge_name]
+            if len(challenges) == 0: raise ChallengeDoesNotExistException
+
+            challenge_channel = discord.utils.get(ctx.channel.category.channels, name=channel_name+'-'+challenge_name)
+            for i, c in enumerate(ctf.challenges):
+                if c.name == channel_name+'-'+challenge_name:
+                    del ctf.challenges[i]
+                    break
+            await challenge_channel.delete()
+            ctf.save()
+        except FewParametersException:
+            await ctx.channel.send('Τελος πάντων, εν θα πω τίποτε... !ctf rmchall takes 1 parameter. !help for more info.')
+        except CTF.DoesNotExist:
+            await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
+        except ChallengeDoesNotExistException:
+            await ctx.channel.send('Παρέα μου... εν κουτσιάς... Εν έσιει έτσι challenge!')
+
+    @ctf.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)
     async def finish(self, ctx, *params):
         try:
