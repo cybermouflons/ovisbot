@@ -64,6 +64,4 @@ class CTF(MongoModel):
             summary_list.append(summary[:idx])
             summary = summary[idx:]
         summary_list.append(summary) 
-        logger.info("summary_list:")
-        logger.info(summary_list)
         return summary_list

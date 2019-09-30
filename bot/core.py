@@ -1,3 +1,4 @@
+import datetime
 import discord
 import logging
 import os
@@ -46,6 +47,13 @@ async def on_message(message):
     if bot.user in message.mentions:
         await message.channel.send('Άφησ\' με! Μεν μου μάσσιεσαι...')
     await bot.process_commands(message)
+
+@bot.event
+async def on_message_edit(before, after):
+    halfmin = 30    # time in seconds
+    if after.content != before.content and \
+        after.edited_at.timestamp()- after.created_at.timestamp() <= 30:
+        await bot.process_commands(after)
 
 @bot.event
 async def on_member_join(member):
