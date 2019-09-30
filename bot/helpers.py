@@ -6,3 +6,6 @@ def chunkify(text, limit):
         text = text[idx:]
     chunks.append(text) 
     return chunks
+
+def escape_md(text):
+    return text.replace("_","\_").replace("*","\*").replace(">>>",'\>>>')

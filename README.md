@@ -12,7 +12,7 @@
 
 ## CTF
 
-> This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs. But, the main use for NullCTF is to easily set up a CTF for your discord server to play as a team. The following commands listed are probably going to be used the most.
+> This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs. But, the main use of the bot is to easily set up a CTF for your discord server to play as a team. The following commands listed are probably going to be used the most.
 
 - `!ctf create <ctf_name>` This is the command you'll use when you want to begin a new CTF. This command will make a private category channel with a general text channel in your server, with your supplied name.
 
