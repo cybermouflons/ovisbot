@@ -49,6 +49,9 @@ Sets the description of an existing CTF
 !ctf addchallenge <chall_name> <category>
 Creates a private channel for a challenge. Valid category names are: crypto, web, misc, pwn, reverse, stego
 
+!ctf rmchall <chall_name> 
+Removes the challenge with teh given name.
+
 !ctf attempt <chall_name>
 Adds you to the private channel of that challenge. Use `!ctf status` to see active challenges.
 
