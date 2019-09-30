@@ -1,7 +1,11 @@
 import os
+import logging 
 
+from helpers import escape_md
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 connect('mongodb://mongo/serverdb')
 
 
@@ -46,18 +50,20 @@ class CTF(MongoModel):
         solved_response, unsolved_response = '', ''
 
         for challenge in self.challenges:
-            challenge_details = f'**{challenge.name[len(self.name)+1:]}** [{", ".join(challenge.tags)}]'
+            challenge_details = f'**{escape_md(challenge.name[len(self.name)+1:])}** [{", ".join(challenge.tags)}]'
             if challenge.solved_at:
                 solved_response += f':white_check_mark: {challenge_details} Solved by: [{", ".join(challenge.solved_by)}]\n'
             else:
-                unsolved_response += f':thinking: {challenge_details} Attempted by: [{", ".join(challenge.attempted_by)}]\n'
+                unsolved_response += f':thinking: {challenge_details} Attempted by: [{escape_md(", ".join(challenge.attempted_by))}]\n'
 
         div = "-" * len(self.name) * 2
-        summary = f'>>> Solved\n{solved_response}' + f'>>> Unsolved\n{unsolved_response}'
+        summary = f'\>>> Solved\n{solved_response}' + f'\>>> Unsolved\n{unsolved_response}'
         summary_list = []
         while len(summary) > 1900: # Embed has a limit of 2048 chars 
             idx = summary.index('\n',1900)
             summary_list.append(summary[:idx])
             summary = summary[idx:]
         summary_list.append(summary) 
+        logger.info("summary_list:")
+        logger.info(summary_list)
         return summary_list

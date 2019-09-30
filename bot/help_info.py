@@ -80,3 +80,8 @@ Converts a string to long
 !utils ltos <long>
 Converts a long number to string
 '''
+
+help_page['stats'] = '''
+!stats me
+Returns basic statistics about the challenges you solved.
+'''

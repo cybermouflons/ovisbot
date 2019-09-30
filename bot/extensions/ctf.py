@@ -7,6 +7,7 @@ from db_models import CTF, Challenge
 from discord.ext import commands
 from pymodm.errors import ValidationError
 from exceptions import *
+from helpers import escape_md
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -164,9 +165,10 @@ class Ctf(commands.Cog):
             challenge.solved_at = datetime.datetime.now()
             ctf.save()
 
-            await ctx.channel.send('Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:'.format(ctx.message.author.name, chall_name))
+            solvers_str = escape_md(", ".join([ctx.message.author.name] + [m.name for m in ctx.message.mentions]))
+            await ctx.channel.send('Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:'.format(solvers_str, chall_name))
             general_channel = discord.utils.get(ctx.channel.category.channels, name="general")
-            await general_channel.send(f'{ctx.message.author.name} solved the {chall_name} challenge! :candy: :candy:')
+            await general_channel.send(f'{solvers_str} solved the {chall_name} challenge! :candy: :candy:')
         except (NotInChallengeChannelException, CTF.DoesNotExist):
             await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
         except ChallengeAlreadySolvedException:
