@@ -21,17 +21,24 @@
 
 - `!ctf join <ctf_name>` Using this command will either give or remove the role of a created ctf to/from you.
 
+- `!ctf archive <ctf_name>` Arcive a CTF to the DB and remove it from discord.
+
 _NOTE: the following ctf specific commands will only be accepted under the category created for that ctf. This is to avoid clashes with multiple ctfs going on in the same server._
 
 - `!ctf status` This displays the status of the CTF. It displays the added challenges, who's working on what, and if a challenge is solved (and by who).
 
 - `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
 
+= `!ctf rmchall <challenge_name>` Removes the challenge with the given name.
+
 - `!ctf attempt <challenge_name>` Gives you permission to view the text channel of the challenge given and adds you to the members working on it. Note the challenge name must match the exact name from `!ctf status`
 
 - `!ctf solve [<teammate> <teammate> ...]` Marks the challenge as solved and sets you as the solver. To work you must be in a text channel of a challenge. If other teammates helped solving the challenge you can add them as optional mentions in the arguments and they will be added to the solvers as well.
 
 - `!ctf unsolve` Resets solved status of a challenges. Simarly with the solve command you have to be in the text channel of the challenge. The purpose of this is to allow you to rollback accidental changes when running solve. (Forgot to add teammates, etc..)
+
+- `!ctf notes` Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
+
 
 ---
 ## Ctftime

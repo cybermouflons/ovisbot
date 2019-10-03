@@ -50,7 +50,7 @@ Sets the description of an existing CTF
 Creates a private channel for a challenge. Valid category names are: crypto, web, misc, pwn, reverse, stego
 
 !ctf rmchall <chall_name> 
-Removes the challenge with teh given name.
+Removes the challenge with the given name.
 
 !ctf attempt <chall_name>
 Adds you to the private channel of that challenge. Use `!ctf status` to see active challenges.
@@ -60,6 +60,9 @@ Adds you to the private channels of all challenges
 
 !ctf solve [<member> <member> ...]
 Sets the current challenge as solved by you. Addition of team mates that helped to solve is optional
+
+!ctf notes
+Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
 
 !ctf unsolve
 Sets the current challenge as unsolved. Allows to to rollback accidental solves.
