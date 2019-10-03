@@ -7,7 +7,7 @@ from db_models import CTF, Challenge
 from discord.ext import commands
 from pymodm.errors import ValidationError
 from exceptions import *
-from helpers import escape_md
+from helpers import escape_md, create_corimd_notebook
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -105,15 +105,19 @@ class Ctf(commands.Cog):
                 self.bot.user: discord.PermissionOverwrite(read_messages=True),
                 ctx.message.author: discord.PermissionOverwrite(read_messages=True)
             }
+            notebook_url = create_corimd_notebook()
             challenge_channel = await ctx.channel.category.create_text_channel(channel_name + "-" + challenge_name, overwrites=overwrites)
             new_challenge = Challenge(name=challenge_channel.name,
                                     tags=[category],
                                     created_at=datetime.datetime.now(),
-                                    attempted_by=[ctx.message.author.name])
+                                    attempted_by=[ctx.message.author.name],
+                                    notebook_url=notebook_url)
             ctf.challenges.append(new_challenge)
             ctf.save()
             await ctx.channel.send('Εεεφτασέέέ!')
             await challenge_channel.send('@here Ατε να δούμε δώστου πίεση!')
+            notebook_msg = await challenge_channel.send(f'Ετο τζαι το δευτερούι σου: {notebook_url}')
+            await notebook_msg.pin()
         except FewParametersException:
             await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf addchallenge takes 2 parameters. !help for more info.')
         except CTF.DoesNotExist:
@@ -152,6 +156,28 @@ class Ctf(commands.Cog):
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except ChallengeDoesNotExistException:
             await ctx.channel.send('Παρέα μου... εν κουτσιάς... Εν έσιει έτσι challenge!')
+
+    @ctf.command()
+    async def notes(self, ctx):
+        try:
+            chall_name = ctx.channel.name
+            ctf = CTF.objects.get({'name': ctx.channel.category.name})
+
+            # Find challenge in CTF by name
+            challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+
+            if not challenge: raise NotInChallengeChannelException
+
+            if challenge.notebook_url != "":
+                await ctx.channel.send(f"Notes: {challenge.notebook_url}")
+            else:
+                await ctx.channel.send("Εν έσσιει έτσι πράμα δαμέ...Τζίλα το...")
+        except (NotInChallengeChannelException, CTF.DoesNotExist):
+            await ctx.channel.send('Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`.')
+        except Exception as e:
+            logger.error(e)
+            await ctx.channel.send('Εσαντανώθηκα. Δοκίμασε ξανά ρε παρέα μου.')
+
 
     @ctf.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)

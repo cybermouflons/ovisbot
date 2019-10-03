@@ -1,3 +1,5 @@
+import requests
+
 def chunkify(text, limit):
     chunks = []
     while len(text) > limit: # Embed has a limit of 2048 chars 
@@ -9,3 +11,9 @@ def chunkify(text, limit):
 
 def escape_md(text):
     return text.replace("_","\_").replace("*","\*").replace(">>>",'\>>>')
+
+def create_corimd_notebook():
+    base_url = "https://notes.status.im/"
+    create_new_note_url = base_url + "new"
+    res = requests.get(create_new_note_url)
+    return res.url
