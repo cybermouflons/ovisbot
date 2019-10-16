@@ -29,7 +29,7 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
 
-= `!ctf rmchall <challenge_name>` Removes the challenge with the given name.
+- `!ctf rmchall <challenge_name>` Removes the challenge with the given name.
 
 - `!ctf attempt <challenge_name>` Gives you permission to view the text channel of the challenge given and adds you to the members working on it. Note the challenge name must match the exact name from `!ctf status`
 
@@ -39,6 +39,9 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - `!ctf notes` Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
 
+- `!ctf setcreds <username> <password> [<link>]` Sets shared credentials to be used by the team
+
+- `!ctf showcreds` Reveals shared credentials that have been set for the CTF
 
 ---
 ## Ctftime

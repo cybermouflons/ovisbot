@@ -361,15 +361,17 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def setcreds(self, ctx, *params):
         try:
-            if len(params) != 2: raise FewParametersException
+            if len(params) < 2: raise FewParametersException
             channel_name = str(ctx.channel.category)
             ctf = CTF.objects.get({"name": channel_name})
             ctf.username = params[0]
             ctf.password = params[1]
+            if len(params) > 2:
+                ctf.url = params[2]
             ctf.save()
             await ctx.channel.send('CTF shared credentials set!')
         except FewParametersException:
-            await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 parameters. !help for more info.')
+            await ctx.channel.send('Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 or more parameters. !help for more info.')
         except CTF.DoesNotExist:
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except Exception as e:

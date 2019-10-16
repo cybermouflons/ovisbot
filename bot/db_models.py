@@ -42,7 +42,10 @@ class CTF(MongoModel):
                 f'[{start_date_str} - {end_date_str}]\n'
 
     def credentials(self):
-        return f'Username: {self.username}\nPassword: {self.password}'
+        response = f':busts_in_silhouette: **Username**: {self.username}\n:key: **Password**: {self.password}'
+        if self.url != None:
+            response += f"\n\nLogin Here: {self.url}"
+        return response
 
     def challenge_summary(self):
         if not self.challenges:
