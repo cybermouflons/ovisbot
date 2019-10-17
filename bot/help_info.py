@@ -11,6 +11,9 @@ Returns a list of past and ongoing ctf still kept in the server.
 !chucknorris
 Returns a chuck norris joke
 
+!wolfram <question>
+Calls wolfram API to answer your question/query.
+
 !contribute
 Return the github link for KyriosZolos
 

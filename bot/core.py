@@ -8,7 +8,7 @@ from discord.ext.commands import Bot
 from discord.ext import commands
 from discord.ext.commands.errors import MissingPermissions, CommandNotFound
 from help_info import *
-from helpers import chunkify
+from helpers import chunkify, wolfram_simple_query
 from db_models import CTF, Challenge
 import requests
 
@@ -115,6 +115,13 @@ async def status(ctx):
 async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
 
+@bot.command()
+async def wolfram(ctx, params):
+    try:
+        await ctx.channel.send(wolfram_simple_query(params))
+    except Exception as e:
+        logger.error(e)
+        await ctx.channel.send("Σιέσε μέστην τιάνισην... Error!")
 
 @bot.command()
 async def chucknorris(ctx):
