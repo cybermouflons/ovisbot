@@ -37,8 +37,8 @@ Leave the current CTF.
 !ctf delete <ctf_name>
 Delete a CTF category with all its channel and its user role.
 
-!ctf setcreds <username> <password>
-Sets shared credentials to be used by the team members to login to the CTF
+!ctf setcreds <username> <password> [<link>]
+Sets shared credentials to be used by the team members to login to the CTF. Link is the login/home page of the CTF
 
 !ctf showcreds
 Displays shared credentials used by the team members to login to the CTF
