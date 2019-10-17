@@ -5,6 +5,7 @@ services:
     container_name: 'zolobot'
     environment:
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      WOLFRAM_ALPHA_APP_ID: ${WOLFRAM_ALPHA_APP_ID}
     volumes:
       - ./bot:/bot
     working_dir: /bot

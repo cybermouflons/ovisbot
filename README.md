@@ -10,6 +10,10 @@
 
 - `!status` Returns the current status of the server with regards to CTFs. i.e. Information about which CTFs have been finished/are active, how many members are working on it and the number of challenges solved/unsolved.
 
+- `!wolfram <question>` Calls wolfram API to answer your question/query. Can be used for unit conversion, arithmetic, general queries
+
+- `!chucknorris` Tells you a chunk norris joke 
+
 ## CTF
 
 > This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs. But, the main use of the bot is to easily set up a CTF for your discord server to play as a team. The following commands listed are probably going to be used the most.
