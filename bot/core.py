@@ -116,9 +116,10 @@ async def frappe(ctx):
     await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
 
 @bot.command()
-async def wolfram(ctx, params):
+async def wolfram(ctx, *params):
+    query = ' '.join(list(params))
     try:
-        await ctx.channel.send(wolfram_simple_query(params))
+        await ctx.channel.send(wolfram_simple_query(query))
     except Exception as e:
         logger.error(e)
         await ctx.channel.send("Σιέσε μέστην τιάνισην... Error!")
