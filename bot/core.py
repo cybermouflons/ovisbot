@@ -11,7 +11,9 @@ from help_info import *
 from helpers import chunkify, wolfram_simple_query
 from db_models import CTF, Challenge
 import requests
-import asyncio
+
+from discord.ext import tasks
+
 
 token = os.getenv("DISCORD_BOT_TOKEN")
 
@@ -32,7 +34,8 @@ async def on_ready():
     logger.info(('<' + bot.user.name) + ' Online>')
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
-    bot.bg_task = bot.loop.create_task(my_background_task(bot))
+    #bot.bg_task = bot.loop.create_task(my_background_task(bot))
+    printer.start()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -145,17 +148,12 @@ def run():
         bot.load_extension(extension)
     bot.run(token)
 
+#tasks
 
-
-async def my_background_task(bot):
-    await bot.wait_until_ready()
-    counter = 0
-    channel = bot.get_channel(635462040080875522) # channel ID goes here
-    
-    while not bot.is_closed():
-        counter += 1
-        await channel.send(counter)
-        await asyncio.sleep(60) # task runs every 60 seconds
+@tasks.loop(seconds=5.0)
+async def printer():
+    channel = bot.get_channel(635462040080875522) 
+    await channel.send("Task to iterate every 5 seconds")
 
 if __name__ == '__main__':
     run()
