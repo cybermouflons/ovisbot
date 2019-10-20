@@ -16,6 +16,7 @@ from discord.ext import tasks
 
 
 token = os.getenv("DISCORD_BOT_TOKEN")
+# guild_id = os.getenv("GUILD_ID")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -153,7 +154,11 @@ def run():
 @tasks.loop(seconds=5.0)
 async def printer():
     channel = bot.get_channel(635462040080875522) 
-    await channel.send("Task to iterate every 5 seconds")
-
+    # await channel.send("Task to iterate every 5 seconds")
+    guild_id = 635462040080875520 # en to pianei p to .env mou
+    guild = (bot.get_guild(guild_id))
+    print(guild)
+    print(bot.get_all_channels())
+    
 if __name__ == '__main__':
     run()
