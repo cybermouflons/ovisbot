@@ -11,6 +11,7 @@ from help_info import *
 from helpers import chunkify, wolfram_simple_query
 from db_models import CTF, Challenge
 import requests
+import asyncio
 
 token = os.getenv("DISCORD_BOT_TOKEN")
 
@@ -31,7 +32,7 @@ async def on_ready():
     logger.info(('<' + bot.user.name) + ' Online>')
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
-    bot.bg_task = bot.loop.create_task(my_background_task())
+    bot.bg_task = bot.loop.create_task(my_background_task(bot))
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -146,19 +147,15 @@ def run():
 
 
 
-async def my_background_task():
-    #damesa en skata
-    #await bot.wait_until_ready()
-    print("empikame mesa?")
+async def my_background_task(bot):
+    await bot.wait_until_ready()
     counter = 0
-    channel = get_channel(635462040080875522) # channel ID goes here
-    await channel.send(counter)
-    print(channel)
-    # while not bot.is_closed():
-    #     print("da?")
-    #     counter += 1
-    #     await channel.send(counter)
-    #     await asyncio.sleep(5) # task runs every 60 seconds
+    channel = bot.get_channel(635462040080875522) # channel ID goes here
+    
+    while not bot.is_closed():
+        counter += 1
+        await channel.send(counter)
+        await asyncio.sleep(60) # task runs every 60 seconds
 
 if __name__ == '__main__':
     run()
