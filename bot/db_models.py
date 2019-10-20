@@ -18,8 +18,8 @@ class Challenge(EmbeddedMongoModel):
     solved_by = fields.ListField(fields.CharField(), default=[], blank=True)
     notebook_url = fields.CharField(default="", blank=True)
     flag = fields.CharField()
-
-
+   
+    
 class CTF(MongoModel):
     name = fields.CharField(required=True)
     description = fields.CharField()
@@ -29,6 +29,7 @@ class CTF(MongoModel):
     username = fields.CharField()
     password = fields.CharField()
     challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
+    reminder = fields.BooleanField(default=False)
 
     def status(self, members_joined_count):
         fmt_str = '%d/%m/%Y-%H:%M:%S'
@@ -45,6 +46,10 @@ class CTF(MongoModel):
         response = f':busts_in_silhouette: **Username**: {self.username}\n:key: **Password**: {self.password}'
         if self.url != None:
             response += f"\n\nLogin Here: {self.url}"
+        return response
+
+    def reminder(self):
+        response = f'{self.reminder}'
         return response
 
     def challenge_summary(self):
