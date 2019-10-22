@@ -30,7 +30,7 @@ class CTF(MongoModel):
     password = fields.CharField()
     challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
     reminder = fields.BooleanField(default=False)
-    date_for_reminder = fields.DateTimeField()#fields.CharField(default="", blank=True)
+    date_for_reminder = fields.DateTimeField()
 
     def status(self, members_joined_count):
         fmt_str = '%d/%m/%Y-%H:%M:%S'

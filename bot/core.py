@@ -35,7 +35,6 @@ async def on_ready():
     logger.info(('<' + bot.user.name) + ' Online>')
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
-    #bot.bg_task = bot.loop.create_task(my_background_task(bot))
     reminder.start()
 
 @bot.event

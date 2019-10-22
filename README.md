@@ -47,7 +47,7 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - `!ctf showcreds` Reveals shared credentials that have been set for the CTF
 
-- `ctf reminder` Sets a reminder to alert the team members before the CTF starts.
+- `!ctf reminder` Sets a reminder to alert the team members before the CTF starts.
 ---
 ## Ctftime
 
