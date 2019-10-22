@@ -404,20 +404,24 @@ class Ctf(commands.Cog):
         limit = '5'
         response = requests.get(upcoming_url, headers=headers, params=limit)
         data = response.json()
-
+        print(data)
+        date_for_reminder = ""
         ctf_found = False
-        for num in range(0, len(data)):
+        for num in range(0, int(limit)):
             ctf_title = data[num]['title']
             if  channel_name in ctf_title.lower():
                 ctf_found = True
-            break
-
+                date_for_reminder = data[num]['start']
+                print(date_for_reminder)
+                break
+        
         if not ctf_found:
             await ctx.channel.send(f'Ε κουμπάρε, έτσι CTF εν υπάρχει μα ιντα όνομα εδοκες στο channel;')
         else:
             try:
                 ctf = CTF.objects.get({"name": channel_name})
                 ctf.reminder = True
+                ctf.date_for_reminder = date_for_reminder
                 ctf.save()
                 await ctx.channel.send(f'Εν να σας θυμίσω τουλάχιστον μισή ώρα πριν αρκέψει το {ctf_title}.')
             except Exception as e:

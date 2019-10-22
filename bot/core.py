@@ -13,10 +13,10 @@ from db_models import CTF, Challenge
 import requests
 
 from discord.ext import tasks
+from datetime import datetime, timezone, timedelta
 
 
 token = os.getenv("DISCORD_BOT_TOKEN")
-# guild_id = os.getenv("GUILD_ID")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ async def on_ready():
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
     #bot.bg_task = bot.loop.create_task(my_background_task(bot))
-    printer.start()
+    reminder.start()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -151,14 +151,23 @@ def run():
 
 #tasks
 
-@tasks.loop(seconds=5.0)
-async def printer():
-    channel = bot.get_channel(635462040080875522) 
-    # await channel.send("Task to iterate every 5 seconds")
-    guild_id = 635462040080875520 # en to pianei p to .env mou
-    guild = (bot.get_guild(guild_id))
-    print(guild)
-    print(bot.get_all_channels())
-    
+@tasks.loop(seconds=1800)
+async def reminder():
+    guild = bot.guilds[0]
+    categories = guild.by_category()
+    ctfs = [c for c in guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels' ]
+    for ctf in ctfs:
+        try:
+            ctf_doc = CTF.objects.get({"name": ctf.name})
+            if ctf_doc.reminder:
+                for c in categories:
+                    if ctf in c:
+                        channel = bot.get_channel(int(c[1][0].id))                    
+                if(datetime.now() > ctf_doc.date_for_reminder - timedelta(hours=1)):
+                    alarm = (ctf_doc.date_for_reminder.replace(microsecond=0)) - datetime.now().replace(microsecond=0)
+                    await channel.send(f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰")
+        except CTF.DoesNotExist:
+            continue    
+
 if __name__ == '__main__':
     run()

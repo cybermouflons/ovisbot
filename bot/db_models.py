@@ -30,6 +30,7 @@ class CTF(MongoModel):
     password = fields.CharField()
     challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
     reminder = fields.BooleanField(default=False)
+    date_for_reminder = fields.DateTimeField()#fields.CharField(default="", blank=True)
 
     def status(self, members_joined_count):
         fmt_str = '%d/%m/%Y-%H:%M:%S'
@@ -46,10 +47,6 @@ class CTF(MongoModel):
         response = f':busts_in_silhouette: **Username**: {self.username}\n:key: **Password**: {self.password}'
         if self.url != None:
             response += f"\n\nLogin Here: {self.url}"
-        return response
-
-    def reminder(self):
-        response = f'{self.reminder}'
         return response
 
     def challenge_summary(self):
