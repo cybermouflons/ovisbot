@@ -152,16 +152,16 @@ def run():
 
 @tasks.loop(seconds=1800)
 async def reminder():
+    
     guild = bot.guilds[0]
     categories = guild.by_category()
     ctfs = [c for c in guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels' ]
+    
     for ctf in ctfs:
         try:
             ctf_doc = CTF.objects.get({"name": ctf.name})
             if ctf_doc.reminder:
-                for c in categories:
-                    if ctf in c:
-                        channel = bot.get_channel(int(c[1][0].id))                    
+                channel = discord.utils.get(ctf.channels, name='general')                
                 if(datetime.now() > ctf_doc.date_for_reminder - timedelta(hours=1)):
                     alarm = (ctf_doc.date_for_reminder.replace(microsecond=0)) - datetime.now().replace(microsecond=0)
                     await channel.send(f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰")
