@@ -12,10 +12,6 @@ from helpers import chunkify, wolfram_simple_query
 from db_models import CTF, Challenge
 import requests
 
-from discord.ext import tasks
-from datetime import datetime, timezone, timedelta
-
-
 token = os.getenv("DISCORD_BOT_TOKEN")
 
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +31,6 @@ async def on_ready():
     logger.info(('<' + bot.user.name) + ' Online>')
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
-    reminder.start()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -148,25 +143,6 @@ def run():
         bot.load_extension(extension)
     bot.run(token)
 
-#tasks
-
-@tasks.loop(seconds=1800)
-async def reminder():
-    
-    guild = bot.guilds[0]
-    categories = guild.by_category()
-    ctfs = [c for c in guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels' ]
-    
-    for ctf in ctfs:
-        try:
-            ctf_doc = CTF.objects.get({"name": ctf.name})
-            if ctf_doc.reminder:
-                channel = discord.utils.get(ctf.channels, name='general')                
-                if(datetime.now() > ctf_doc.date_for_reminder - timedelta(hours=1)):
-                    alarm = (ctf_doc.date_for_reminder.replace(microsecond=0)) - datetime.now().replace(microsecond=0)
-                    await channel.send(f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰")
-        except CTF.DoesNotExist:
-            continue    
 
 if __name__ == '__main__':
     run()
