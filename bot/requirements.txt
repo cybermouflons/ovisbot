@@ -17,7 +17,7 @@ multidict==4.5.2
 numpy==1.16.4
 pathtools==0.1.2
 persistent==4.5.0
-Pillow==6.0.0
+Pillow==6.2.0
 pycparser==2.19
 pycrypto==2.6.1
 pymodm==0.4.1
