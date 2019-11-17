@@ -47,7 +47,8 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 
 - `!ctf showcreds` Reveals shared credentials that have been set for the CTF
 
-- `!ctf reminder` Sets a reminder to alert the team members before the CTF starts.
+- `!ctf reminder` Sets a reminder to alert the team members before the CTF starts. The date is automatically fetched from ctftime but it can also be set manually if a date is provided as a parameter
+
 ---
 ## Ctftime
 
@@ -68,5 +69,6 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 - [kgeorgiou](https://github.com/kgeorgiou)
 - [condiom](https://github.com/condiom)
 - [npitsillos](https://github.com/npitsillos)
+- [Sikkis](https://github.com/Sikkis)
 
 ## Have a feature request? Make a GitHub issue and feel free to contribute.

@@ -1,8 +1,4 @@
-import datetime
-import discord
-import logging
-import os
-import sys
+import datetime, discord, logging, os, sys, dateutil.parser
 
 from discord.ext.commands import Bot
 from discord.ext import commands
@@ -152,18 +148,18 @@ def run():
 
 @tasks.loop(seconds=1800)
 async def reminder():
-    
     guild = bot.guilds[0]
     categories = guild.by_category()
     ctfs = [c for c in guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels' ]
-    
+
     for ctf in ctfs:
         try:
             ctf_doc = CTF.objects.get({"name": ctf.name})
             if ctf_doc.reminder:
+                reminder_date = dateutil.parser.parse(ctf_doc.date_for_reminder)
                 channel = discord.utils.get(ctf.channels, name='general')                
-                if(datetime.now() > ctf_doc.date_for_reminder - timedelta(hours=1)):
-                    alarm = (ctf_doc.date_for_reminder.replace(microsecond=0)) - datetime.now().replace(microsecond=0)
+                if(datetime.now() > (reminder_date - timedelta(hours=1))):
+                    alarm = ((reminder_date.replace(microsecond=0)) - datetime.now().replace(microsecond=0)).minute
                     await channel.send(f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰")
         except CTF.DoesNotExist:
             continue    

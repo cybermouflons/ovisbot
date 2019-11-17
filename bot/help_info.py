@@ -70,8 +70,8 @@ Shows the notebook url for the particular challenge channel that you are current
 !ctf unsolve
 Sets the current challenge as unsolved. Allows to to rollback accidental solves.
 
-!ctf reminder
-Sets a reminder to alert the team members before the CTF starts.
+!ctf setreminder [<date>]
+Sets a reminder to alert the team members before the CTF starts. The date is automatically fetched from ctftime but it can also be set manually if a date is provided as a parameter
 
 !ctf archive <ctf_name>
 Arcive a CTF to the DB and remove it from discord.
