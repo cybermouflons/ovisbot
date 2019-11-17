@@ -33,3 +33,6 @@ class CTFSharedCredentialsNotSet(Exception):
 
 class CTFAlreadyFinishedException(Exception):
     pass
+
+class CtfimeNameDoesNotMatch(Exception):
+    pass

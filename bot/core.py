@@ -1,8 +1,4 @@
-import datetime
-import discord
-import logging
-import os
-import sys
+import datetime, discord, logging, os, sys, dateutil.parser
 
 from discord.ext.commands import Bot
 from discord.ext import commands
@@ -11,6 +7,10 @@ from help_info import *
 from helpers import chunkify, wolfram_simple_query
 from db_models import CTF, Challenge
 import requests
+
+from discord.ext import tasks
+from datetime import datetime, timezone, timedelta
+
 
 token = os.getenv("DISCORD_BOT_TOKEN")
 
@@ -31,6 +31,7 @@ async def on_ready():
     logger.info(('<' + bot.user.name) + ' Online>')
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name='with your mind! Use !help'))
+    reminder.start()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -143,6 +144,25 @@ def run():
         bot.load_extension(extension)
     bot.run(token)
 
+#tasks
+
+@tasks.loop(seconds=1800)
+async def reminder():
+    guild = bot.guilds[0]
+    categories = guild.by_category()
+    ctfs = [c for c in guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels' ]
+
+    for ctf in ctfs:
+        try:
+            ctf_doc = CTF.objects.get({"name": ctf.name})
+            if ctf_doc.reminder:
+                reminder_date = dateutil.parser.parse(ctf_doc.date_for_reminder)
+                channel = discord.utils.get(ctf.channels, name='general')                
+                if(datetime.now() > (reminder_date - timedelta(hours=1))):
+                    alarm = ((reminder_date.replace(microsecond=0)) - datetime.now().replace(microsecond=0)).minute
+                    await channel.send(f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰")
+        except CTF.DoesNotExist:
+            continue    
 
 if __name__ == '__main__':
     run()

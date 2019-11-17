@@ -1,7 +1,4 @@
-import datetime
-import discord
-import logging
-import sys
+import datetime, discord, logging, sys, re, requests, dateutil.parser
 
 from db_models import CTF, Challenge
 from discord.ext import commands
@@ -390,6 +387,50 @@ class Ctf(commands.Cog):
             await ctx.channel.send('For this command you have to be in a channel created by !ctf create.')
         except CTFSharedCredentialsNotSet:
             await ctx.channel.send('This CTF has no shared credentials set!')
+
+    @ctf.command()
+    async def setreminder(self, ctx, param="auto"):
+        channel_name = str(ctx.channel.category)
+        try:
+            ctf_obj = CTF.objects.get({"name": channel_name})
+            if param == "auto":
+                upcoming_url = 'https://ctftime.org/api/v1/events/'
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0',
+                }
+
+                limit = 5
+                data = requests.get(upcoming_url, headers=headers, params=str(limit)).json()
+                date_for_reminder = ""
+                ctf_found = False
+                for ctf in data[:limit]:
+                    ctf_title = ctf['title']
+                    if  channel_name in ctf_title.lower():
+                        ctf_found = True
+                        date_for_reminder = ctf['start']
+                        break
+                
+                if not ctf_found:
+                    raise CtfimeNameDoesNotMatch
+            else:
+                _, date_for_reminder = dateutil.parser.parse(param), param
+                
+            # Save reminder to DB
+            ctf_obj.reminder = True
+            ctf_obj.date_for_reminder = date_for_reminder
+            ctf_obj.save()
+            await ctx.channel.send(f'Εν να σας θυμίσω τουλάχιστον μισή ώρα πριν αρκέψει το {ctf_title}.')
+
+        except CtfimeNameDoesNotMatch:
+            await ctx.channel.send(f'Ε κουμπάρε, έτσι CTF εν υπάρχει μα ιντα όνομα εδοκες στο channel; Καμε το μόνος σου τζαι κανεί...')
+        except CTF.DoesNotExist:
+            await ctx.channel.send('Μέσα σε CTF channel να το κάμεις τουτο ρε καμμά!')
+        except ValueError:
+            await ctx.channel.send(f'Μα ίνταμπου τούτη ημερομηνία που μου έδωκες ολάν?')
+        except Exception as e:
+            logger.exception(e)
+            await ctx.channel.send('Ουπς. Έτα ούλα τζιαμέ...')
+
 
 def setup(bot):
     bot.add_cog(Ctf(bot))
