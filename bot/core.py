@@ -161,6 +161,8 @@ async def reminder():
                 if(datetime.now() > (reminder_date - timedelta(hours=1))):
                     alarm = ((reminder_date.replace(microsecond=0)) - datetime.now().replace(microsecond=0)).minute
                     await channel.send(f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰")
+                    ctf_doc.reminder = False
+                    ctf_doc.save()
         except CTF.DoesNotExist:
             continue    
 
