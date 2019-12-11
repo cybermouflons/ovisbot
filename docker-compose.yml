@@ -1,7 +1,7 @@
 version: '2'
 services:
   bot:
-    image: python:3.7
+    build: .
     container_name: 'zolobot'
     environment:
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
@@ -10,7 +10,7 @@ services:
     volumes:
       - ./bot:/bot
     working_dir: /bot
-    command: bash -c "pip install -r requirements.txt && python -u core.py"
+    command: python -u core.py
     links:
       - mongo
   mongo:
