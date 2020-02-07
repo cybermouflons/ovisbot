@@ -62,6 +62,8 @@ async def on_member_join(member):
     print(f"Κοπέλια τζαι κοπέλες επολύναμε! Άτε {member.name} πε μας 2 λοούτθκια για σένα!!")
     channel = bot.get_channel(579049835064197157) # Id of announcements channel
     await channel.send((f"""Κοπέλια τζαι κοπέλες επολύναμε! Άτε {member.name} πε μας 2 λοούτθκια για σένα!! Τζαι τωρά στα εγγλέζικα:\nLadies and gentlemen we have grown! Rokos tell us something about you!"""))
+
+
 # Commands
 
 async def send_help_page(ctx, page):
