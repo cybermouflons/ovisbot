@@ -59,9 +59,12 @@ async def on_message_edit(before, after):
 @bot.event
 async def on_member_join(member):
     await member.send("Καλώς τον/την! Εγώ είμαι ο Ζόλος τζαι καμνω τα ούλλα. Στείλε !help να πάρεις μιαν ιδέα.")
+    print(f"Κοπέλια τζαι κοπέλες επολύναμε! Άτε {member.name} πε μας 2 λοούτθκια για σένα!!")
+    channel = bot.get_channel(579049835064197157) # Id of announcements channel
+    await channel.send((f"""Κοπέλια τζαι κοπέλες επολύναμε! Άτε {member.name} πε μας 2 λοούτθκια για σένα!! Τζαι τωρά στα εγγλέζικα:\nLadies and gentlemen we have grown! Rokos tell us something about you!"""))
+
 
 # Commands
-
 
 async def send_help_page(ctx, page):
     help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
