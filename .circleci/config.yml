@@ -25,7 +25,7 @@ jobs:
       - run:
           name: Deploy Bot to GCE
           command: |
-            ssh -o "StrictHostKeyChecking no" -t ubuntu@$ec2-35-180-135-164.eu-west-3.compute.amazonaws.com "sudo rm -rf KyriosZolo && git clone https://github.com/apogiatzis/KyriosZolo && cd KyriosZolo && echo 'DISCORD_BOT_TOKEN='$DISCORD_BOT_TOKEN >> .env && echo 'WOLFRAM_ALPHA_APP_ID='$WOLFRAM_ALPHA_APP_ID >> .env && /opt/bin/docker-compose up --force-recreate -d"
+            ssh -o "StrictHostKeyChecking no" -t ubuntu@ec2-35-180-135-164.eu-west-3.compute.amazonaws.com "sudo rm -rf KyriosZolo && git clone https://github.com/apogiatzis/KyriosZolo && cd KyriosZolo && echo 'DISCORD_BOT_TOKEN='$DISCORD_BOT_TOKEN >> .env && echo 'WOLFRAM_ALPHA_APP_ID='$WOLFRAM_ALPHA_APP_ID >> .env && /opt/bin/docker-compose up --force-recreate -d"
             
 workflows:
   version: 2
