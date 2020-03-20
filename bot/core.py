@@ -102,7 +102,7 @@ async def status(ctx):
         try:
             ctf_doc = CTF.objects.get({"name": ctf.name})
         except CTF.DoesNotExist:
-            await ctx.channel.send(f"{ctf_doc.name} was not in the DB")
+            await ctx.channel.send(f"{ctf.name} was not in the DB")
         ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
         status_response += ctf_doc.status(len(ctfrole.members))
 
