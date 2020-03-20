@@ -95,7 +95,8 @@ async def help(ctx, *params):
 @bot.command()
 async def status(ctx):
     status_response = ""
-    ctfs = [c for c in ctx.guild.categories if c.name != 'Text Channels' and c.name != 'Voice Channels']
+    non_ctf_categories = ["Text Channels","Voice Channels", "Round Table", "ECSC", "Casual", "Projects"]
+    ctfs = [c for c in ctx.guild.categories if c.name not in non_ctf_categories]
     sorted(ctfs, key=lambda x: x.created_at)
     for ctf in ctfs:
         try:
