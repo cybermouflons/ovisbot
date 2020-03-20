@@ -8,14 +8,13 @@ logger = logging.getLogger(__name__)
 
 
 class Manage(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 
     @commands.group()
     async def manage(self, ctx):
         if ctx.invoked_subcommand is None:
-            await ctx.send('Invalid command passed.  Use !help.')
+            await ctx.send("Invalid command passed.  Use !help.")
 
     @manage.command()
     @commands.has_permissions(administrator=True)

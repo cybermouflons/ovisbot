@@ -1,6 +1,8 @@
 help_page = {}
 
-help_page['misc'] = '''
+help_page[
+    "misc"
+] = """
 !help [<page1> <page2> ...] (optional)
 Display the help pages(default all pages)
 Current pages are: {}
@@ -19,9 +21,13 @@ Return the github link for KyriosZolos
 
 !frappe
 Return a frappe for you
-'''.format(" ".join(help_page.keys()))
+""".format(
+    " ".join(help_page.keys())
+)
 
-help_page['ctf'] = '''
+help_page[
+    "ctf"
+] = """
 !ctf status
 Returns a list of ongoing challenges in the ctf
 
@@ -75,25 +81,31 @@ Sets a reminder to alert the team members before the CTF starts. The date is aut
 
 !ctf archive <ctf_name>
 Arcive a CTF to the DB and remove it from discord.
-'''
+"""
 
-help_page['ctftime'] = '''
+help_page[
+    "ctftime"
+] = """
 !ctftime upcoming
 Returns the 3 most recent upcoming CTFs from ctftime.
 
 !ctftime writeups <number>(optional)
 Returns the number(default=3) most recent writeups from ctftime.
-'''
+"""
 
-help_page['utils'] = '''
+help_page[
+    "utils"
+] = """
 !utils stol <string>
 Converts a string to long
 
 !utils ltos <long>
 Converts a long number to string
-'''
+"""
 
-help_page['stats'] = '''
+help_page[
+    "stats"
+] = """
 !stats me
 Returns basic statistics about the challenges you solved.
-'''
+"""
