@@ -50,7 +50,7 @@ class CTF(MongoModel):
 
     def credentials(self):
         response = f":busts_in_silhouette: **Username**: {self.username}\n:key: **Password**: {self.password}"
-        if self.url != None:
+        if self.url is not None:
             response += f"\n\nLogin Here: {self.url}"
         return response
 
@@ -69,13 +69,12 @@ class CTF(MongoModel):
             else:
                 unsolved_response += f':thinking: {challenge_details} Attempted by: [{escape_md(", ".join(challenge.attempted_by))}]\n'
 
-        div = "-" * len(self.name) * 2
         summary = (
-            f"\>>> Solved\n{solved_response}" + f"\>>> Unsolved\n{unsolved_response}"
+            f"\\>>> Solved\n{solved_response}" + f"\\>>> Unsolved\n{unsolved_response}"
         )
         summary_list = []
-        while len(summary) > 1700: # Embed has a limit of 2048 chars 
-            idx = summary.index('\n',1900)
+        while len(summary) > 1700:  # Embed has a limit of 2048 chars
+            idx = summary.index("\n", 1900)
             summary_list.append(summary[:idx])
             summary = summary[idx:]
         summary_list.append(summary)

@@ -1,4 +1,8 @@
-import datetime, discord, logging, os, sys, dateutil.parser
+import discord
+import logging
+import os
+import sys
+import dateutil.parser
 import requests
 
 from datetime import datetime, timezone, timedelta
@@ -7,7 +11,7 @@ from discord.ext import tasks
 from discord.ext.commands.errors import MissingPermissions, CommandNotFound
 from discord.ext.commands import Bot
 
-from ovisbot.help_info import *
+from ovisbot.help_info import help_page
 from ovisbot.helpers import chunkify, wolfram_simple_query
 from ovisbot.db_models import CTF, Challenge
 
@@ -56,10 +60,10 @@ async def on_message(message):
 
 @bot.event
 async def on_message_edit(before, after):
-    halfmin = 30  # time in seconds
+    threshold = 30  # time in seconds
     if (
         after.content != before.content
-        and after.edited_at.timestamp() - after.created_at.timestamp() <= 30
+        and after.edited_at.timestamp() - after.created_at.timestamp() <= threshold
     ):
         await bot.process_commands(after)
 
@@ -70,7 +74,7 @@ async def on_member_join(member):
         "Καλώς τον/την! Εγώ είμαι ο Ζόλος τζαι καμνω τα ούλλα. Στείλε !help να πάρεις μιαν ιδέα."
     )
     announcements = discord.utils.get(member.guild.text_channels, name="announcements")
-    if announcements != None:
+    if announcements is not None:
         await announcements.send(
             (
                 f"""Άτε {member.name} πε μας 2 λοούτθκια για σένα!! Τζαι τωρά στα εγγλέζικα:\nLadies and gentlemen we have grown! {member.name} tell us something about you!"""
@@ -87,7 +91,7 @@ async def send_help_page(ctx, page):
         idx = help_info.index("\n", 1900)
         emb = discord.Embed(description=help_info[:idx], colour=4387968)
         await ctx.author.send(embed=emb)
-        summary = summary[idx:]
+        help_info = help_info[idx:]
     emb = discord.Embed(description=help_info, colour=4387968)
     await ctx.author.send(embed=emb)
 
@@ -115,7 +119,14 @@ async def help(ctx, *params):
 @bot.command()
 async def status(ctx):
     status_response = ""
-    non_ctf_categories = ["Text Channels","Voice Channels", "Round Table", "ECSC", "Casual", "Projects"]
+    non_ctf_categories = [
+        "Text Channels",
+        "Voice Channels",
+        "Round Table",
+        "ECSC",
+        "Casual",
+        "Projects",
+    ]
     ctfs = [c for c in ctx.guild.categories if c.name not in non_ctf_categories]
     sorted(ctfs, key=lambda x: x.created_at)
     for ctf in ctfs:
@@ -124,10 +135,10 @@ async def status(ctx):
         except CTF.DoesNotExist:
             pass
 
-        ctfrole = discord.utils.get(ctx.guild.roles, name='Team-'+ctf.name)
+        ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf.name)
         status_response += ctf_doc.status(len(ctfrole.members))
 
-    if len(status_response) is 0:
+    if len(status_response) == 0:
         status_response = "Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου."
         await ctx.channel.send(status_response)
         return
@@ -178,7 +189,6 @@ def run():
 @tasks.loop(seconds=1800)
 async def reminder():
     guild = bot.guilds[0]
-    categories = guild.by_category()
     ctfs = [
         c
         for c in guild.categories
