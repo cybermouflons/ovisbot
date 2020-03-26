@@ -1,7 +1,7 @@
 import logging
 
 from discord.ext import commands
-from db_models import CTF
+from ovisbot.db_models import CTF
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -1,5 +1,7 @@
 FROM python:3.7
 
-COPY ./bot/requirements.txt requirements.txt
+COPY . /ovisbot
 
-RUN pip install -r requirements.txt
+WORKDIR /ovisbot
+
+RUN pip install -e .

@@ -8,7 +8,7 @@ import feedparser
 from colorthief import ColorThief
 from discord.ext import commands
 from urllib.request import urlopen
-from exceptions import *
+from ovisbot.exceptions import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class Ctf(commands.Cog):
             ctf_format = data[num]["format"]
             ctf_place = data[num]["onsite"]
 
-            if ctf_place == False:
+            if ctf_place is False:
                 ctf_place = "Online"
             else:
                 ctf_place = "Onsite"

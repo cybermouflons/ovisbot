@@ -1,10 +1,20 @@
-import datetime, discord, logging, sys, re, requests, dateutil.parser
+import datetime
+import discord
+import logging
+import sys
+import re
+import requests
+import dateutil.parser
 
-from db_models import CTF, Challenge
 from discord.ext import commands
 from pymodm.errors import ValidationError
-from exceptions import *
-from helpers import escape_md, create_corimd_notebook
+from ovisbot.db_models import CTF, Challenge
+from ovisbot.exceptions import CTFAlreadyExistsException, FewParametersException, \
+    ChallengeAlreadySolvedException, ChallengeInvalidCategory, ChallengeExistsException, \
+    ChallengeDoesNotExistException, NotInChallengeChannelException, CTFAlreadyFinishedException, \
+    ChallengeNotSolvedException, UserAlreadyInChallengeChannelException, CTFSharedCredentialsNotSet, \
+    CtfimeNameDoesNotMatch
+from ovisbot.helpers import escape_md, create_corimd_notebook
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -69,13 +79,11 @@ class Ctf(commands.Cog):
                 raise CTFAlreadyExistsException
 
             user = ctx.message.author
-            everyone_role = self.guild.get_role(self.gid)
             ctfrole = await self.guild.create_role(
                 name="Team-" + scat, mentionable=True
             )
             await user.add_roles(ctfrole)
             overwrites = {
-                # Everyone
                 self.guild.get_role(self.gid): discord.PermissionOverwrite(
                     read_messages=False
                 ),
@@ -237,7 +245,7 @@ class Ctf(commands.Cog):
                 raise FewParametersException
             ctf_name = "-".join(list(params)).replace("'", "").lower()
             ctf = CTF.objects.get({"name": ctf_name})
-            if ctf.finished_at != None:
+            if ctf.finished_at is not None:
                 raise CTFAlreadyFinishedException
             ctf.finished_at = datetime.datetime.now()
             ctf.save()
@@ -346,7 +354,6 @@ class Ctf(commands.Cog):
     async def leave(self, ctx):
         try:
             ctf_name = str(ctx.channel.category)
-            ctf = CTF.objects.get({"name": ctf_name})
             ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
             await ctx.message.author.remove_roles(ctfrole)
         except Exception as e:
@@ -444,7 +451,7 @@ class Ctf(commands.Cog):
     async def description(self, ctx, *params):
         channel_name = str(ctx.channel.category)
         try:
-            if len(params) is 0:
+            if len(params) == 0:
                 raise FewParametersException
             ctf = CTF.objects.get({"name": channel_name})
             ctf.description = " ".join(params)

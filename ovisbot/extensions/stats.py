@@ -1,7 +1,7 @@
 import logging
 import struct
 from ctf import CHALLENGE_CATEGORIES
-from db_models import CTF, Challenge
+from ovisbot.db_models import CTF, Challenge
 from discord.ext import commands
 
 logging.basicConfig(level=logging.INFO)

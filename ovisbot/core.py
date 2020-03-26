@@ -4,6 +4,7 @@ import os
 import sys
 import dateutil.parser
 import requests
+import traceback
 
 from datetime import datetime, timezone, timedelta
 from discord.ext import commands
@@ -16,8 +17,6 @@ from ovisbot.helpers import chunkify, wolfram_simple_query
 from ovisbot.db_models import CTF, Challenge
 
 token = os.getenv("DISCORD_BOT_TOKEN")
-
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot Extensions
@@ -27,21 +26,37 @@ client = discord.Client()
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 
+
+async def send_help_page(ctx, page):
+    help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
+    while len(help_info) > 1900:  # Embed has a limit of 2048 chars
+        idx = help_info.index("\n", 1900)
+        emb = discord.Embed(description=help_info[:idx], colour=4387968)
+        await ctx.author.send(embed=emb)
+        help_info = help_info[idx:]
+    emb = discord.Embed(description=help_info, colour=4387968)
+    await ctx.author.send(embed=emb)
+
 # Events
-
-
 @bot.event
 async def on_ready():
     logger.info(("<" + bot.user.name) + " Online>")
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name="with your mind! Use !help"))
-    reminder.start()
+    # reminder.start()
+
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    for arg in args:
+        if isinstance(arg, Exception):
+            raise arg
 
 
 @bot.event
 async def on_command_error(ctx, error):
-    # Handle missing permissions
     if isinstance(error, MissingPermissions):
+        # Handle missing permissions
         await ctx.channel.send(
             "Ops! You don't have sufficient permissions to do that. Τζίλα το πάρακατω..."
         )
@@ -83,19 +98,6 @@ async def on_member_join(member):
 
 
 # Commands
-
-
-async def send_help_page(ctx, page):
-    help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
-    while len(help_info) > 1900:  # Embed has a limit of 2048 chars
-        idx = help_info.index("\n", 1900)
-        emb = discord.Embed(description=help_info[:idx], colour=4387968)
-        await ctx.author.send(embed=emb)
-        help_info = help_info[idx:]
-    emb = discord.Embed(description=help_info, colour=4387968)
-    await ctx.author.send(embed=emb)
-
-
 @bot.command()
 async def help(ctx, *params):
     if isinstance(ctx.channel, discord.DMChannel):
@@ -119,32 +121,24 @@ async def help(ctx, *params):
 @bot.command()
 async def status(ctx):
     status_response = ""
-    non_ctf_categories = [
-        "Text Channels",
-        "Voice Channels",
-        "Round Table",
-        "ECSC",
-        "Casual",
-        "Projects",
-    ]
-    ctfs = [c for c in ctx.guild.categories if c.name not in non_ctf_categories]
-    sorted(ctfs, key=lambda x: x.created_at)
+    ctfs = sorted([c for c in ctx.guild.categories], key=lambda x: x.created_at)
     for ctf in ctfs:
         try:
             ctf_doc = CTF.objects.get({"name": ctf.name})
         except CTF.DoesNotExist:
-            pass
-
-        ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf.name)
+            continue
+            # await ctx.channel.send(f"{ctf.name} was not in the DB")
+        ctfrole = discord.utils.get(ctx.guild.roles, name='Team-' + ctf.name)
         status_response += ctf_doc.status(len(ctfrole.members))
 
     if len(status_response) == 0:
-        status_response = "Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου."
+        status_response = 'Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου.'
         await ctx.channel.send(status_response)
         return
 
     for chunk in chunkify(status_response, 1900):
-        emb = discord.Embed(description=chunk, colour=4387968)
+        emb = discord.Embed(
+            description=chunk, colour=4387968)
         await ctx.channel.send(embed=emb)
 
 
@@ -177,9 +171,11 @@ async def contribute(ctx):
 
 
 def run():
-    sys.path.insert(1, os.getcwd() + "/extensions/")
+    sys.path.insert(1, os.path.join(os.getcwd(), "ovisbot", "extensions"))
     for extension in extensions:
         bot.load_extension(extension)
+    if token is None:
+        raise ValueError("DISCORD_BOT_TOKEN variable has not been set!")
     bot.run(token)
 
 
@@ -213,7 +209,3 @@ async def reminder():
                     ctf_doc.save()
         except CTF.DoesNotExist:
             continue
-
-
-if __name__ == "__main__":
-    run()

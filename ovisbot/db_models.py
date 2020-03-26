@@ -1,7 +1,7 @@
 import os
 import logging
 
-from helpers import escape_md
+from ovisbot.helpers import escape_md
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,8 @@ class CTF(MongoModel):
     description = fields.CharField()
     created_at = fields.DateTimeField(required=True)
     finished_at = fields.DateTimeField()
+    start_date = fields.DateTimeField()
+    finish_date = fields.DateTimeField()
     url = fields.URLField()
     username = fields.CharField()
     password = fields.CharField()
@@ -39,11 +41,11 @@ class CTF(MongoModel):
             self.finished_at.strftime(fmt_str) if self.finished_at else "Live"
         )
         description_str = (
-            self.description if self.description else "_No description set_"
+            self.description + "\n" if self.description else ""
         )
 
         return (
-            f":triangular_flag_on_post: **{self.name}** ({members_joined_count} Members joined)\n{description_str}\n"
+            f":triangular_flag_on_post: **{self.name}** ({members_joined_count} Members joined)\n{description_str}"
             + f"{len(list(filter(lambda x: x.solved_at != None, self.challenges)))} Solved / {len(self.challenges)} Total\n"
             + f"[{start_date_str} - {end_date_str}]\n"
         )

@@ -8,4 +8,4 @@ services:
         - RELOAD_CONTAINER=zolobot
     volumes:
         - "/var/run/docker.sock:/var/run/docker.sock"
-        - ./bot:/bot
+        - ./ovisbot:/ovisbot
