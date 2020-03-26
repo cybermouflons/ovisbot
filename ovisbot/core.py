@@ -5,6 +5,7 @@ import sys
 import dateutil.parser
 import requests
 import traceback
+import gettext
 
 from datetime import datetime, timezone, timedelta
 from discord.ext import commands
@@ -15,6 +16,9 @@ from discord.ext.commands import Bot
 from ovisbot.help_info import help_page
 from ovisbot.helpers import chunkify, wolfram_simple_query
 from ovisbot.db_models import CTF, Challenge
+from ovisbot.locale import _
+
+COMMAND_PREFIX = "!"
 
 token = os.getenv("DISCORD_BOT_TOKEN")
 logger = logging.getLogger(__name__)
@@ -23,7 +27,7 @@ logger = logging.getLogger(__name__)
 extensions = ["ctf", "manage", "utils", "ctftime", "stats"]
 
 client = discord.Client()
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix=COMMAND_PREFIX)
 bot.remove_command("help")
 
 
@@ -40,7 +44,7 @@ async def send_help_page(ctx, page):
 # Events
 @bot.event
 async def on_ready():
-    logger.info(("<" + bot.user.name) + " Online>")
+    logger.info("<" + bot.user.name + " Online>")
     logger.info(discord.__version__)
     await bot.change_presence(activity=discord.Game(name="with your mind! Use !help"))
     # reminder.start()
@@ -55,21 +59,27 @@ async def on_error(event, *args, **kwargs):
 
 @bot.event
 async def on_command_error(ctx, error):
+    if ctx.cog is not None:
+        # Errors coming from cogs
+        logger.info("Received cog exception: {0}".format(error))
+        return
+
     if isinstance(error, MissingPermissions):
         # Handle missing permissions
         await ctx.channel.send(
-            "Ops! You don't have sufficient permissions to do that. Τζίλα το πάρακατω..."
+            _("Permission denied.")
         )
     elif isinstance(error, CommandNotFound):
-        await ctx.channel.send("Έφυε σου λλίο... Command not found")
+        await ctx.channel.send(_("Command not found"))
     else:
-        raise error
+        await ctx.channel.send(_("Something went wrong..."))
+        raise error.original
 
 
 @bot.event
 async def on_message(message):
     if bot.user in message.mentions:
-        await message.channel.send("Άφησ' με! Μεν μου μάσσιεσαι...")
+        await message.channel.send(_("What?!"))
     await bot.process_commands(message)
 
 
@@ -86,13 +96,13 @@ async def on_message_edit(before, after):
 @bot.event
 async def on_member_join(member):
     await member.send(
-        "Καλώς τον/την! Εγώ είμαι ο Ζόλος τζαι καμνω τα ούλλα. Στείλε !help να πάρεις μιαν ιδέα."
+        _("Hello {0}! Welcome to the server! Send {1}help to see a list of available commands".format(member.name, COMMAND_PREFIX))
     )
     announcements = discord.utils.get(member.guild.text_channels, name="announcements")
     if announcements is not None:
         await announcements.send(
             (
-                f"""Άτε {member.name} πε μας 2 λοούτθκια για σένα!! Τζαι τωρά στα εγγλέζικα:\nLadies and gentlemen we have grown! {member.name} tell us something about you!"""
+                _("Welcome {0}! Take your time to briefly introduce yourself".format(member.name))
             )
         )
 

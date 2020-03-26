@@ -5,6 +5,7 @@ astor==0.8.1
 async-timeout==3.0.1
 attrs==19.1.0
 autopep8==1.5
+Babel==2.8.0
 bandit==1.6.2
 black==19.10b0
 BTrees==4.5.1
@@ -78,6 +79,7 @@ pymodm==0.4.1
 pymongo==3.8.0
 pyparsing==2.4.0
 python-dateutil==2.8.0
+pytz==2019.3
 PyYAML==5.1
 radon==4.1.0
 regex==2020.2.20

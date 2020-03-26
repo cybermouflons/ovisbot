@@ -4,7 +4,6 @@ import logging
 from ovisbot.helpers import escape_md
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 connect("mongodb://mongo/serverdb")
 

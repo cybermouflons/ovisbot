@@ -10,7 +10,6 @@ from discord.ext import commands
 from urllib.request import urlopen
 from ovisbot.exceptions import *
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -95,27 +94,28 @@ class Ctf(commands.Cog):
     @ctftime.command()
     async def writeups(self, ctx, *params):
         writeups_url = "https://ctftime.org/writeups/rss/"
-        try:
-            news_feed = feedparser.parse(writeups_url)
-            limit = 3
-            if len(params) == 1:
-                limit = int(params[0])
-            if limit > len(news_feed.entries):
-                limit = len(news_feed.entries)
-            for i in range(limit):
-                entry = news_feed.entries[i]
-                writeup_title = entry["title"]
-                writeup_url = entry["original_url"]
-                embed = discord.Embed(
-                    title=writeup_title, url=writeup_url, color=231643
-                )
-                await ctx.channel.send(embed=embed)
-        except ValueError:
+        news_feed = feedparser.parse(writeups_url)
+        limit = 3
+        if len(params) == 1:
+            limit = int(params[0])
+        if limit > len(news_feed.entries):
+            limit = len(news_feed.entries)
+        for i in range(limit):
+            entry = news_feed.entries[i]
+            writeup_title = entry["title"]
+            writeup_url = entry["original_url"]
+            embed = discord.Embed(
+                title=writeup_title, url=writeup_url, color=231643
+            )
+            await ctx.channel.send(embed=embed)
+
+    @writeups.error
+    async def writeups_error(self, ctx, error):
+        if isinstance(error.original, ValueError):
             await ctx.channel.send(
                 "Έλεος μάθε να μετράς τστστσ. For this command you have to provide an int number"
             )
-        except Exception as e:
-            logger.error(e)
+        else:
             await ctx.channel.send(
                 "Κατι εν εδούλεψε... Θέλεις ξανα δοκιμασε, θέλεις μεν δοκιμάσεις! Στα @@ μου."
             )

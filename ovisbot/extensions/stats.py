@@ -1,6 +1,6 @@
 import logging
 import struct
-from ctf import CHALLENGE_CATEGORIES
+from ovisbot.extensions.ctf import CHALLENGE_CATEGORIES
 from ovisbot.db_models import CTF, Challenge
 from discord.ext import commands
 

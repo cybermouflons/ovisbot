@@ -4,7 +4,6 @@ import struct
 from Crypto.Util.number import long_to_bytes, bytes_to_long
 from discord.ext import commands
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

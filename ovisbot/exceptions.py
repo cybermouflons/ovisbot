@@ -10,12 +10,10 @@ class ChallengeInvalidCategory(Exception):
     pass
 
 
-class ChallengeDoesNotExistException(Exception):
-    pass
-
-
 class ChallengeAlreadySolvedException(Exception):
-    pass
+
+    def __init__(self, solved_by, *args, **kwargs):
+        self.solved_by = solved_by
 
 
 class ChallengeNotSolvedException(Exception):
