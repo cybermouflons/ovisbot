@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OvisBot 1.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-26 23:14+0000\n"
+"POT-Creation-Date: 2020-03-26 23:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,29 +17,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
 
-#: ovisbot/core.py:71
+#: ovisbot/core.py:70
 msgid "Permission denied."
 msgstr ""
 
-#: ovisbot/core.py:74
+#: ovisbot/core.py:73
 msgid "Command not found"
 msgstr ""
 
-#: ovisbot/core.py:76
+#: ovisbot/core.py:75
 msgid "Something went wrong..."
 msgstr ""
 
-#: ovisbot/core.py:83
+#: ovisbot/core.py:82
 msgid "What?!"
 msgstr ""
 
-#: ovisbot/core.py:100
+#: ovisbot/core.py:99
 msgid ""
 "Hello {0}! Welcome to the server! Send {1}help to see a list of available"
 " commands"
 msgstr ""
 
-#: ovisbot/core.py:106
+#: ovisbot/core.py:105
 msgid "Welcome {0}! Take your time to briefly introduce yourself"
+msgstr ""
+
+#: ovisbot/core.py:122
+msgid ""
+"Page {0} does not exist!\n"
+"Available pages: {1}"
+msgstr ""
+
+#: ovisbot/core.py:130
+msgid "Ask for help in direct message."
+msgstr ""
+
+#: ovisbot/core.py:147
+msgid "CTF list is empty!"
+msgstr ""
+
+#: ovisbot/core.py:159
+msgid "Frappe on it's way...!"
+msgstr ""
+
+#: ovisbot/core.py:186
+msgid "DISCORD_BOT_TOKEN variable has not been set!"
 msgstr ""
 

@@ -117,15 +117,17 @@ async def help(ctx, *params):
                     await send_help_page(ctx, page)
                 else:
                     await ctx.channel.send(
-                        "Μπούκκα ρε Τσιούη! Εν υπάρχει ετσί page({0})\nAvailable pages: {1}".format(
-                            page, " ".join(help_page.keys())
+                        _(
+                            "Page {0} does not exist!\nAvailable pages: {1}".format(
+                                page, " ".join(help_page.keys())
+                            )
                         )
                     )
         else:
             for key in help_page.keys():
                 await send_help_page(ctx, key)
     else:
-        await ctx.channel.send("Κύριε Βειτερ!! Στείλε DM γιατί έπρησες μας τα!")
+        await ctx.channel.send(_("Ask for help in direct message."))
 
 
 @bot.command()
@@ -142,7 +144,7 @@ async def status(ctx):
         status_response += ctf_doc.status(len(ctfrole.members))
 
     if len(status_response) == 0:
-        status_response = 'Μα σάννα τζιαι εν θωρώ κανένα CTF ρε παρέα μου.'
+        status_response = _("CTF list is empty!")
         await ctx.channel.send(status_response)
         return
 
@@ -154,17 +156,13 @@ async def status(ctx):
 
 @bot.command()
 async def frappe(ctx):
-    await ctx.channel.send("Έφτασεεεεν ... Ρούφα τζαι έρκετε!")
+    await ctx.channel.send(_("Frappe on it's way...!"))
 
 
 @bot.command()
 async def wolfram(ctx, *params):
     query = " ".join(list(params))
-    try:
-        await ctx.channel.send(wolfram_simple_query(query))
-    except Exception as e:
-        logger.error(e)
-        await ctx.channel.send("Σιέσε μέστην τιάνισην... Error!")
+    await ctx.channel.send(wolfram_simple_query(query))
 
 
 @bot.command()
@@ -185,37 +183,37 @@ def run():
     for extension in extensions:
         bot.load_extension(extension)
     if token is None:
-        raise ValueError("DISCORD_BOT_TOKEN variable has not been set!")
+        raise ValueError(_("DISCORD_BOT_TOKEN variable has not been set!"))
     bot.run(token)
 
 
 # tasks
 
 
-@tasks.loop(seconds=1800)
-async def reminder():
-    guild = bot.guilds[0]
-    ctfs = [
-        c
-        for c in guild.categories
-        if c.name != "Text Channels" and c.name != "Voice Channels"
-    ]
+# @tasks.loop(seconds=1800)
+# async def reminder():
+#     guild = bot.guilds[0]
+#     ctfs = [
+#         c
+#         for c in guild.categories
+#         if c.name != "Text Channels" and c.name != "Voice Channels"
+#     ]
 
-    for ctf in ctfs:
-        try:
-            ctf_doc = CTF.objects.get({"name": ctf.name})
-            if ctf_doc.reminder:
-                reminder_date = dateutil.parser.parse(ctf_doc.date_for_reminder)
-                channel = discord.utils.get(ctf.channels, name="general")
-                if datetime.now() > (reminder_date - timedelta(hours=1)):
-                    alarm = (
-                        (reminder_date.replace(microsecond=0))
-                        - datetime.now().replace(microsecond=0)
-                    ).minute
-                    await channel.send(
-                        f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰"
-                    )
-                    ctf_doc.reminder = False
-                    ctf_doc.save()
-        except CTF.DoesNotExist:
-            continue
+#     for ctf in ctfs:
+#         try:
+#             ctf_doc = CTF.objects.get({"name": ctf.name})
+#             if ctf_doc.reminder:
+#                 reminder_date = dateutil.parser.parse(ctf_doc.date_for_reminder)
+#                 channel = discord.utils.get(ctf.channels, name="general")
+#                 if datetime.now() > (reminder_date - timedelta(hours=1)):
+#                     alarm = (
+#                         (reminder_date.replace(microsecond=0))
+#                         - datetime.now().replace(microsecond=0)
+#                     ).minute
+#                     await channel.send(
+#                         f"⏰Ατέ μανα μου, ξυπνάτε το CTF ξεκινά σε {alarm} λεπτά!⏰"
+#                     )
+#                     ctf_doc.reminder = False
+#                     ctf_doc.save()
+#         except CTF.DoesNotExist:
+#             continue
