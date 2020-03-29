@@ -38,16 +38,6 @@ class Stats(commands.Cog):
         total = sum(categories_solved.values())
         mx = max(categories_solved.values())
 
-        # def normalize(v, mx, mn=0):
-        #     if v == 0:
-        #         return 0
-        #     if mx == mn:
-        #         return 1
-        #     v = float(v)
-        #     return (v - mn) / (mx - mn)
-
-        # def draw_bar(v, b=10):
-        #     return (round(normalize(v, mx) * b) * "+").ljust(b, "-")
         to_ret = "\n".join(
             [
                 f"{draw_bar(categories_solved[k], mx)} {k.upper()} x{categories_solved[k]}"
