@@ -2,6 +2,7 @@ import logging
 import struct
 from ovisbot.extensions.ctf import CHALLENGE_CATEGORIES
 from ovisbot.db_models import CTF, Challenge
+from ovisbot.utils.progressbar import draw_bar
 from discord.ext import commands
 
 logging.basicConfig(level=logging.INFO)
@@ -34,34 +35,34 @@ class Stats(commands.Cog):
                 continue
             categories_solved[tag] += 1
 
-        sm = sum(categories_solved.values())
+        total = sum(categories_solved.values())
         mx = max(categories_solved.values())
 
-        def normalize(v, mx, mn=0):
-            if v == 0:
-                return 0
-            if mx == mn:
-                return 1
-            v = float(v)
-            return (v - mn) / (mx - mn)
+        # def normalize(v, mx, mn=0):
+        #     if v == 0:
+        #         return 0
+        #     if mx == mn:
+        #         return 1
+        #     v = float(v)
+        #     return (v - mn) / (mx - mn)
 
-        def draw_bar(v, b=10):
-            return (round(normalize(v, mx) * b) * "+").ljust(b, "-")
-
+        # def draw_bar(v, b=10):
+        #     return (round(normalize(v, mx) * b) * "+").ljust(b, "-")
         to_ret = "\n".join(
             [
-                f"{draw_bar(categories_solved[k])} {k.upper()} x{categories_solved[k]}"
+                f"{draw_bar(categories_solved[k], mx)} {k.upper()} x{categories_solved[k]}"
                 for k in CHALLENGE_CATEGORIES
             ]
         )
+        to_ret = "Total {0} Challenge(s) Solved!\n\n".format(total) + to_ret
 
         preambles = [
             "👶 Είσαι νινί ακόμα.",  # 0-10 solved
             "👍 Κουτσά στραβά, κάτι καμνεις.",  # 10-20 solved
             "🐐👑 Μα εσού είσαι αρχιτράουλλος!",  # 20+ solved
         ]
-        p_choice = preambles[min(int(sm / 10), len(preambles) - 1)]
-        await ctx.send(f"{p_choice}\n```{to_ret}```")
+        p_choice = preambles[min(int(total / 10), len(preambles) - 1)]
+        await ctx.send(f"{p_choice}\n```CSS\n{to_ret}```")
 
 
 def setup(bot):

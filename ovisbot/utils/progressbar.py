@@ -4,26 +4,26 @@ import sys
 import math
 
 bar_styles = [
-    '▁▂▃▄▅▆▇█',
-    '⣀⣄⣤⣦⣶⣷⣿',
-    '⣀⣄⣆⣇⣧⣷⣿',
-    '○◔◐◕⬤',
-    '□◱◧▣■',
-    '□◱▨▩■',
-    '□◱▥▦■',
-    '░▒▓█',
-    '░█',
-    '⬜⬛',
-    '▱▰',
-    '▭◼',
-    '▯▮',
-    '◯⬤',
-    '⚪⚫',
+    "▁▂▃▄▅▆▇█",
+    "⣀⣄⣤⣦⣶⣷⣿",
+    "⣀⣄⣆⣇⣧⣷⣿",
+    "○◔◐◕⬤",
+    "□◱◧▣■",
+    "□◱▨▩■",
+    "□◱▥▦■",
+    "░▒▓█",
+    "░█",
+    "⬜⬛",
+    "▱▰",
+    "▭◼",
+    "▯▮",
+    "◯⬤",
+    "⚪⚫",
 ]
 
 
-def progressbar(value, max_value=100, barsize=10, style=3, label=""):
-    percentage = value / max_value
+def draw_bar(value, max_value=100, barsize=10, style=3, label=""):
+    percentage = 0 if max_value == 0 else value / max_value
     progress = round(barsize * percentage)
     empty_progress = barsize - progress
     style_symbols = bar_styles[style % len(bar_styles)]

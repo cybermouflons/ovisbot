@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/ovisbot
     working_dir: /ovisbot
-    command: bash -c "pip install -e . && ovisbot"
+    command: bash -c "pip install . && ovisbot"
     links:
       - mongo
   mongo:

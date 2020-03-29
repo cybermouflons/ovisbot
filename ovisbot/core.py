@@ -17,7 +17,11 @@ import ovisbot.locale as i118n
 from datetime import datetime, timezone, timedelta
 from discord.ext import commands
 from discord.ext import tasks
-from discord.ext.commands.errors import MissingPermissions, CommandNotFound
+from discord.ext.commands.errors import (
+    MissingPermissions,
+    CommandNotFound,
+    ExpectedClosingQuoteError,
+)
 from discord.ext.commands import Bot
 
 from ovisbot.help_info import help_page
@@ -30,7 +34,7 @@ token = os.getenv("DISCORD_BOT_TOKEN")
 logger = logging.getLogger(__name__)
 
 # Bot Extensions
-extensions = ["ctf", "manage", "utils", "ctftime", "stats"]
+extensions = ["ctf", "manage", "utils", "ctftime", "stats", "poll"]
 
 client = discord.Client()
 bot = commands.Bot(command_prefix=COMMAND_PREFIX)
@@ -75,6 +79,8 @@ async def on_command_error(ctx, error):
         # Handle missing permissions
         await ctx.channel.send(i118n._("Permission denied."))
     elif isinstance(error, CommandNotFound):
+        await ctx.channel.send(i118n._("Command not found"))
+    elif isinstance(error, ExpectedClosingQuoteError):
         await ctx.channel.send(i118n._("Command not found"))
     else:
         await ctx.channel.send(i118n._("Something went wrong..."))
