@@ -73,6 +73,7 @@ async def on_command_error(ctx, error):
     if ctx.cog is not None:
         # Errors coming from cogs
         logger.info("Received cog exception: {0}".format(error))
+        raise error.original
         return
 
     if isinstance(error, MissingPermissions):
