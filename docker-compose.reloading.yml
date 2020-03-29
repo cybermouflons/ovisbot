@@ -1,0 +1,11 @@
+version: '2'
+services:
+  live-reloader:
+    image: apogiatzis/livereloading
+    container_name: livereloader
+    privileged: true
+    environment:
+        - RELOAD_CONTAINER=zolobot
+    volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock"
+        - ./ovisbot:/ovisbot
