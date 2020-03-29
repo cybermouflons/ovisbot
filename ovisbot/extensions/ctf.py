@@ -9,11 +9,20 @@ import dateutil.parser
 from discord.ext import commands
 from pymodm.errors import ValidationError
 from ovisbot.db_models import CTF, Challenge
-from ovisbot.exceptions import CTFAlreadyExistsException, FewParametersException, \
-    ChallengeAlreadySolvedException, ChallengeInvalidCategory, ChallengeExistsException, \
-    ChallengeDoesNotExistException, NotInChallengeChannelException, CTFAlreadyFinishedException, \
-    ChallengeNotSolvedException, UserAlreadyInChallengeChannelException, CTFSharedCredentialsNotSet, \
-    CtfimeNameDoesNotMatch
+from ovisbot.exceptions import (
+    CTFAlreadyExistsException,
+    FewParametersException,
+    ChallengeAlreadySolvedException,
+    ChallengeInvalidCategory,
+    ChallengeExistsException,
+    ChallengeDoesNotExistException,
+    NotInChallengeChannelException,
+    CTFAlreadyFinishedException,
+    ChallengeNotSolvedException,
+    UserAlreadyInChallengeChannelException,
+    CTFSharedCredentialsNotSet,
+    CtfimeNameDoesNotMatch,
+)
 from ovisbot.helpers import escape_md, create_corimd_notebook
 
 logger = logging.getLogger(__name__)
@@ -83,9 +92,7 @@ class Ctf(commands.Cog):
             raise CTFAlreadyExistsException
 
         user = ctx.message.author
-        ctfrole = await self.guild.create_role(
-            name="Team-" + scat, mentionable=True
-        )
+        ctfrole = await self.guild.create_role(name="Team-" + scat, mentionable=True)
         await user.add_roles(ctfrole)
         overwrites = {
             self.guild.get_role(self.gid): discord.PermissionOverwrite(
@@ -94,9 +101,7 @@ class Ctf(commands.Cog):
             self.bot.user: discord.PermissionOverwrite(read_messages=True),
             ctfrole: discord.PermissionOverwrite(read_messages=True),
         }
-        category = await self.guild.create_category(
-            name=scat, overwrites=overwrites
-        )
+        category = await self.guild.create_category(name=scat, overwrites=overwrites)
         general_channel = await self.guild.create_text_channel(
             name="general", category=category
         )
@@ -124,9 +129,7 @@ class Ctf(commands.Cog):
             raise ChallengeInvalidCategory
 
         challenges = [
-            c
-            for c in ctf.challenges
-            if c.name == channel_name + "-" + challenge_name
+            c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
         ]
         if len(challenges) > 0:
             raise ChallengeExistsException
@@ -187,9 +190,7 @@ class Ctf(commands.Cog):
 
         challenge_name = params[0].lower()
         challenges = [
-            c
-            for c in ctf.challenges
-            if c.name == channel_name + "-" + challenge_name
+            c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
         ]
         if len(challenges) == 0:
             raise ChallengeDoesNotExistException
@@ -237,8 +238,9 @@ class Ctf(commands.Cog):
 
     @notes.error
     async def notes_error(self, ctx, error):
-        if isinstance(error.original,
-                      (NotInChallengeChannelException, CTF.DoesNotExist)):
+        if isinstance(
+            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
+        ):
             await ctx.channel.send(
                 "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
             )
@@ -307,8 +309,9 @@ class Ctf(commands.Cog):
 
     @solve.error
     async def solve_error(self, ctx, error):
-        if isinstance(error.original,
-                      (NotInChallengeChannelException, CTF.DoesNotExist)):
+        if isinstance(
+            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
+        ):
             await ctx.channel.send(
                 "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
             )
@@ -335,8 +338,9 @@ class Ctf(commands.Cog):
 
     @unsolve.error
     async def unsolve_error(self, ctx, error):
-        if isinstance(error.original,
-                      (NotInChallengeChannelException, CTF.DoesNotExist)):
+        if isinstance(
+            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
+        ):
             await ctx.channel.send(
                 "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
             )
@@ -391,11 +395,7 @@ class Ctf(commands.Cog):
             await ctx.channel.send(f"Άμα είσαι κουνόσσιηλλος...")
         else:
             challenge = next(
-                (
-                    c
-                    for c in ctf.challenges
-                    if c.name == ctf_name + "-" + chall_name
-                ),
+                (c for c in ctf.challenges if c.name == ctf_name + "-" + chall_name),
                 None,
             )
             if not challenge:
@@ -408,14 +408,10 @@ class Ctf(commands.Cog):
             chall_channel = discord.utils.get(
                 ctx.channel.category.channels, name=ctf_name + "-" + chall_name
             )
-            await chall_channel.set_permissions(
-                ctx.message.author, read_messages=True
-            )
+            await chall_channel.set_permissions(ctx.message.author, read_messages=True)
 
             # TODO(investigate): ch.attempted_by.append(ctx.message.author.name) mutates all embedded challenges
-            challenge.attempted_by = challenge.attempted_by + [
-                ctx.message.author.name
-            ]
+            challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name]
             ctf.save()
             await ctx.channel.send(
                 f'Άτε {ctx.message.author.name} μου! Έβαλα σε τζιαι στη λίστα τζείνων που μάχουνται πάνω στο challenge. [{", ".join(challenge.attempted_by)}]'
@@ -432,13 +428,9 @@ class Ctf(commands.Cog):
                 "Μα περιπέζεις μας; There is not such a challenge. Create it using !ctf addchallenge"
             )
         elif isinstance(error.original, ChallengeAlreadySolvedException):
-            await ctx.channel.send(
-                "Ρε μπρο μου... Ελύσαμε το τουτο το challenge αφού."
-            )
+            await ctx.channel.send("Ρε μπρο μου... Ελύσαμε το τουτο το challenge αφού.")
         elif isinstance(error.original, UserAlreadyInChallengeChannelException):
-            await ctx.channel.send(
-                'Ρε αρφούι μου... Είσαι ήδη μέσα στη λιστούα.'
-            )
+            await ctx.channel.send("Ρε αρφούι μου... Είσαι ήδη μέσα στη λιστούα.")
         else:
             await ctx.channel.send(
                 "Εν τα κατάφερα να σε βάλω μέσα στη λιστούα... Σόρρυ."
@@ -543,9 +535,7 @@ class Ctf(commands.Cog):
             }
 
             limit = 5
-            data = requests.get(
-                upcoming_url, headers=headers, params=str(limit)
-            ).json()
+            data = requests.get(upcoming_url, headers=headers, params=str(limit)).json()
             date_for_reminder = ""
             ctf_found = False
             for ctf in data[:limit]:

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OvisBot 1.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-26 23:29+0000\n"
+"POT-Creation-Date: 2020-03-26 23:43+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,7 +50,7 @@ msgid ""
 msgstr ""
 
 #: ovisbot/core.py:130
-msgid "Ask for help in direct message."
+msgid "Ask for help in direct message!"
 msgstr ""
 
 #: ovisbot/core.py:147
@@ -63,5 +63,11 @@ msgstr ""
 
 #: ovisbot/core.py:186
 msgid "DISCORD_BOT_TOKEN variable has not been set!"
+msgstr ""
+
+#: ovisbot/db_models.py:62
+msgid ""
+"No challenges found. Try adding one with `!ctf addchallenge <name> "
+"<category>`"
 msgstr ""
 

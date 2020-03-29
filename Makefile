@@ -6,8 +6,8 @@ docker-run:
 	@docker-compose up 
 
 # Python Code Style
-# reformat:
-# 	$(PYTHON) -m black `git ls-files "*.py"`
+reformat:
+	python -m black `git ls-files "*.py"`
 # stylecheck:
 # 	$(PYTHON) -m black --check `git ls-files "*.py"`
 # stylediff:

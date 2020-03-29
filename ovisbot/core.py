@@ -1,3 +1,9 @@
+"""
+core.py
+====================================
+The core module of my example project
+"""
+
 import discord
 import logging
 import os
@@ -6,6 +12,7 @@ import dateutil.parser
 import requests
 import traceback
 import gettext
+import ovisbot.locale as i118n
 
 from datetime import datetime, timezone, timedelta
 from discord.ext import commands
@@ -16,7 +23,6 @@ from discord.ext.commands import Bot
 from ovisbot.help_info import help_page
 from ovisbot.helpers import chunkify, wolfram_simple_query
 from ovisbot.db_models import CTF, Challenge
-from ovisbot.locale import _
 
 COMMAND_PREFIX = "!"
 
@@ -40,6 +46,7 @@ async def send_help_page(ctx, page):
         help_info = help_info[idx:]
     emb = discord.Embed(description=help_info, colour=4387968)
     await ctx.author.send(embed=emb)
+
 
 # Events
 @bot.event
@@ -66,20 +73,18 @@ async def on_command_error(ctx, error):
 
     if isinstance(error, MissingPermissions):
         # Handle missing permissions
-        await ctx.channel.send(
-            _("Permission denied.")
-        )
+        await ctx.channel.send(i118n._("Permission denied."))
     elif isinstance(error, CommandNotFound):
-        await ctx.channel.send(_("Command not found"))
+        await ctx.channel.send(i118n._("Command not found"))
     else:
-        await ctx.channel.send(_("Something went wrong..."))
+        await ctx.channel.send(i118n._("Something went wrong..."))
         raise error.original
 
 
 @bot.event
 async def on_message(message):
     if bot.user in message.mentions:
-        await message.channel.send(_("What?!"))
+        await message.channel.send(i118n._("What?!"))
     await bot.process_commands(message)
 
 
@@ -96,13 +101,21 @@ async def on_message_edit(before, after):
 @bot.event
 async def on_member_join(member):
     await member.send(
-        _("Hello {0}! Welcome to the server! Send {1}help to see a list of available commands".format(member.name, COMMAND_PREFIX))
+        i118n._(
+            "Hello {0}! Welcome to the server! Send {1}help to see a list of available commands".format(
+                member.name, COMMAND_PREFIX
+            )
+        )
     )
     announcements = discord.utils.get(member.guild.text_channels, name="announcements")
     if announcements is not None:
         await announcements.send(
             (
-                _("Welcome {0}! Take your time to briefly introduce yourself".format(member.name))
+                i118n._(
+                    "Welcome {0}! Take your time to briefly introduce yourself".format(
+                        member.name
+                    )
+                )
             )
         )
 
@@ -117,7 +130,7 @@ async def help(ctx, *params):
                     await send_help_page(ctx, page)
                 else:
                     await ctx.channel.send(
-                        _(
+                        i118n._(
                             "Page {0} does not exist!\nAvailable pages: {1}".format(
                                 page, " ".join(help_page.keys())
                             )
@@ -127,7 +140,7 @@ async def help(ctx, *params):
             for key in help_page.keys():
                 await send_help_page(ctx, key)
     else:
-        await ctx.channel.send(_("Ask for help in direct message."))
+        await ctx.channel.send(i118n._("Ask for help in direct message!"))
 
 
 @bot.command()
@@ -140,23 +153,22 @@ async def status(ctx):
         except CTF.DoesNotExist:
             continue
             # await ctx.channel.send(f"{ctf.name} was not in the DB")
-        ctfrole = discord.utils.get(ctx.guild.roles, name='Team-' + ctf.name)
+        ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf.name)
         status_response += ctf_doc.status(len(ctfrole.members))
 
     if len(status_response) == 0:
-        status_response = _("CTF list is empty!")
+        status_response = i118n._("CTF list is empty!")
         await ctx.channel.send(status_response)
         return
 
     for chunk in chunkify(status_response, 1900):
-        emb = discord.Embed(
-            description=chunk, colour=4387968)
+        emb = discord.Embed(description=chunk, colour=4387968)
         await ctx.channel.send(embed=emb)
 
 
 @bot.command()
 async def frappe(ctx):
-    await ctx.channel.send(_("Frappe on it's way...!"))
+    await ctx.channel.send(i118n._("Frappe on it's way...!"))
 
 
 @bot.command()
@@ -178,12 +190,12 @@ async def contribute(ctx):
     await ctx.channel.send("https://github.com/apogiatzis/KyriosZolo")
 
 
-def run():
+def launch():
     sys.path.insert(1, os.path.join(os.getcwd(), "ovisbot", "extensions"))
     for extension in extensions:
         bot.load_extension(extension)
     if token is None:
-        raise ValueError(_("DISCORD_BOT_TOKEN variable has not been set!"))
+        raise ValueError(i118n._("DISCORD_BOT_TOKEN variable has not been set!"))
     bot.run(token)
 
 

@@ -9,6 +9,11 @@ logger = logging.getLogger(__name__)
 connect("mongodb://mongo/serverdb")
 
 
+class InstalledCogs(MongoModel):
+    name = fields.CharField(required=True)
+    enabled = fields.BooleanField(default=True)
+
+
 class Challenge(EmbeddedMongoModel):
     name = fields.CharField(required=True)
     created_at = fields.DateTimeField(required=True)
@@ -40,9 +45,7 @@ class CTF(MongoModel):
         end_date_str = (
             self.finished_at.strftime(fmt_str) if self.finished_at else "Live"
         )
-        description_str = (
-            self.description + "\n" if self.description else ""
-        )
+        description_str = self.description + "\n" if self.description else ""
 
         return (
             f":triangular_flag_on_post: **{self.name}** ({members_joined_count} Members joined)\n{description_str}"
@@ -59,7 +62,9 @@ class CTF(MongoModel):
     def challenge_summary(self):
         if not self.challenges:
             return [
-                _("No challenges found. Try adding one with `!ctf addchallenge <name> <category>`")
+                _(
+                    "No challenges found. Try adding one with `!ctf addchallenge <name> <category>`"
+                )
             ]
 
         solved_response, unsolved_response = "", ""

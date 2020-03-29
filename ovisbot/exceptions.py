@@ -11,7 +11,6 @@ class ChallengeInvalidCategory(Exception):
 
 
 class ChallengeAlreadySolvedException(Exception):
-
     def __init__(self, solved_by, *args, **kwargs):
         self.solved_by = solved_by
 

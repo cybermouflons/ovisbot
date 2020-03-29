@@ -104,9 +104,7 @@ class Ctf(commands.Cog):
             entry = news_feed.entries[i]
             writeup_title = entry["title"]
             writeup_url = entry["original_url"]
-            embed = discord.Embed(
-                title=writeup_title, url=writeup_url, color=231643
-            )
+            embed = discord.Embed(title=writeup_title, url=writeup_url, color=231643)
             await ctx.channel.send(embed=embed)
 
     @writeups.error
