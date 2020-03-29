@@ -8,9 +8,9 @@ services:
       WOLFRAM_ALPHA_APP_ID: ${WOLFRAM_ALPHA_APP_ID}
     restart: always
     volumes:
-      - ./bot:/bot
-    working_dir: /bot
-    command: python -u core.py
+      - .:/ovisbot
+    working_dir: /ovisbot
+    command: bash -c "pip install . && ovisbot"
     links:
       - mongo
   mongo:
