@@ -86,3 +86,7 @@ class CTF(MongoModel):
             summary = summary[idx:]
         summary_list.append(summary)
         return summary_list
+
+    class Meta:
+        # Read from secondaries.
+        collection_name = "ctf"
