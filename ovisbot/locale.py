@@ -14,4 +14,3 @@ def setup_locale():
     )
     translate.install()
     _ = translate.gettext
-    logger.info(_)

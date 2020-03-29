@@ -17,7 +17,12 @@ def load_requirements(fname):
 
 if os.getenv("READTHEDOCS", False):
     setup(
-        python_requires=">=3.7", install_requires=load_requirements("requirements.txt")
+        include_package_data=True,
+        python_requires=">=3.7",
+        install_requires=load_requirements("requirements.txt"),
     )
 else:
-    setup(install_requires=load_requirements("requirements.txt"))
+    setup(
+        include_package_data=True,
+        install_requires=load_requirements("requirements.txt"),
+    )
