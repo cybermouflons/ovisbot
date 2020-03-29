@@ -6,7 +6,7 @@ from ovisbot.locale import _
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 
 logger = logging.getLogger(__name__)
-connect("mongodb://mongo/serverdb")
+connect("mongodb://mongo/ovisdb")
 
 
 class InstalledCogs(MongoModel):
@@ -88,5 +88,4 @@ class CTF(MongoModel):
         return summary_list
 
     class Meta:
-        # Read from secondaries.
         collection_name = "ctf"
