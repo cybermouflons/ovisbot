@@ -1,1 +1,1 @@
-recursive-include ovisbot/locale
+recursive-include ovisbot/locale *

@@ -34,6 +34,10 @@ class Ctf(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def _get_channel_ctf(self, ctx):
+        channel_name = str(ctx.channel.category)
+        return CTF.objects.get({"name": channel_name})
+
     @commands.group()
     async def ctf(self, ctx):
         self.guild = ctx.guild
@@ -505,6 +509,50 @@ class Ctf(commands.Cog):
         elif isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
                 "For this command you have to be in a channel created by !ctf create."
+            )
+
+    @ctf.command(aliases=[])
+    async def startdate(self, ctx, *params):
+        ctf = self._get_channel_ctf(ctx)
+        if params:
+            full_params = " ".join(params)
+            startdate = dateutil.parser.parse(full_params)
+            ctf.start_date = startdate
+            ctf.save()
+            await ctx.channel.send("Start date set!")
+        else:
+            startdate = ctf.start_date
+            if startdate is None:
+                await ctx.channel.send("Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!")
+            else:
+                await ctx.channel.send("**Start time:** {0}".format(startdate))
+
+    @ctf.command(aliases=[])
+    async def enddate(self, ctx, *params):
+        ctf = self._get_channel_ctf(ctx)
+        if params:
+            full_params = " ".join(params)
+            enddate = dateutil.parser.parse(full_params)
+            ctf.end_date = enddate
+            ctf.save()
+            await ctx.channel.send("End date set!")
+        else:
+            enddate = ctf.start_date
+            if enddate is None:
+                await ctx.channel.send("Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!")
+            else:
+                await ctx.channel.send("**End time:** {0}".format(enddate))
+
+    @enddate.error
+    @startdate.error
+    async def date_error(self, ctx, error):
+        if isinstance(error.original, ValueError):
+            await ctx.channel.send(
+                "Ρε μα ενόμισες μυρίζουμε τα νύσσια μου? Βάλε ρε κουμπάρε μιά ημερομηνία του χαϊρκού!"
+            )
+        elif isinstance(error.original, CTF.DoesNotExist):
+            await ctx.channel.send(
+                "Ατού ο γαβρίλης.. For this command you have to be in a channel created by !ctf create."
             )
 
     @ctf.command()

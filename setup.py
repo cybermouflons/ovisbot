@@ -15,9 +15,14 @@ def load_requirements(fname):
     return [str(ir.req) for ir in reqs]
 
 
+kwargs = {
+    "include_package_data": True,
+    "install_requires": load_requirements("requirements.txt"),
+}
+
 if os.getenv("READTHEDOCS", False):
     setup(
-        python_requires=">=3.7", install_requires=load_requirements("requirements.txt")
+        **kwargs, python_requires=">=3.7",
     )
 else:
-    setup(install_requires=load_requirements("requirements.txt"))
+    setup(**kwargs)

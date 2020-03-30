@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OvisBot 1.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-03-26 23:43+0000\n"
+"POT-Creation-Date: 2020-03-30 04:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,55 +17,55 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
 
-#: ovisbot/core.py:70
+#: ovisbot/core.py:81
 msgid "Permission denied."
 msgstr ""
 
-#: ovisbot/core.py:73
+#: ovisbot/core.py:83 ovisbot/core.py:85
 msgid "Command not found"
 msgstr ""
 
-#: ovisbot/core.py:75
+#: ovisbot/core.py:87
 msgid "Something went wrong..."
 msgstr ""
 
-#: ovisbot/core.py:82
+#: ovisbot/core.py:94
 msgid "What?!"
 msgstr ""
 
-#: ovisbot/core.py:99
+#: ovisbot/core.py:112
 msgid ""
 "Hello {0}! Welcome to the server! Send {1}help to see a list of available"
 " commands"
 msgstr ""
 
-#: ovisbot/core.py:105
+#: ovisbot/core.py:122
 msgid "Welcome {0}! Take your time to briefly introduce yourself"
 msgstr ""
 
-#: ovisbot/core.py:122
+#: ovisbot/core.py:142
 msgid ""
 "Page {0} does not exist!\n"
 "Available pages: {1}"
 msgstr ""
 
-#: ovisbot/core.py:130
+#: ovisbot/core.py:150
 msgid "Ask for help in direct message!"
 msgstr ""
 
-#: ovisbot/core.py:147
+#: ovisbot/core.py:167
 msgid "CTF list is empty!"
 msgstr ""
 
-#: ovisbot/core.py:159
+#: ovisbot/core.py:178
 msgid "Frappe on it's way...!"
 msgstr ""
 
-#: ovisbot/core.py:186
+#: ovisbot/core.py:205
 msgid "DISCORD_BOT_TOKEN variable has not been set!"
 msgstr ""
 
-#: ovisbot/db_models.py:62
+#: ovisbot/db_models.py:65
 msgid ""
 "No challenges found. Try adding one with `!ctf addchallenge <name> "
 "<category>`"

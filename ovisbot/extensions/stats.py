@@ -20,7 +20,7 @@ class Stats(commands.Cog):
 
     @stats.command()
     async def me(self, ctx, *params):
-        style = 3
+        style = 5
         for p in params:
             try:
                 arg = "--style"
@@ -57,11 +57,11 @@ class Stats(commands.Cog):
         to_ret = "Total {0} Challenge(s) Solved!\n\n".format(total) + to_ret
 
         preambles = [
-            "👶 Είσαι νινί ακόμα.",  # 0-10 solved
-            "👍 Κουτσά στραβά, κάτι καμνεις.",  # 10-20 solved
-            "🐐👑 Μα εσού είσαι αρχιτράουλλος!",  # 20+ solved
+            "👶 Είσαι νινί ακόμα.",  # 0-24 solved
+            "👍 Κουτσά στραβά, κάτι καμνεις.",  # 15-49 solved
+            "🐐👑 Μα εσού είσαι αρχιτράουλλος!",  # 50+ solved
         ]
-        p_choice = preambles[min(int(total / 10), len(preambles) - 1)]
+        p_choice = preambles[min(int(total / 25), len(preambles) - 1)]
         await ctx.send(f"{p_choice}\n```CSS\n{to_ret}```")
 
 

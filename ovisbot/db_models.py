@@ -31,7 +31,7 @@ class CTF(MongoModel):
     created_at = fields.DateTimeField(required=True)
     finished_at = fields.DateTimeField()
     start_date = fields.DateTimeField()
-    finish_date = fields.DateTimeField()
+    end_date = fields.DateTimeField()
     url = fields.URLField()
     username = fields.CharField()
     password = fields.CharField()
