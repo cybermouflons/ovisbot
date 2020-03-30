@@ -23,7 +23,7 @@ from ovisbot.exceptions import (
     CTFSharedCredentialsNotSet,
     CtfimeNameDoesNotMatch,
 )
-from ovisbot.helpers import escape_md, create_corimd_notebook
+from ovisbot.helpers import chunkify, create_corimd_notebook, escape_md
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,8 @@ class Ctf(commands.Cog):
     async def status(self, ctx):
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
-        for chunk in ctf.challenge_summary():
+        summary_chunks = chunkify(ctf.challenge_summary(), 1700)
+        for chunk in summary_chunks:
             emb = discord.Embed(description=chunk, colour=4387968)
             await ctx.channel.send(embed=emb)
 

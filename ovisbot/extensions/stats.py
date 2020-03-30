@@ -19,7 +19,17 @@ class Stats(commands.Cog):
             await ctx.send("Invalid command passed. Use `!help`.")
 
     @stats.command()
-    async def me(self, ctx):
+    async def me(self, ctx, *params):
+        style = 3
+        for p in params:
+            try:
+                arg = "--style"
+                if arg in p:
+                    style = int(p[p.index(arg) + len(arg) + 1 :])
+            except ValueError:
+                await ctx.send("Ούλλο μαλακίες είσαι....")
+                return
+
         author = ctx.message.author.name
         ctfs = CTF.objects.aggregate(
             {"$match": {"challenges.solved_by": {"$eq": author}}},
@@ -40,7 +50,7 @@ class Stats(commands.Cog):
 
         to_ret = "\n".join(
             [
-                f"{draw_bar(categories_solved[k], mx)} {k.upper()} x{categories_solved[k]}"
+                f"{draw_bar(categories_solved[k], mx, style=style)} {k.upper()} x{categories_solved[k]}"
                 for k in CHALLENGE_CATEGORIES
             ]
         )

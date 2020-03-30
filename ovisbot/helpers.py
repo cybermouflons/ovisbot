@@ -5,7 +5,7 @@ import urllib.parse
 
 def chunkify(text, limit):
     chunks = []
-    while len(text) > limit:  # Embed has a limit of 2048 chars
+    while len(text) > limit:
         idx = text.index("\n", limit)
         chunks.append(text[:idx])
         text = text[idx:]

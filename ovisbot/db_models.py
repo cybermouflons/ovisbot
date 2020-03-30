@@ -79,13 +79,7 @@ class CTF(MongoModel):
         summary = (
             f"\\>>> Solved\n{solved_response}" + f"\\>>> Unsolved\n{unsolved_response}"
         )
-        summary_list = []
-        while len(summary) > 1700:  # Embed has a limit of 2048 chars
-            idx = summary.index("\n", 1900)
-            summary_list.append(summary[:idx])
-            summary = summary[idx:]
-        summary_list.append(summary)
-        return summary_list
+        return summary
 
     class Meta:
         collection_name = "ctf"
