@@ -1,8 +1,12 @@
-<div style="text-align:center">
-  <img src="https://i.imgur.com/XOxm3Zb.png" alt="drawing" width="200"/>
+<p align="center">
+  <img src="https://i.imgur.com/XOxm3Zb.png" alt="drawing" width="150"/>
+</p>
 
-  # OvisBot CTF Discord Bot
-  <p align="center">
+<h1 align="center">
+  OvisBot CTF Discord Bot
+</h1>
+
+<p align="center">
   <a href="https://github.com/ambv/black">
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style: Black">
   </a>
@@ -10,7 +14,7 @@
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
   </a>
 </p>
-</div>
+
 
 > ### _A [discord.py](http://discordpy.readthedocs.io/en/latest/) bot focused on providing CTF tools for collaboration in Discord servers. If you have a feature request, make it a GitHub issue_
 
