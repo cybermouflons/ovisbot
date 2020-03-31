@@ -13,6 +13,7 @@ import requests
 import traceback
 import gettext
 import ovisbot.locale as i118n
+import re
 
 from datetime import datetime, timezone, timedelta
 from discord.ext import commands
@@ -204,3 +205,38 @@ def launch():
     if token is None:
         raise ValueError(i118n._("DISCORD_BOT_TOKEN variable has not been set!"))
     bot.run(token)
+
+@bot.command()
+async def rank(ctx, *param):
+    if len(param) > 1:
+        status_response = i118n._("Rank command takes one argument!")
+        await ctx.channel.send(status_response)
+    elif len(param) ==  0:
+        status_response = i118n._("Rank command takes one argument!")
+        await ctx.channel.send(status_response)
+    else:
+        if "htb" in param:
+            headers = {
+                'Host': 'www.hackthebox.eu',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5'
+            }
+            url = 'https://www.hackthebox.eu/teams/profile/353'
+            r = requests.get(url,headers=headers)
+            result = re.search('<i class="fas fa-user-chart"></i> (.*)</span><br>', r.text)
+            status_response = i118n._("HTB Ranking: "+ result.group(1))
+
+        elif "ctftime" in param:
+            url = 'https://ctftime.org/api/v1/teams/81678/'
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
+            }
+            r = requests.get(url,headers=headers)
+            data = r.json()
+            status_response = i118n._("CTFTime Ranking: " + str(data['rating'][0][str(datetime.now().year)]['rating_place'])) 
+        else:
+            status_response = i118n._("Ranking is not tracked at the moment")
+        
+        await ctx.channel.send(status_response)
+
