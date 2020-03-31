@@ -43,18 +43,21 @@ class CTF(MongoModel):
 
         description_str = self.description + "\n" if self.description else ""
 
-        solved_count = len(list(filter(lambda x: x.solved_at is not None, self.challenges)))
+        solved_count = len(
+            list(filter(lambda x: x.solved_at is not None, self.challenges))
+        )
         total_count = len(self.challenges)
         status = (
             f":triangular_flag_on_post: **{self.name}** ({members_joined_count} Members joined)\n{description_str}"
-            + f"```CSS\n{draw_bar(solved_count, total_count, style=5)}```"
-            + f"{solved_count} Solved / {total_count} Total\n"
+            + f"```CSS\n{draw_bar(solved_count, total_count, style=5)}\n"
+            + f" {solved_count} Solved / {total_count} Total"
         )
         if self.start_date:
-            fmt_str = "%d/%m/%Y %H:%M:%S"
+            fmt_str = "%d/%m %H:\u200b%M"
             start_date_str = self.start_date.strftime(fmt_str)
             end_date_str = self.end_date.strftime(fmt_str) if self.end_date else "Live"
-            status += f"{start_date_str} - {end_date_str}\n"
+            status += f"\n {start_date_str} - {end_date_str}\n"
+        status += "```"
         return status
 
     def credentials(self):

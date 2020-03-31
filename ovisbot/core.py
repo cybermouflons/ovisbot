@@ -59,7 +59,6 @@ async def on_ready():
     logger.info("<" + bot.user.name + " Online>")
     logger.info(__version__)
     await bot.change_presence(activity=discord.Game(name="with your mind! Use !help"))
-    # reminder.start()
 
 
 @bot.event

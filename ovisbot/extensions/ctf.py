@@ -725,9 +725,11 @@ class Ctf(commands.Cog):
         for ctf in ctfs:
             try:
                 ctf_doc = CTF.objects.get({"name": ctf.name})
+                now = datetime.datetime.now()
+
+                ## Check Custom Reminders
                 if ctf_doc.start_date and ctf_doc.pending_reminders:
                     for reminder in copy.deepcopy(ctf_doc.pending_reminders):
-                        now = datetime.datetime.now()
                         if now >= reminder:
                             logger.info(
                                 "Sending reminder to {0}".format(reminders_channel)
@@ -742,6 +744,32 @@ class Ctf(commands.Cog):
                             )
                             ctf_doc.pending_reminders.remove(reminder)
                             ctf_doc.save()
+
+                ## Check Start Reminders
+                now_truncated = now.replace(second=0, microsecond=0)
+                if (
+                    ctf_doc.start_date
+                    and ctf_doc.start_date.replace(second=0, microsecond=0)
+                    == now_truncated
+                ):
+                    await reminders_channel.send(
+                        "⛳ Το **{0}** άρκεψεν! Ταράσσετε εμπάτε! @here".format(
+                            ctf_doc.name
+                        )
+                    )
+
+                ## Check End Reminders
+                now_truncated = now.replace(second=0, microsecond=0)
+                if (
+                    ctf_doc.end_date
+                    and ctf_doc.end_date.replace(second=0, microsecond=0)
+                    == now_truncated
+                ):
+                    await reminders_channel.send(
+                        "⛳ Πάππαλλα το **{0}**! Τέλος! Εεε? Εδέραμε? @here ".format(
+                            ctf_doc.name
+                        )
+                    )
             except CTF.DoesNotExist:
                 continue
 
