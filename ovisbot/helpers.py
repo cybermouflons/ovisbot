@@ -1,6 +1,7 @@
 import requests
 import os
 import urllib.parse
+from discord.ext.commands.core import GroupMixin
 
 
 def chunkify(text, limit):

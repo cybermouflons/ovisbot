@@ -45,3 +45,11 @@ class CTFAlreadyFinishedException(Exception):
 
 class CtfimeNameDoesNotMatch(Exception):
     pass
+
+
+class DateMisconfiguredException(Exception):
+    pass
+
+
+class MissingStartDateException(Exception):
+    pass

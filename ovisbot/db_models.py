@@ -4,6 +4,7 @@ import logging
 from ovisbot.helpers import escape_md
 from ovisbot.locale import _
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
+from ovisbot.utils.progressbar import draw_bar
 
 logger = logging.getLogger(__name__)
 connect("mongodb://mongo/ovisdb")
@@ -36,22 +37,25 @@ class CTF(MongoModel):
     username = fields.CharField()
     password = fields.CharField()
     challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
-    reminder = fields.BooleanField(default=False)
-    date_for_reminder = fields.DateTimeField()
+    pending_reminders = fields.ListField(blank=True, default=[])
 
     def status(self, members_joined_count):
-        fmt_str = "%d/%m/%Y-%H:%M:%S"
-        start_date_str = self.created_at.strftime(fmt_str)
-        end_date_str = (
-            self.finished_at.strftime(fmt_str) if self.finished_at else "Live"
-        )
+
         description_str = self.description + "\n" if self.description else ""
 
-        return (
+        solved_count = len(list(filter(lambda x: x.solved_at is not None, self.challenges)))
+        total_count = len(self.challenges)
+        status = (
             f":triangular_flag_on_post: **{self.name}** ({members_joined_count} Members joined)\n{description_str}"
-            + f"{len(list(filter(lambda x: x.solved_at != None, self.challenges)))} Solved / {len(self.challenges)} Total\n"
-            + f"[{start_date_str} - {end_date_str}]\n"
+            + f"```CSS\n{draw_bar(solved_count, total_count, style=5)}```"
+            + f"{solved_count} Solved / {total_count} Total\n"
         )
+        if self.start_date:
+            fmt_str = "%d/%m/%Y %H:%M:%S"
+            start_date_str = self.start_date.strftime(fmt_str)
+            end_date_str = self.end_date.strftime(fmt_str) if self.end_date else "Live"
+            status += f"{start_date_str} - {end_date_str}\n"
+        return status
 
     def credentials(self):
         response = f":busts_in_silhouette: **Username**: {self.username}\n:key: **Password**: {self.password}"
@@ -83,3 +87,4 @@ class CTF(MongoModel):
 
     class Meta:
         collection_name = "ctf"
+        ignore_unknown_fields = True

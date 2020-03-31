@@ -1,11 +1,15 @@
-import datetime
+import copy
 import discord
+import datetime
 import logging
 import sys
 import re
 import requests
 import dateutil.parser
+import pytz
 
+from datetime import timedelta
+from dateutil.utils import default_tzinfo
 from discord.ext import commands
 from pymodm.errors import ValidationError
 from ovisbot.db_models import CTF, Challenge
@@ -22,8 +26,13 @@ from ovisbot.exceptions import (
     UserAlreadyInChallengeChannelException,
     CTFSharedCredentialsNotSet,
     CtfimeNameDoesNotMatch,
+    DateMisconfiguredException,
+    MissingStartDateException,
 )
 from ovisbot.helpers import chunkify, create_corimd_notebook, escape_md
+from discord.ext import tasks
+from ovisbot.locale import tz
+from discord.ext.commands.core import GroupMixin
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +42,7 @@ CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego", "for
 class Ctf(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.check_reminders.start()
 
     def _get_channel_ctf(self, ctx):
         channel_name = str(ctx.channel.category)
@@ -517,13 +527,19 @@ class Ctf(commands.Cog):
         if params:
             full_params = " ".join(params)
             startdate = dateutil.parser.parse(full_params)
+            if ctf.end_date and startdate >= ctf.end_date:
+                raise DateMisconfiguredException
+
             ctf.start_date = startdate
+            ctf.pending_reminders = []
             ctf.save()
-            await ctx.channel.send("Start date set!")
+            await ctx.channel.send("Start date set! Any reminders have been reset!")
         else:
             startdate = ctf.start_date
             if startdate is None:
-                await ctx.channel.send("Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!")
+                await ctx.channel.send(
+                    "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!"
+                )
             else:
                 await ctx.channel.send("**Start time:** {0}".format(startdate))
 
@@ -533,13 +549,19 @@ class Ctf(commands.Cog):
         if params:
             full_params = " ".join(params)
             enddate = dateutil.parser.parse(full_params)
+
+            if ctf.start_date and enddate <= ctf.start_date:
+                raise DateMisconfiguredException
+
             ctf.end_date = enddate
             ctf.save()
             await ctx.channel.send("End date set!")
         else:
             enddate = ctf.start_date
             if enddate is None:
-                await ctx.channel.send("Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!")
+                await ctx.channel.send(
+                    "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!"
+                )
             else:
                 await ctx.channel.send("**End time:** {0}".format(enddate))
 
@@ -549,6 +571,10 @@ class Ctf(commands.Cog):
         if isinstance(error.original, ValueError):
             await ctx.channel.send(
                 "Ρε μα ενόμισες μυρίζουμε τα νύσσια μου? Βάλε ρε κουμπάρε μιά ημερομηνία του χαϊρκού!"
+            )
+        elif isinstance(error.original, DateMisconfiguredException):
+            await ctx.channel.send(
+                "Έκαμες τα σαλάτα με τις ημερομηνίες παλε... Πρέπει Start date > End Date"
             )
         elif isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
@@ -573,50 +599,151 @@ class Ctf(commands.Cog):
         elif isinstance(error, CTFSharedCredentialsNotSet):
             await ctx.channel.send("This CTF has no shared credentials set!")
 
-    @ctf.command()
-    async def setreminder(self, ctx, param="auto"):
-        channel_name = str(ctx.channel.category)
-        ctf_obj = CTF.objects.get({"name": channel_name})
-        if param == "auto":
-            upcoming_url = "https://ctftime.org/api/v1/events/"
-            headers = {
-                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
-            }
-
-            limit = 5
-            data = requests.get(upcoming_url, headers=headers, params=str(limit)).json()
-            date_for_reminder = ""
-            ctf_found = False
-            for ctf in data[:limit]:
-                ctf_title = ctf["title"]
-                if channel_name in ctf_title.lower():
-                    ctf_found = True
-                    date_for_reminder = ctf["start"]
-                    break
-
-            if not ctf_found:
-                raise CtfimeNameDoesNotMatch
+    @ctf.group()
+    async def reminders(self, ctx):
+        if ctx.subcommand_passed == ctx.command.name:
+            # No subcommand passed
+            ctf = self._get_channel_ctf(ctx)
+            if ctf.pending_reminders:
+                await ctx.channel.send(
+                    "\n".join(
+                        "**{0})** {1}".format(idx + 1, r)
+                        for idx, r in enumerate(ctf.pending_reminders)
+                    )
+                )
+            else:
+                await ctx.send(
+                    "Εν έσσιει κανένα reminder ρε τσιάκκο... Εν να βάλεις όξα?"
+                )
         else:
-            _, date_for_reminder = dateutil.parser.parse(param), param
+            if ctx.invoked_subcommand is None:
+                subcomms = [sub_command for sub_command in ctx.command.all_commands]
+                await ctx.send(
+                    "Invalid command passed. Use !help for more info.\nAvailable subcommands are:\n```{0}```".format(
+                        " ".join(subcomms)
+                    )
+                )
 
-        # Save reminder to DB
-        ctf_obj.reminder = True
-        ctf_obj.date_for_reminder = date_for_reminder
-        ctf_obj.save()
-        await ctx.channel.send(
-            f"Εν να σας θυμίσω τουλάχιστον μισή ώρα πριν αρκέψει το {ctf_title}."
-        )
+    @reminders.command(name="add")
+    async def reminders_add(self, ctx, *params):
+        ctf = self._get_channel_ctf(ctx)
 
-    @setreminder.error
-    async def setreminder_error(self, ctx, error):
-        if isinstance(error.original, CtfimeNameDoesNotMatch):
+        if not ctf.start_date:
+            raise MissingStartDateException
+
+        if len(params) < 2:
+            raise FewParametersException
+
+        amount = int(params[1])
+        unit = params[0]
+        td = timedelta(**{unit: amount})
+
+        reminder_date = ctf.start_date + td
+        ctf.pending_reminders.append(reminder_date)
+        ctf.save()
+
+        await ctx.send("Reminder set!")
+
+    @reminders_add.error
+    async def reminders_add_error(self, ctx, error):
+        if isinstance(error.original, (ValueError, TypeError)):
             await ctx.channel.send(
-                f"Ε κουμπάρε, έτσι CTF εν υπάρχει μα ιντα όνομα εδοκες στο channel; Καμε το μόνος σου τζαι κανεί..."
+                "Εν να σε αφήκω να καταλάβεις μόνος σου τι μαλακία έκαμες..."
             )
         elif isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send("Μέσα σε CTF channel να το κάμεις τουτο ρε καμμά!")
+            await ctx.channel.send(
+                "For this command you have to be in a channel created by !ctf create."
+            )
+        elif isinstance(error.original, FewParametersException):
+            await ctx.channel.send("This command takes more parameters. Use !help")
+        elif isinstance(error.original, MissingStartDateException):
+            await ctx.channel.send(
+                "Φιλούδιν... πρέπει να βάλεις ενα start date (!ctf startdate ...) πρώτα!"
+            )
+
+    @reminders.command(name="rm", aliases=["remove"])
+    async def reminders_rm(self, ctx, reminder_idx):
+        ctf = self._get_channel_ctf(ctx)
+        del ctf.pending_reminders[int(reminder_idx) - 1]
+        ctf.save()
+        await ctx.send("Reminder list updated!")
+
+    @reminders_rm.error
+    async def reminders_rm_error(self, ctx, error):
+        if isinstance(error.original, IndexError):
+            await ctx.channel.send(
+                "Εν να σε αφήκω να καταλάβεις μόνος σου τι μαλακία έκαμες..."
+            )
+        elif isinstance(error.original, CTF.DoesNotExist):
+            await ctx.channel.send(
+                "For this command you have to be in a channel created by !ctf create."
+            )
         elif isinstance(error.original, ValueError):
-            await ctx.channel.send(f"Μα ίνταμπου τούτη ημερομηνία που μου έδωκες ολάν?")
+            await ctx.channel.send("Index μανα μου ... Index!")
+
+    # @ctf.command()
+    # async def reminders(self, ctx, param="auto"):
+    #     ctf_obj = self._get_channel_ctf(ctx)
+    # if param == "auto":
+    #     upcoming_url = "https://ctftime.org/api/v1/events/"
+    #     headers = {
+    #         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
+    #     }
+    #     limit = 5
+    #     data = requests.get(upcoming_url, headers=headers, params=str(limit)).json()
+    #     date_for_reminder = ""
+    #     ctf_found = False
+    #     for ctf in data[:limit]:
+    #         ctf_title = ctf["title"]
+    #         if channel_name in ctf_title.lower():
+    #             ctf_found = True
+    #             date_for_reminder = ctf["start"]
+    #             break
+
+    #     if not ctf_found:
+    #         raise CtfimeNameDoesNotMatch
+    # else:
+    #     _, date_for_reminder = dateutil.parser.parse(param), param
+
+    # Save reminder to DB
+
+    # ctf_obj.reminder = True
+    # ctf_obj.date_for_reminder = date_for_reminder
+    # ctf_obj.save()
+    # await ctx.channel.send(
+    #     f"Εν να σας θυμίσω τουλάχιστον μισή ώρα πριν αρκέψει το {ctf_title}."
+    # )
+
+    @tasks.loop(seconds=60)
+    async def check_reminders(self):
+        if len(self.bot.guilds) == 0:
+            return
+        REMINDERS_CHANNEL_ID = 579049835064197157
+        guild = self.bot.guilds[0]
+        reminders_channel = guild.get_channel(REMINDERS_CHANNEL_ID)
+        ctfs = [c for c in guild.categories]
+        for ctf in ctfs:
+            try:
+                ctf_doc = CTF.objects.get({"name": ctf.name})
+                if ctf_doc.start_date and ctf_doc.pending_reminders:
+                    for reminder in copy.deepcopy(ctf_doc.pending_reminders):
+                        now = datetime.datetime.now()
+                        if now >= reminder:
+                            logger.info(
+                                "Sending reminder to {0}".format(reminders_channel)
+                            )
+                            delta = abs(ctf_doc.start_date - now)
+                            if now > ctf_doc.start_date:
+                                reminder_text = "⏰ Ατέ ρε αχαμάκκιες... Εν να μπείτε? Το **{0}** άρκεψε εσσιει τζαί **{1}** λεπτά! ⏰"
+                            else:
+                                reminder_text = "⏰  Ντριιιινγκ... Ντριιινγκ!! Ατέ μανα μου, ξυπνάτε! Το **{0}** ξεκινά σε **{1}** λεπτά! ⏰"
+                            await reminders_channel.send(
+                                reminder_text.format(ctf.name, int(delta.seconds / 60))
+                            )
+                            ctf_doc.pending_reminders.remove(reminder)
+                            ctf_doc.save()
+            except CTF.DoesNotExist:
+                continue
 
 
 def setup(bot):
