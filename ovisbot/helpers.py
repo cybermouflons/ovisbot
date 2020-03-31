@@ -31,3 +31,29 @@ def wolfram_simple_query(query):
     query_url = base_url.format(urllib.parse.quote(query), app_id)
     res = requests.get(query_url).text
     return res
+
+
+def td_format(td_object):
+    ## Straight copy paste from here: https://stackoverflow.com/questions/538666/format-timedelta-to-string
+    seconds = int(td_object.total_seconds())
+    periods = [
+        ("year", 60 * 60 * 24 * 365),
+        ("month", 60 * 60 * 24 * 30),
+        ("day", 60 * 60 * 24),
+        ("hour", 60 * 60),
+        ("minute", 60),
+        ("second", 1),
+    ]
+
+    strings = []
+    for period_name, period_seconds in periods:
+        if seconds > period_seconds:
+            period_value, seconds = divmod(seconds, period_seconds)
+            has_s = "s" if period_value > 1 else ""
+            strings.append("%s %s%s" % (period_value, period_name, has_s))
+
+    return ", ".join(strings)
+
+
+async def success(message):
+    await message.add_reaction("✅")
