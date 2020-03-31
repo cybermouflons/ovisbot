@@ -408,8 +408,9 @@ class Ctf(commands.Cog):
         if chall_name == "--all":
             for challenge in ctf.challenges:
                 if (
-                    ctx.message.author.name in challenge.attempted_by
-                    or challenge.solved_at
+                    ctx.message.author.name
+                    in challenge.attempted_by
+                    # or challenge.solved_at
                 ):
                     continue
                 challenge.attempted_by = challenge.attempted_by + [
@@ -431,8 +432,8 @@ class Ctf(commands.Cog):
             )
             if not challenge:
                 raise ChallengeDoesNotExistException
-            if challenge.solved_at:
-                raise ChallengeAlreadySolvedException
+            # if challenge.solved_at:
+            #     raise ChallengeAlreadySolvedException
             if ctx.message.author.name in challenge.attempted_by:
                 raise UserAlreadyInChallengeChannelException
 
