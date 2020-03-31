@@ -50,7 +50,11 @@ CHALLENGE_CATEGORIES = [
     "reverse",
     "stego",
     "forensics",
+<<<<<<< HEAD
     "htb",
+=======
+    "HTB",
+>>>>>>> feat: add 'HTB' category
 ]
 
 
