@@ -29,7 +29,13 @@ from ovisbot.exceptions import (
     DateMisconfiguredException,
     MissingStartDateException,
 )
-from ovisbot.helpers import chunkify, create_corimd_notebook, escape_md
+from ovisbot.helpers import (
+    chunkify,
+    create_corimd_notebook,
+    escape_md,
+    success,
+    td_format,
+)
 from discord.ext import tasks
 from ovisbot.locale import tz
 from discord.ext.commands.core import GroupMixin
@@ -121,6 +127,7 @@ class Ctf(commands.Cog):
             name="general", category=category
         )
         CTF(name=category, created_at=datetime.datetime.now()).save()
+        await success(ctx.message)
         await general_channel.send(f"@here Καλως ορίσατε στο {category} CTF")
 
     @create.error
@@ -461,7 +468,7 @@ class Ctf(commands.Cog):
         ctf = CTF.objects.get({"name": channel_name})
         ctf.description = " ".join(params)
         ctf.save()
-        await ctx.channel.send("CTF description set!")
+        await success(ctx.message)
 
     @description.error
     async def description_error(self, ctx, error):
@@ -508,7 +515,7 @@ class Ctf(commands.Cog):
         if len(params) > 2:
             ctf.url = params[2]
         ctf.save()
-        await ctx.channel.send("CTF shared credentials set!")
+        await success(ctx.message)
 
     @setcreds.error
     async def setcreds_error(self, ctx, error):
@@ -533,7 +540,8 @@ class Ctf(commands.Cog):
             ctf.start_date = startdate
             ctf.pending_reminders = []
             ctf.save()
-            await ctx.channel.send("Start date set! Any reminders have been reset!")
+            await success(ctx.message)
+            await ctx.channel.send("Any reminders have been reset!")
         else:
             startdate = ctf.start_date
             if startdate is None:
@@ -555,7 +563,7 @@ class Ctf(commands.Cog):
 
             ctf.end_date = enddate
             ctf.save()
-            await ctx.channel.send("End date set!")
+            await success(ctx.message)
         else:
             enddate = ctf.start_date
             if enddate is None:
@@ -624,6 +632,19 @@ class Ctf(commands.Cog):
                     )
                 )
 
+    @ctf.command(name="countdown")
+    async def countdown(self, ctx):
+        ctf = self._get_channel_ctf(ctx)
+
+        if not ctf.start_date:
+            raise MissingStartDateException
+
+        now = datetime.datetime.now()
+        if now < ctf.start_date:
+            await ctx.channel.send("⏰   **" + td_format(ctf.start_date - now) + "**")
+        else:
+            await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
+
     @reminders.command(name="add")
     async def reminders_add(self, ctx, *params):
         ctf = self._get_channel_ctf(ctx)
@@ -642,9 +663,10 @@ class Ctf(commands.Cog):
         ctf.pending_reminders.append(reminder_date)
         ctf.save()
 
-        await ctx.send("Reminder set!")
+        await success(ctx.message)
 
     @reminders_add.error
+    @countdown.error
     async def reminders_add_error(self, ctx, error):
         if isinstance(error.original, (ValueError, TypeError)):
             await ctx.channel.send(
