@@ -50,7 +50,7 @@ CHALLENGE_CATEGORIES = [
     "reverse",
     "stego",
     "forensics",
-    "HTB",
+    "htb",
 ]
 
 
