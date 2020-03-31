@@ -42,7 +42,16 @@ from discord.ext.commands.core import GroupMixin
 
 logger = logging.getLogger(__name__)
 
-CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego", "forensics"]
+CHALLENGE_CATEGORIES = [
+    "crypto",
+    "web",
+    "misc",
+    "pwn",
+    "reverse",
+    "stego",
+    "forensics",
+    "HTB",
+]
 
 
 class Ctf(commands.Cog):
@@ -394,7 +403,7 @@ class Ctf(commands.Cog):
         ctf_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": ctf_name})
 
-        chall_name = params
+        chall_name = params.lower()
 
         if chall_name == "--all":
             for challenge in ctf.challenges:

@@ -60,7 +60,7 @@ class CTF(MongoModel):
         if self.start_date:
             fmt_str = "%d/%m %H:\u200b%M"
             start_date_str = self.start_date.strftime(fmt_str)
-            end_date_str = self.end_date.strftime(fmt_str) if self.end_date else "Live"
+            end_date_str = self.end_date.strftime(fmt_str) if self.end_date else "?"
             status += f"\n {start_date_str} - {end_date_str}\n"
         status += "```"
         return status
