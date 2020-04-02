@@ -41,7 +41,7 @@ class CTF(MongoModel):
     url = fields.URLField()
     username = fields.CharField()
     password = fields.CharField()
-    challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
+    challenges = fields.EmbeddedDocumentListField(Challenge, default=[], blank=True)
     pending_reminders = fields.ListField(blank=True, default=[])
 
     def status(self, members_joined_count):
