@@ -73,11 +73,9 @@ class CTF(MongoModel):
 
     def challenge_summary(self):
         if not self.challenges:
-            return [
-                i118n._(
-                    "No challenges found. Try adding one with `!ctf addchallenge <name> <category>`"
-                )
-            ]
+            return i118n._(
+                "No challenges found. Try adding one with `!ctf addchallenge <name> <category>`"
+            )
 
         solved_response, unsolved_response = "", ""
 
