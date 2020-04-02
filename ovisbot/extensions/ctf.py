@@ -185,7 +185,7 @@ class Ctf(commands.Cog):
         )
         ctf.challenges.append(new_challenge)
         ctf.save()
-        await ctx.channel.send("Εεεφτασέέέ!")
+        await success(ctx.message)
         await challenge_channel.send("@here Ατε να δούμε δώστου πίεση!")
         notebook_msg = await challenge_channel.send(
             f"Ετο τζαι το δευτερούι σου: {notebook_url}"

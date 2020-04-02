@@ -2,7 +2,7 @@ import os
 import logging
 
 from ovisbot.helpers import escape_md
-from ovisbot.locale import _
+from ovisbot.locale import i118n
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 from ovisbot.utils.progressbar import draw_bar
 
@@ -74,7 +74,7 @@ class CTF(MongoModel):
     def challenge_summary(self):
         if not self.challenges:
             return [
-                _(
+                i118n._(
                     "No challenges found. Try adding one with `!ctf addchallenge <name> <category>`"
                 )
             ]
