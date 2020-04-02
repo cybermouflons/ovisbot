@@ -2,7 +2,7 @@ import os
 import logging
 
 from ovisbot.helpers import escape_md
-from ovisbot.locale import i118n
+import ovisbot.locale as i118n
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 from ovisbot.utils.progressbar import draw_bar
 
