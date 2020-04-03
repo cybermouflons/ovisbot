@@ -1,7 +1,7 @@
 import logging
 import struct
 from ovisbot.extensions.ctf import CHALLENGE_CATEGORIES
-from ovisbot.db_models import CTF, Challenge
+from ovisbot.core.models import CTF, Challenge
 from ovisbot.utils.progressbar import draw_bar
 from discord.ext import commands
 

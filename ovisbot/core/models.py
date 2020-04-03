@@ -10,12 +10,7 @@ logger = logging.getLogger(__name__)
 connect("mongodb://mongo/ovisdb")
 
 
-class BotConfig(object):
-    ANNOUNCEMENTS_CHANNEL = fields.IntegerField()
-    REMINDERS_CHANNEL = fields.IntegerField()
-
-
-class InstalledCogs(MongoModel):
+class Cog(MongoModel):
     name = fields.CharField(required=True)
     enabled = fields.BooleanField(default=True)
 
@@ -29,6 +24,12 @@ class Challenge(EmbeddedMongoModel):
     solved_by = fields.ListField(fields.CharField(), default=[], blank=True)
     notebook_url = fields.CharField(default="", blank=True)
     flag = fields.CharField()
+
+
+class BotConfig(object):
+    ANNOUNCEMENTS_CHANNEL = fields.IntegerField()
+    REMINDERS_CHANNEL = fields.IntegerField()
+    COGS = fields.EmbeddedDocumentListField(Challenge, default=[], blank=True)
 
 
 class CTF(MongoModel):

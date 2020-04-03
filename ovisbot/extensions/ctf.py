@@ -12,7 +12,7 @@ from datetime import timedelta
 from dateutil.utils import default_tzinfo
 from discord.ext import commands
 from pymodm.errors import ValidationError
-from ovisbot.db_models import CTF, Challenge
+from ovisbot.core.models import CTF, Challenge
 from ovisbot.exceptions import (
     CTFAlreadyExistsException,
     FewParametersException,

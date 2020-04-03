@@ -16,8 +16,14 @@ class Utils(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid command passed.  Use !help.")
 
+    # @utils.command(aliases=["stol"])
+    # async def str2long(self, ctx, params):
+    #     """str2long_help"""
+    #     await ctx.send("`{0}`".format(bytes_to_long(params.encode("utf-8"))))
+
     @utils.command(aliases=["stol"])
     async def str2long(self, ctx, params):
+        """str2long_help"""
         await ctx.send("`{0}`".format(bytes_to_long(params.encode("utf-8"))))
 
     @utils.command(aliases=["ltos"])
