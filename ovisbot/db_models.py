@@ -20,6 +20,11 @@ class InstalledCogs(MongoModel):
     enabled = fields.BooleanField(default=True)
 
 
+class CryptoHackUserMapping(MongoModel):
+    discord_user_id = fields.IntegerField(required=True)
+    cryptohack_user = fields.CharField(required=True)
+
+
 class Challenge(EmbeddedMongoModel):
     name = fields.CharField(required=True)
     created_at = fields.DateTimeField(required=True)

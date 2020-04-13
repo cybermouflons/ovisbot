@@ -13,15 +13,18 @@ class Poll(commands.Cog):
 
     @commands.group()
     async def poll(self, ctx):
+        """
+        Collection of commands to create polls
+        """
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid command passed.  Use `!help {0}`".format(__name__))
 
     @poll.command()
-    async def binary(self, ctx, *params):
-        if len(params) != 1:
-            await ctx.send("This command expects 1 parameter! See `!help poll`")
-
-        poll_q = params[0]
+    async def binary(self, ctx, question):
+        """
+        Creates a binary poll.
+        """
+        poll_q = question
 
         embed = discord.Embed(title=poll_q, description="", color=int("00fbf5", 16))
         embed.add_field(
@@ -32,12 +35,12 @@ class Poll(commands.Cog):
         await msg.add_reaction("👎")
 
     @poll.command()
-    async def multichoice(self, ctx, *params):
-        if len(params) < 2:
-            await ctx.send("This command expects 2 or more parameter! See `!help poll`")
-
-        poll_q = params[0]
-        options = params[1:]
+    async def multichoice(self, ctx, question, *options):
+        """
+        Creates a multichoice poll
+        """
+        poll_q = question
+        options = options
         option_symbols = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭"]
 
         if len(options) > len(option_symbols):
@@ -57,6 +60,10 @@ class Poll(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
         if isinstance(error, discorderr.ExpectedClosingQuoteError):
             await ctx.channel.send("Expected closing quote.")
 

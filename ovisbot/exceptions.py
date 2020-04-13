@@ -53,3 +53,7 @@ class DateMisconfiguredException(Exception):
 
 class MissingStartDateException(Exception):
     pass
+
+
+class CryptoHackApiException(Exception):
+    pass
