@@ -13,6 +13,7 @@ import requests
 import traceback
 import gettext
 import ovisbot.locale as i118n
+import re
 
 from datetime import datetime, timezone, timedelta
 from discord.ext import commands
@@ -27,6 +28,7 @@ from ovisbot import __version__
 from ovisbot.help_info import help_page
 from ovisbot.helpers import chunkify, wolfram_simple_query
 from ovisbot.db_models import CTF, Challenge
+from ovisbot.exceptions import FewParametersException
 
 COMMAND_PREFIX = "!"
 
@@ -34,23 +36,10 @@ token = os.getenv("DISCORD_BOT_TOKEN")
 logger = logging.getLogger(__name__)
 
 # Bot Extensions
-extensions = ["ctf", "manage", "utils", "ctftime", "stats", "poll"]
+extensions = ["ctf", "manage", "utils", "ctftime", "stats", "poll", "cryptohack"]
 
 client = discord.Client()
-bot = commands.Bot(command_prefix=COMMAND_PREFIX)
-bot.remove_command("help")
-
-
-async def send_help_page(ctx, page):
-    help_info = "--- " + page.upper() + " HELP PAGE ---\n" + help_page[page]
-    while len(help_info) > 1900:  # Embed has a limit of 2048 chars
-        idx = help_info.index("\n", 1900)
-        emb = discord.Embed(description=help_info[:idx], colour=4387968)
-        await ctx.author.send(embed=emb)
-        help_info = help_info[idx:]
-    emb = discord.Embed(description=help_info, colour=4387968)
-    await ctx.author.send(embed=emb)
-
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, category="Test")
 
 # Events
 @bot.event
@@ -127,31 +116,11 @@ async def on_member_join(member):
         )
 
 
-# Commands
-@bot.command()
-async def help(ctx, *params):
-    if isinstance(ctx.channel, discord.DMChannel):
-        if len(params) > 0:
-            for page in params:
-                if page in help_page.keys():
-                    await send_help_page(ctx, page)
-                else:
-                    await ctx.channel.send(
-                        i118n._(
-                            "Page {0} does not exist!\nAvailable pages: {1}".format(
-                                page, " ".join(help_page.keys())
-                            )
-                        )
-                    )
-        else:
-            for key in help_page.keys():
-                await send_help_page(ctx, key)
-    else:
-        await ctx.channel.send(i118n._("Ask for help in direct message!"))
-
-
 @bot.command()
 async def status(ctx):
+    """
+    Shows any ongoing, scheduled, finished CTFs in the server.
+    """
     status_response = ""
     ctfs = sorted([c for c in ctx.guild.categories], key=lambda x: x.created_at)
     for ctf in ctfs:
@@ -175,17 +144,25 @@ async def status(ctx):
 
 @bot.command()
 async def frappe(ctx):
+    """
+    Orders a cold frappe!
+    """
     await ctx.channel.send(i118n._("Frappe on it's way...!"))
 
 
 @bot.command()
-async def wolfram(ctx, *params):
-    query = " ".join(list(params))
+async def wolfram(ctx, query):
+    """
+    Ask wolfram anything you want
+    """
     await ctx.channel.send(wolfram_simple_query(query))
 
 
 @bot.command()
 async def chucknorris(ctx):
+    """
+    Tells a chunk norris joke
+    """
     joke_url = "http://api.icndb.com/jokes/random"
     response = requests.get(joke_url)
     data = response.json()
@@ -194,7 +171,60 @@ async def chucknorris(ctx):
 
 @bot.command()
 async def contribute(ctx):
+    """
+    Shows contribute information
+    """
     await ctx.channel.send("https://github.com/apogiatzis/KyriosZolo")
+
+
+@bot.group()
+async def rank(ctx):
+    """
+    Collection of team ranking commands
+    """
+    if ctx.invoked_subcommand is None:
+        subcomms = [sub_command for sub_command in ctx.command.all_commands]
+        await ctx.send(
+            "Ranking is not tracked at the moment.\nAvailable rankings are:\n```{0}```".format(
+                " ".join(subcomms)
+            )
+        )
+
+
+@rank.command(name="htb")
+async def rank_htb(ctx):
+    """
+    Displays Hack The Box team ranking
+    """
+    headers = {
+        "Host": "www.hackthebox.eu",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+    url = "https://www.hackthebox.eu/teams/profile/353"
+    r = requests.get(url, headers=headers)
+    result = re.search('<i class="fas fa-user-chart"></i> (.*)</span><br>', r.text)
+    status_response = i118n._("HTB Ranking: " + result.group(1))
+    await ctx.channel.send(status_response)
+
+
+@rank.command(name="ctftime")
+async def rank_ctftime(ctx):
+    """
+    Displays team ranking on Ctftime.
+    """
+    url = "https://ctftime.org/api/v1/teams/81678/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
+    }
+    r = requests.get(url, headers=headers)
+    data = r.json()
+    status_response = i118n._(
+        "CTFTime Ranking: "
+        + str(data["rating"][0][str(datetime.now().year)]["rating_place"])
+    )
+    await ctx.channel.send(status_response)
 
 
 def launch():

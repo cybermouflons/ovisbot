@@ -10,7 +10,7 @@ class Manage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group()
+    @commands.group(hidden=True)
     async def manage(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid command passed.  Use !help.")
