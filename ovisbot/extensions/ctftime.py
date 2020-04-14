@@ -98,20 +98,28 @@ class Ctf(commands.Cog):
             await ctx.channel.send(embed=embed)
 
     @ctftime.command()
-    async def writeups(self, ctx, limit=3):
-        """
-        Returns the latest N writeups. Default: N=3
-        """
-        writeups_url = "https://ctftime.org/writeups/rss/"
-        news_feed = feedparser.parse(writeups_url)
-        limit = int(limit)
-        if limit > len(news_feed.entries):
-            limit = len(news_feed.entries)
-        for i in range(limit):
-            entry = news_feed.entries[i]
-            writeup_title = entry["title"]
-            writeup_url = entry["original_url"]
-            embed = discord.Embed(title=writeup_title, url=writeup_url, color=231643)
+    async def writeups(self, ctx, q_name=""):
+        from ctftime_writeups import Event
+        from helpers import chunkify
+
+        e_name = str( q_name )
+        event = Event (
+            e_name = e_name,
+            # e_id = 0,
+            # e_ctf_id = 0,
+            # e_ctftime_url = '',
+            # e_url = '',
+            # e_title = ''
+        )
+        ctf_name, writeups = event.find_event_writeups()
+        str_writeups = '\n\n'.join( map( str, writeups ))
+        
+        summary_chunks = chunkify(str_writeups, 1700)
+        for chunk in summary_chunks:
+            embed = discord.Embed(
+                title=ctf_name,
+                description=chunk,
+                color=231643)
             await ctx.channel.send(embed=embed)
 
     @writeups.error

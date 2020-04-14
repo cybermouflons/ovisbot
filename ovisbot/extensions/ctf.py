@@ -731,6 +731,19 @@ class Ctf(commands.Cog):
             await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
 
     @reminders.command(name="add")
+    async def reminders_add(self, ctx, *params):
+        ctf = self._get_channel_ctf(ctx)
+
+        if not ctf.start_date:
+            raise MissingStartDateException
+
+        now = datetime.datetime.now()
+        if now < ctf.start_date:
+            await ctx.channel.send("⏰   **" + td_format(ctf.start_date - now) + "**")
+        else:
+            await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
+
+    @reminders.command(name="add")
     async def reminders_add(self, ctx, unit, amount):
         """
         Adds a new reminder. Unit can be any time unit (hours, minutes, days...)
