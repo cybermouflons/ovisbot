@@ -2,7 +2,7 @@ import os
 import logging
 
 from ovisbot.helpers import escape_md
-from ovisbot.locale import _
+import ovisbot.locale as i118n
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 from ovisbot.utils.progressbar import draw_bar
 
@@ -10,14 +10,20 @@ logger = logging.getLogger(__name__)
 connect("mongodb://mongo/ovisdb")
 
 
-class BotConfig(object):
+class BotConfig(MongoModel):
     ANNOUNCEMENTS_CHANNEL = fields.IntegerField()
     REMINDERS_CHANNEL = fields.IntegerField()
+    IS_MAINTENANCE = fields.BooleanField()
 
 
 class InstalledCogs(MongoModel):
     name = fields.CharField(required=True)
     enabled = fields.BooleanField(default=True)
+
+
+class CryptoHackUserMapping(MongoModel):
+    discord_user_id = fields.IntegerField(required=True)
+    cryptohack_user = fields.CharField(required=True)
 
 
 class Challenge(EmbeddedMongoModel):
@@ -41,7 +47,7 @@ class CTF(MongoModel):
     url = fields.URLField()
     username = fields.CharField()
     password = fields.CharField()
-    challenges = fields.EmbeddedDocumentListField(Challenge, default=[])
+    challenges = fields.EmbeddedDocumentListField(Challenge, default=[], blank=True)
     pending_reminders = fields.ListField(blank=True, default=[])
 
     def status(self, members_joined_count):
@@ -60,7 +66,7 @@ class CTF(MongoModel):
         if self.start_date:
             fmt_str = "%d/%m %H:\u200b%M"
             start_date_str = self.start_date.strftime(fmt_str)
-            end_date_str = self.end_date.strftime(fmt_str) if self.end_date else "Live"
+            end_date_str = self.end_date.strftime(fmt_str) if self.end_date else "?"
             status += f"\n {start_date_str} - {end_date_str}\n"
         status += "```"
         return status
@@ -73,11 +79,9 @@ class CTF(MongoModel):
 
     def challenge_summary(self):
         if not self.challenges:
-            return [
-                _(
-                    "No challenges found. Try adding one with `!ctf addchallenge <name> <category>`"
-                )
-            ]
+            return i118n._(
+                "No challenges found. Try adding one with `!ctf addchallenge <name> <category>`"
+            )
 
         solved_response, unsolved_response = "", ""
 

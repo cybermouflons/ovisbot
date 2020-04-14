@@ -39,10 +39,20 @@ from ovisbot.helpers import (
 from discord.ext import tasks
 from ovisbot.locale import tz
 from discord.ext.commands.core import GroupMixin
+import pymodm
 
 logger = logging.getLogger(__name__)
 
-CHALLENGE_CATEGORIES = ["crypto", "web", "misc", "pwn", "reverse", "stego", "forensics"]
+CHALLENGE_CATEGORIES = [
+    "crypto",
+    "web",
+    "misc",
+    "pwn",
+    "reverse",
+    "stego",
+    "forensics",
+    "htb",
+]
 
 
 class Ctf(commands.Cog):
@@ -56,6 +66,9 @@ class Ctf(commands.Cog):
 
     @commands.group()
     async def ctf(self, ctx):
+        """
+        Collection of commands to manage CTFs
+        """
         self.guild = ctx.guild
         self.gid = ctx.guild.id
 
@@ -64,6 +77,9 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def status(self, ctx):
+        """
+        Returns a list of ongoing challenges in the ctf
+        """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
         summary_chunks = chunkify(ctf.challenge_summary(), 1700)
@@ -79,8 +95,11 @@ class Ctf(commands.Cog):
             )
 
     @ctf.command()
-    async def archive(self, ctx, *params):
-        ctf_name = "-".join(list(params)).replace("'", "").lower()
+    async def archive(self, ctx, ctf_name):
+        """
+        Arcive a CTF to the DB and remove it from discord
+        """
+        ctf_name = ctf_name.lower()
         ctf = CTF.objects.get({"name": ctf_name})
         category = discord.utils.get(ctx.guild.categories, name=ctf_name)
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
@@ -96,6 +115,10 @@ class Ctf(commands.Cog):
 
     @archive.error
     async def archive_error(self, ctx, error):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
         if isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
                 "Πε μου εσύ αν θορείς κανένα CTF με έτσι όνομα ... Οι πε μου"
@@ -105,8 +128,11 @@ class Ctf(commands.Cog):
             await ctx.channel.send("Ουπς. Κάτι επήε λάθος.")
 
     @ctf.command()
-    async def create(self, ctx, *params):
-        scat = "-".join(list(params)).replace("'", "").lower()
+    async def create(self, ctx, ctf_name):
+        """
+        Creates a new CTF
+        """
+        scat = ctf_name.lower()
         category = discord.utils.get(ctx.guild.categories, name=scat)
 
         if category is not None:
@@ -132,21 +158,25 @@ class Ctf(commands.Cog):
 
     @create.error
     async def create_error(self, ctx, error):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
         if isinstance(error.original, CTFAlreadyExistsException):
             await ctx.channel.send(
                 "Ρε κουμπάρε! This CTF name already exists! Pick another one"
             )
 
     @ctf.command(aliases=["addchall"])
-    async def addchallenge(self, ctx, *params):
-        if len(params) < 2:
-            raise FewParametersException
-
+    async def addchallenge(self, ctx, challname, category):
+        """
+        Creates a private channel for a challenge. Valid category names are: crypto, web, misc, pwn, reverse, stego
+        """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
 
-        challenge_name = params[0].lower()
-        category = params[1].lower()
+        challenge_name = challname.lower()
+        category = category.lower()
         if category not in CHALLENGE_CATEGORIES:
             raise ChallengeInvalidCategory
 
@@ -176,7 +206,7 @@ class Ctf(commands.Cog):
         )
         ctf.challenges.append(new_challenge)
         ctf.save()
-        await ctx.channel.send("Εεεφτασέέέ!")
+        await success(ctx.message)
         await challenge_channel.send("@here Ατε να δούμε δώστου πίεση!")
         notebook_msg = await challenge_channel.send(
             f"Ετο τζαι το δευτερούι σου: {notebook_url}"
@@ -185,11 +215,11 @@ class Ctf(commands.Cog):
 
     @addchallenge.error
     async def addchallenge_error(self, ctx, error):
-        if isinstance(error.original, FewParametersException):
-            await ctx.channel.send(
-                "Πεε που σου νέφκω που παεις... !ctf addchallenge takes 2 parameters. !help for more info."
-            )
-        elif isinstance(error.original, CTF.DoesNotExist):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
+        if isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
                 "For this command you have to be in a channel created by !ctf create."
             )
@@ -203,14 +233,14 @@ class Ctf(commands.Cog):
             )
 
     @ctf.command(aliases=["rmchall"])
-    async def rmchallenge(self, ctx, *params):
-        if len(params) < 1:
-            raise FewParametersException
-
+    async def rmchallenge(self, ctx, challname):
+        """
+        Removes the challenge with the given name.
+        """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
 
-        challenge_name = params[0].lower()
+        challenge_name = challname.lower()
         challenges = [
             c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
         ]
@@ -229,11 +259,11 @@ class Ctf(commands.Cog):
 
     @rmchallenge.error
     async def rmchallenge_error(self, ctx, error):
-        if isinstance(error.original, FewParametersException):
-            await ctx.channel.send(
-                "Τελος πάντων, εν θα πω τίποτε... !ctf rmchall takes 1 parameter. !help for more info."
-            )
-        elif isinstance(error.original, CTF.DoesNotExist):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
+        if isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
                 "For this command you have to be in a channel created by !ctf create."
             )
@@ -244,6 +274,9 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def notes(self, ctx):
+        """
+        Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
+        """
         chall_name = ctx.channel.name
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
 
@@ -269,11 +302,11 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)
-    async def finish(self, ctx, *params):
-        if len(params) == 0:
-            raise FewParametersException
-        ctf_name = "-".join(list(params)).replace("'", "").lower()
-        ctf = CTF.objects.get({"name": ctf_name})
+    async def finish(self, ctx, ctf_name):
+        """
+        Marks CTF as finished. (Requires manage channels permissions)
+        """
+        ctf = CTF.objects.get({"name": ctf_name.lower()})
         if ctf.finished_at is not None:
             raise CTFAlreadyFinishedException
         ctf.finished_at = datetime.datetime.now()
@@ -284,8 +317,10 @@ class Ctf(commands.Cog):
 
     @finish.error
     async def finish_error(self, ctx, error):
-        if isinstance(error.original, FewParametersException):
-            await ctx.channel.send("This command takes parameters. Use `!help`")
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
         if isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
                 "Εισαι τζαι εσού χαλασμένος όπως τα διαστημόπλοια του Κίτσιου... There is not such CTF name. Use `!status`"
@@ -295,6 +330,9 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def solve(self, ctx):
+        """
+        Marks the current challenge as solved by you. Addition of team mates that helped to solve is optional
+        """
         chall_name = ctx.channel.name
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
 
@@ -344,6 +382,9 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def unsolve(self, ctx):
+        """
+        Marks the current challenge as unsolved. Allows to to rollback accidental solves.
+        """
         chall_name = ctx.channel.name
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
 
@@ -371,6 +412,9 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def join(self, ctx, *params):
+        """
+        Join an ongoing ctf. Use `status` to see available CTFs.
+        """
         scat = "-".join(list(params)).replace("'", "").lower()
         CTF.objects.get({"name": scat})
         ctfrole = discord.utils.get(self.guild.roles, name="Team-" + scat)
@@ -385,22 +429,29 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def leave(self, ctx):
+        """
+        Leave the current CTF.
+        """
         ctf_name = str(ctx.channel.category)
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
         await ctx.message.author.remove_roles(ctfrole)
 
     @ctf.command()
-    async def attempt(self, ctx, params):
+    async def attempt(self, ctx, challname):
+        """
+        Adds you to the private channel of that challenge. Use !ctf status to see active challenges.
+        """
         ctf_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": ctf_name})
 
-        chall_name = params
+        chall_name = challname.lower()
 
         if chall_name == "--all":
             for challenge in ctf.challenges:
                 if (
-                    ctx.message.author.name in challenge.attempted_by
-                    or challenge.solved_at
+                    ctx.message.author.name
+                    in challenge.attempted_by
+                    # or challenge.solved_at
                 ):
                     continue
                 challenge.attempted_by = challenge.attempted_by + [
@@ -422,8 +473,8 @@ class Ctf(commands.Cog):
             )
             if not challenge:
                 raise ChallengeDoesNotExistException
-            if challenge.solved_at:
-                raise ChallengeAlreadySolvedException
+            # if challenge.solved_at:
+            #     raise ChallengeAlreadySolvedException
             if ctx.message.author.name in challenge.attempted_by:
                 raise UserAlreadyInChallengeChannelException
 
@@ -459,14 +510,14 @@ class Ctf(commands.Cog):
             )
 
     @ctf.command()
-    async def description(self, ctx, *params):
+    async def description(self, ctx, *, description):
+        """
+        Sets the description of an existing CTF
+        """
         channel_name = str(ctx.channel.category)
 
-        if len(params) == 0:
-            raise FewParametersException
-
         ctf = CTF.objects.get({"name": channel_name})
-        ctf.description = " ".join(params)
+        ctf.description = " ".join(description)
         ctf.save()
         await success(ctx.message)
 
@@ -483,8 +534,11 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)
-    async def delete(self, ctx, *params):
-        scat = "-".join(list(params)).replace("'", "").lower()
+    async def delete(self, ctx, ctfname):
+        """
+        Delete a CTF category with all its channel and its user role.
+        """
+        scat = ctfname.replace("'", "").lower()
         ctf = CTF.objects.get({"name": scat})
         category = discord.utils.get(ctx.guild.categories, name=scat)
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + scat)
@@ -499,26 +553,39 @@ class Ctf(commands.Cog):
 
     @delete.error
     async def delete_error(self, ctx, error):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
         if isinstance(error.original, CTF.DoesNotExist):
             await ctx.channel.send(
                 "Ρε κουμπάρε! There is not any ongoing CTF with such a name."
             )
 
     @ctf.command()
-    async def setcreds(self, ctx, *params):
-        if len(params) < 2:
-            raise FewParametersException
+    async def setcreds(self, ctx, username, password, link=None):
+        """
+        Sets shared credentials to be used by the team members to login to the CTF. Link is the login/home page of the CTF
+        """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
-        ctf.username = params[0]
-        ctf.password = params[1]
-        if len(params) > 2:
-            ctf.url = params[2]
+        ctf.username = username
+        ctf.password = password
+        if link:
+            logger.info(link)
+            ctf.url = link
         ctf.save()
         await success(ctx.message)
 
     @setcreds.error
     async def setcreds_error(self, ctx, error):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            await ctx.channel.send(
+                "Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 or more parameters."
+            )
+            self.bot.help_command.context = ctx
+            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
+
         if isinstance(error.original, FewParametersException):
             await ctx.channel.send(
                 "Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 or more parameters. !help for more info."
@@ -527,12 +594,17 @@ class Ctf(commands.Cog):
             await ctx.channel.send(
                 "For this command you have to be in a channel created by !ctf create."
             )
+        elif isinstance(error.original, pymodm.errors.ValidationError):
+            await ctx.channel.send("Malformatted URL...?")
 
     @ctf.command(aliases=[])
-    async def startdate(self, ctx, *params):
+    async def startdate(self, ctx, date=None):
+        """
+        Sets the start date of the CTF
+        """
         ctf = self._get_channel_ctf(ctx)
-        if params:
-            full_params = " ".join(params)
+        if date:
+            full_params = date
             startdate = dateutil.parser.parse(full_params)
             if ctf.end_date and startdate >= ctf.end_date:
                 raise DateMisconfiguredException
@@ -552,10 +624,13 @@ class Ctf(commands.Cog):
                 await ctx.channel.send("**Start time:** {0}".format(startdate))
 
     @ctf.command(aliases=[])
-    async def enddate(self, ctx, *params):
+    async def enddate(self, ctx, date=None):
+        """
+        Sets the end date of the CTF
+        """
         ctf = self._get_channel_ctf(ctx)
-        if params:
-            full_params = " ".join(params)
+        if date:
+            full_params = " ".join(date)
             enddate = dateutil.parser.parse(full_params)
 
             if ctf.start_date and enddate <= ctf.start_date:
@@ -565,7 +640,7 @@ class Ctf(commands.Cog):
             ctf.save()
             await success(ctx.message)
         else:
-            enddate = ctf.start_date
+            enddate = ctf.end_date
             if enddate is None:
                 await ctx.channel.send(
                     "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!"
@@ -591,6 +666,9 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def showcreds(self, ctx):
+        """
+        Displays shared credentials for the team
+        """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
         if not ctf.username or not ctf.password:
@@ -609,6 +687,10 @@ class Ctf(commands.Cog):
 
     @ctf.group()
     async def reminders(self, ctx):
+        """
+        Group of commands to manage reminders.
+        Displays existing reminders if called without a subcommand.
+        """
         if ctx.subcommand_passed == ctx.command.name:
             # No subcommand passed
             ctf = self._get_channel_ctf(ctx)
@@ -634,6 +716,9 @@ class Ctf(commands.Cog):
 
     @ctf.command(name="countdown")
     async def countdown(self, ctx):
+        """
+        Displays countdown unitl CTF starts. Requires a start date to be set.
+        """
         ctf = self._get_channel_ctf(ctx)
 
         if not ctf.start_date:
@@ -646,17 +731,18 @@ class Ctf(commands.Cog):
             await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
 
     @reminders.command(name="add")
-    async def reminders_add(self, ctx, *params):
+    async def reminders_add(self, ctx, unit, amount):
+        """
+        Adds a new reminder. Unit can be any time unit (hours, minutes, days...)
+        Negative amount parameters means adda reminder before the ctf starts.
+        """
         ctf = self._get_channel_ctf(ctx)
 
         if not ctf.start_date:
             raise MissingStartDateException
 
-        if len(params) < 2:
-            raise FewParametersException
-
-        amount = int(params[1])
-        unit = params[0]
+        amount = int(amount)
+        unit = unit
         td = timedelta(**{unit: amount})
 
         reminder_date = ctf.start_date + td
@@ -685,6 +771,9 @@ class Ctf(commands.Cog):
 
     @reminders.command(name="rm", aliases=["remove"])
     async def reminders_rm(self, ctx, reminder_idx):
+        """
+        Removes a reminder from the reminder list.
+        """
         ctf = self._get_channel_ctf(ctx)
         del ctf.pending_reminders[int(reminder_idx) - 1]
         ctf.save()
