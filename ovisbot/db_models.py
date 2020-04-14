@@ -10,9 +10,10 @@ logger = logging.getLogger(__name__)
 connect("mongodb://mongo/ovisdb")
 
 
-class BotConfig(object):
+class BotConfig(MongoModel):
     ANNOUNCEMENTS_CHANNEL = fields.IntegerField()
     REMINDERS_CHANNEL = fields.IntegerField()
+    IS_MAINTENANCE = fields.BooleanField()
 
 
 class InstalledCogs(MongoModel):

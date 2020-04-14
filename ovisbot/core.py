@@ -25,10 +25,10 @@ from discord.ext.commands.errors import (
 from discord.ext.commands import Bot
 
 from ovisbot import __version__
-from ovisbot.help_info import help_page
 from ovisbot.helpers import chunkify, wolfram_simple_query
-from ovisbot.db_models import CTF, Challenge
+from ovisbot.db_models import CTF, Challenge, BotConfig
 from ovisbot.exceptions import FewParametersException
+from ovisbot.config import get_config
 
 COMMAND_PREFIX = "!"
 
@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 extensions = ["ctf", "manage", "utils", "ctftime", "stats", "poll", "cryptohack"]
 
 client = discord.Client()
-bot = commands.Bot(command_prefix=COMMAND_PREFIX, category="Test")
+bot = commands.Bot(command_prefix=COMMAND_PREFIX)
+config = get_config()
 
 # Events
 @bot.event
@@ -79,6 +80,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
+
     if bot.user in message.mentions:
         await message.channel.send(i118n._("What?!"))
     await bot.process_commands(message)

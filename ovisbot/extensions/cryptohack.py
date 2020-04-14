@@ -3,11 +3,12 @@ import json
 import requests
 import discord
 import dataclasses
+import datetime
 
 from discord.ext import commands
 
 from ovisbot.exceptions import CryptoHackApiException
-from ovisbot.helpers import success
+from ovisbot.helpers import success, escape_md
 from ovisbot.db_models import CryptoHackUserMapping
 
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +41,21 @@ class CryptoHack(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    def _get_cryptohack_score(self, cryptohack_user):
+        """
+        Returns score of given user.
+        """
+        req = requests.get(
+            CryptoHack.USER_SCORE_API_URL,
+            params={"username": cryptohack_user}
+        )
+        res = req.text
+
+        if "failed" in res:
+            raise CryptoHackApiException
+
+        return Score.parse(res)
 
     @commands.group()
     async def cryptohack(self, ctx):
@@ -101,17 +117,8 @@ class CryptoHack(commands.Cog):
         cryptohack_mapping = CryptoHackUserMapping.objects.get(
             {"discord_user_id": user_id}
         )
+        score = self._get_cryptohack_score(cryptohack_mapping.cryptohack_user)
 
-        req = requests.get(
-            CryptoHack.USER_SCORE_API_URL,
-            params={"username": cryptohack_mapping.cryptohack_user}
-        )
-        res = req.text
-
-        if "failed" in res:
-            raise CryptoHackApiException
-
-        score = Score.parse(res)
         await ctx.send(
             embed=discord.Embed(
                 title=score.username,
@@ -135,6 +142,43 @@ class CryptoHack(commands.Cog):
             )
         )
 
+    @cryptohack.command()
+    async def scoreboard(self, ctx):
+        """
+        Displays internal CryptoHack scoreboard.
+        """
+        limit = 10
+        mappings = CryptoHackUserMapping.objects.all()
+        scores = [
+            (
+                escape_md(self.bot.get_user(mapping.discord_user_id).name),
+                self._get_cryptohack_score(mapping.cryptohack_user),
+            )
+            for mapping in mappings
+        ][:limit]
+
+        scores = sorted(scores, key=lambda s: s[1].points, reverse=True)
+        scoreboard = "\n".join(
+            "{0}. **{1}**\t{2}".format(idx + 1, s[0], s[1].points)
+            for idx, s in enumerate(scores)
+        )
+        embed = discord.Embed(
+            title="CryptoHack Scoreboard",
+            colour=discord.Colour(0xFEB32B),
+            url="https://cryptohack.org/",
+            description=scoreboard,
+            timestamp=datetime.datetime.utcfromtimestamp(1586781599),
+        )
+
+        embed.set_thumbnail(url="https://cryptohack.org/static/img/main.png")
+        embed.set_footer(
+            text="CYberMouflons",
+            icon_url="https://cdn.discordapp.com/embed/avatars/0.png",
+        )
+
+        await ctx.send(embed=embed)
+
+    @scoreboard.error
     @disconnect.error
     @connect.error
     @stats.error
