@@ -216,9 +216,22 @@ async def rank_htb(ctx):
     url = "https://www.hackthebox.eu/teams/profile/353"
     r = requests.get(url, headers=headers)
     result = re.search('<i class="fas fa-user-chart"></i> (.*)</span><br>', r.text)
-    status_response = i118n._("HTB Ranking: " + result.group(1))
-    await ctx.channel.send(status_response)
+    status_response = i118n._("Position: " + result.group(1))
 
+    embed = discord.Embed(
+        title="Hack The Box Team Ranking",
+        colour=discord.Colour(0x7ED321),
+        url="https://www.hackthebox.eu",
+        description=status_response,
+        timestamp=datetime.now(),
+    )
+
+    embed.set_thumbnail(url="https://forum.hackthebox.eu/uploads/RJZMUY81IQLQ.png")
+    embed.set_footer(
+        text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
+    )
+
+    await ctx.channel.send(embed=embed)
 
 @rank.command(name="ctftime")
 async def rank_ctftime(ctx):
@@ -232,10 +245,24 @@ async def rank_ctftime(ctx):
     r = requests.get(url, headers=headers)
     data = r.json()
     status_response = i118n._(
-        "CTFTime Ranking: "
+        "Position: "
         + str(data["rating"][0][str(datetime.now().year)]["rating_place"])
     )
-    await ctx.channel.send(status_response)
+
+    embed = discord.Embed(
+        title="CTFTime Ranking",
+        colour=discord.Colour(0xFF0035),
+        url="https://ctftime.org/",
+        description=status_response,
+        timestamp=datetime.now(),
+    )
+
+    embed.set_thumbnail(url="https://pbs.twimg.com/profile_images/2189766987/ctftime-logo-avatar_400x400.png")
+    embed.set_footer(
+        text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
+    )
+
+    await ctx.channel.send(embed=embed)
 
 
 def launch():
@@ -245,38 +272,3 @@ def launch():
     if token is None:
         raise ValueError(i118n._("DISCORD_BOT_TOKEN variable has not been set!"))
     bot.run(token)
-
-@bot.group()
-async def rank(ctx):
-    if ctx.invoked_subcommand is None:
-        subcomms = [sub_command for sub_command in ctx.command.all_commands]
-        await ctx.send(
-            "Ranking is not tracked at the moment.\nAvailable rankings are:\n```{0}```".format(
-                " ".join(subcomms)
-            )
-        )
-
-@rank.command(name="htb")
-async def rank_htb(ctx):
-    headers = {
-        'Host': 'www.hackthebox.eu',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5'
-    }
-    url = 'https://www.hackthebox.eu/teams/profile/353'
-    r = requests.get(url,headers=headers)
-    result = re.search('<i class="fas fa-user-chart"></i> (.*)</span><br>', r.text)
-    status_response = i118n._("HTB Ranking: "+ result.group(1))
-    await ctx.channel.send(status_response)
-
-@rank.command(name="ctftime")
-async def rank_ctftime(ctx):
-    url = 'https://ctftime.org/api/v1/teams/81678/'
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0",
-    }
-    r = requests.get(url,headers=headers)
-    data = r.json()
-    status_response = i118n._("CTFTime Ranking: " + str(data['rating'][0][str(datetime.now().year)]['rating_place']))
-    await ctx.channel.send(status_response) 
