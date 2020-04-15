@@ -174,12 +174,14 @@ class HackTheBox(commands.Cog):
         """
         Link your Hack The Box account
         """
+        HTB_SETTINGS_URL="https://www.hackthebox.eu/home/settings"
         if isinstance(ctx.channel, discord.DMChannel):
             if identifier is None:
-                msg = (
-                    "Εν μου έδωκες account identifier! Πάεννε στο https://www.hackthebox.eu/home/settings"
-                    "τζαι πιαστο account identifier που εν κάτω κάτω! Μια ζωη να σας παρατζέλλω δαμέσα!"
-                )
+                msg = ' '.join([
+                            f'Εν μου έδωκες account identifier!',
+                            f'Πάεννε στο {HTB_SETTINGS_URL} τζαι πιαστο account identifier που εν κάτω κάτω!',
+                            'Μια ζωη να σας παρατζέλλω δαμέσα!'
+                          ])
                 await ctx.send(msg)
             else:
                 htb_user = self.api_client.identify_user(identifier)
