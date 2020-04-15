@@ -13,24 +13,39 @@ class Utils(commands.Cog):
 
     @commands.group()
     async def utils(self, ctx):
+        """
+        Utility commands for various trivial tasks
+        """
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid command passed.  Use !help.")
 
     @utils.command(aliases=["stol"])
     async def str2long(self, ctx, params):
+        """
+        Converts string to long
+        """
         await ctx.send("`{0}`".format(bytes_to_long(params.encode("utf-8"))))
 
     @utils.command(aliases=["ltos"])
     async def long2str(self, ctx, params):
+        """
+        Converts long to string
+        """
         await ctx.send("`{0}`".format(long_to_bytes(params)))
 
     @utils.command()
     async def str2hex(self, ctx, *params):
+        """
+        Converts string to hex
+        """
         joined_params = " ".join(params)
         await ctx.send("`{0}`".format(joined_params.encode("latin-1").hex()))
 
     @utils.command()
     async def hex2str(self, ctx, param):
+        """
+        Converts hex to string
+        """
         await ctx.send("`{0}`".format(bytearray.fromhex(param).decode()))
 
 

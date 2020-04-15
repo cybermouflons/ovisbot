@@ -9,6 +9,12 @@ def setupenv():
     env["WOLFRAM_ALPHA_APP_ID"] = input(
         "\033[1mPlease enter your Wolfram Alpha App ID: \033[0m"
     )
+    env["HTB_CREDS_EMAIL"] = input(
+        "\033[1mPlease enter your Hack The Box email: \033[0m"
+    )
+    env["HTB_CREDS_PASS"] = input(
+        "\033[1mPlease enter your Hack The Box password: \033[0m"
+    )
 
     ROOT_DIR = os.path.abspath(os.curdir)
 

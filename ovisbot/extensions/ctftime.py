@@ -19,6 +19,9 @@ class Ctf(commands.Cog):
 
     @commands.group()
     async def ctftime(self, ctx):
+        """
+        Collection of commands to interact with Ctftime
+        """
         self.guild = ctx.guild
         self.gid = ctx.guild.id
 
@@ -27,6 +30,9 @@ class Ctf(commands.Cog):
 
     @ctftime.command()
     async def upcoming(self, ctx):
+        """
+        Displays the next 3 upcoming CTFs listed in Ctftime
+        """
         default_image = "https://pbs.twimg.com/profile_images/2189766987/ctftime-logo-avatar_400x400.png"
         upcoming_url = "https://ctftime.org/api/v1/events/"
         headers = {
@@ -92,12 +98,13 @@ class Ctf(commands.Cog):
             await ctx.channel.send(embed=embed)
 
     @ctftime.command()
-    async def writeups(self, ctx, *params):
+    async def writeups(self, ctx, limit=3):
+        """
+        Returns the latest N writeups. Default: N=3
+        """
         writeups_url = "https://ctftime.org/writeups/rss/"
         news_feed = feedparser.parse(writeups_url)
-        limit = 3
-        if len(params) == 1:
-            limit = int(params[0])
+        limit = int(limit)
         if limit > len(news_feed.entries):
             limit = len(news_feed.entries)
         for i in range(limit):
