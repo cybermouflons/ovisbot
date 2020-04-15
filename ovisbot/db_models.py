@@ -10,14 +10,26 @@ logger = logging.getLogger(__name__)
 connect("mongodb://mongo/ovisdb")
 
 
-class BotConfig(object):
+class BotConfig(MongoModel):
     ANNOUNCEMENTS_CHANNEL = fields.IntegerField()
     REMINDERS_CHANNEL = fields.IntegerField()
+    IS_MAINTENANCE = fields.BooleanField()
 
 
 class InstalledCogs(MongoModel):
     name = fields.CharField(required=True)
     enabled = fields.BooleanField(default=True)
+
+
+class HTBUserMapping(MongoModel):
+    discord_user_id = fields.IntegerField(required=True)
+    htb_user = fields.CharField(required=True)
+    htb_user_id = fields.IntegerField(required=True)
+
+
+class CryptoHackUserMapping(MongoModel):
+    discord_user_id = fields.IntegerField(required=True)
+    cryptohack_user = fields.CharField(required=True)
 
 
 class Challenge(EmbeddedMongoModel):

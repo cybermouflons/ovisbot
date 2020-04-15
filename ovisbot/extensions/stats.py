@@ -15,11 +15,17 @@ class Stats(commands.Cog):
 
     @commands.group()
     async def stats(self, ctx):
+        """
+        Collection of commands for player statistics
+        """
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid command passed. Use `!help`.")
 
     @stats.command()
     async def me(self, ctx, *params):
+        """
+        Displays your CTF statistics. Use --style <N> to change text format.
+        """
         style = 5
         for p in params:
             try:
