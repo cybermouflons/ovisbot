@@ -36,7 +36,16 @@ token = os.getenv("DISCORD_BOT_TOKEN")
 logger = logging.getLogger(__name__)
 
 # Bot Extensions
-extensions = ["ctf", "manage", "utils", "ctftime", "stats", "poll", "cryptohack"]
+extensions = [
+    "ctf",
+    "manage",
+    "utils",
+    "ctftime",
+    "stats",
+    "poll",
+    "cryptohack",
+    "hackthebox",
+]
 
 client = discord.Client()
 bot = commands.Bot(command_prefix=COMMAND_PREFIX)
