@@ -1,4 +1,5 @@
 aiohttp==3.6.2
+alabaster==0.7.12
 appdirs==1.4.3
 argh==0.26.2
 astor==0.8.1
@@ -7,6 +8,7 @@ attrs==19.1.0
 autopep8==1.5
 Babel==2.8.0
 bandit==1.6.2
+beautifulsoup4==4.9.0
 black==19.10b0
 BTrees==4.5.1
 certifi==2019.3.9
@@ -54,21 +56,28 @@ GitPython==3.1.0
 identify==1.4.11
 idna==2.8
 idna-ssl==1.1.0
+imagesize==1.2.0
 importlib-metadata==1.5.0
 isort==4.3.21
+Jinja2==2.11.1
 kiwisolver==1.1.0
+lxml==4.5.0
 mando==0.6.4
+MarkupSafe==1.1.1
 mccabe==0.6.1
 multidict==4.5.2
 nodeenv==1.3.5
 numpy==1.16.4
+-e git+https://github.com/apogiatzis/KyriosZolo@7b1afe3be52854773172784eacd4e206155e5ef1#egg=OvisBot
 packaging==20.3
+parse==1.15.0
 pathspec==0.7.0
 pathtools==0.1.2
 pbr==5.4.4
 pep8-naming==0.9.1
 persistent==4.5.0
 Pillow==6.2.0
+pockets==0.9.1
 pre-commit==2.2.0
 pycodestyle==2.5.0
 pycparser==2.19
@@ -86,9 +95,11 @@ radon==4.1.0
 regex==2020.2.20
 requests==2.22.0
 restructuredtext-lint==1.3.0
+rstcheck==3.3.1
 six==1.12.0
 smmap==3.0.1
 snowballstemmer==2.0.0
+soupsieve==2.0
 Sphinx==2.4.4
 sphinxcontrib-applehelp==1.0.2
 sphinxcontrib-devhelp==1.0.2

@@ -21,6 +21,12 @@ class InstalledCogs(MongoModel):
     enabled = fields.BooleanField(default=True)
 
 
+class HTBUserMapping(MongoModel):
+    discord_user_id = fields.IntegerField(required=True)
+    htb_user = fields.CharField(required=True)
+    htb_user_id = fields.IntegerField(required=True)
+
+
 class CryptoHackUserMapping(MongoModel):
     discord_user_id = fields.IntegerField(required=True)
     cryptohack_user = fields.CharField(required=True)

@@ -47,8 +47,7 @@ class CryptoHack(commands.Cog):
         Returns score of given user.
         """
         req = requests.get(
-            CryptoHack.USER_SCORE_API_URL,
-            params={"username": cryptohack_user}
+            CryptoHack.USER_SCORE_API_URL, params={"username": cryptohack_user}
         )
         res = req.text
 
@@ -167,13 +166,12 @@ class CryptoHack(commands.Cog):
             colour=discord.Colour(0xFEB32B),
             url="https://cryptohack.org/",
             description=scoreboard,
-            timestamp=datetime.datetime.utcfromtimestamp(1586781599),
+            timestamp=datetime.datetime.now(),
         )
 
         embed.set_thumbnail(url="https://cryptohack.org/static/img/main.png")
         embed.set_footer(
-            text="CYberMouflons",
-            icon_url="https://cdn.discordapp.com/embed/avatars/0.png",
+            text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
         )
 
         await ctx.send(embed=embed)
