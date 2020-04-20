@@ -216,9 +216,22 @@ async def rank_htb(ctx):
     url = "https://www.hackthebox.eu/teams/profile/353"
     r = requests.get(url, headers=headers)
     result = re.search('<i class="fas fa-user-chart"></i> (.*)</span><br>', r.text)
-    status_response = i118n._("HTB Ranking: " + result.group(1))
-    await ctx.channel.send(status_response)
+    status_response = i118n._("Position: " + result.group(1))
 
+    embed = discord.Embed(
+        title="Hack The Box Team Ranking",
+        colour=discord.Colour(0x7ED321),
+        url="https://www.hackthebox.eu",
+        description=status_response,
+        timestamp=datetime.now(),
+    )
+
+    embed.set_thumbnail(url="https://forum.hackthebox.eu/uploads/RJZMUY81IQLQ.png")
+    embed.set_footer(
+        text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
+    )
+
+    await ctx.channel.send(embed=embed)
 
 @rank.command(name="ctftime")
 async def rank_ctftime(ctx):
@@ -232,10 +245,24 @@ async def rank_ctftime(ctx):
     r = requests.get(url, headers=headers)
     data = r.json()
     status_response = i118n._(
-        "CTFTime Ranking: "
+        "Position: "
         + str(data["rating"][0][str(datetime.now().year)]["rating_place"])
     )
-    await ctx.channel.send(status_response)
+
+    embed = discord.Embed(
+        title="CTFTime Ranking",
+        colour=discord.Colour(0xFF0035),
+        url="https://ctftime.org/",
+        description=status_response,
+        timestamp=datetime.now(),
+    )
+
+    embed.set_thumbnail(url="https://pbs.twimg.com/profile_images/2189766987/ctftime-logo-avatar_400x400.png")
+    embed.set_footer(
+        text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
+    )
+
+    await ctx.channel.send(embed=embed)
 
 
 def launch():
