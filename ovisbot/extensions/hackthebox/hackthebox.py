@@ -42,12 +42,12 @@ class HTBAPIClient(object):
     HTB API: https://github.com/mxrch/htb_api
     """
 
-    def __init__(self):
+    def __init__(self, htb_creds_email, htb_creds_pass):
         self.root_url = "https://www.hackthebox.eu"
         self.authenticated = False
         self.session = requests.Session()
-        self.htb_creds_email = os.getenv("HTB_CREDS_EMAIL")
-        self.htb_creds_pass = os.getenv("HTB_CREDS_PASS")
+        self.htb_creds_email = htb_creds_email
+        self.htb_creds_pass = htb_creds_pass
         self.headers = {
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0)"
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36",
@@ -159,7 +159,9 @@ class HTBAPIClient(object):
 class HackTheBox(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.api_client = HTBAPIClient()
+        self.api_client = HTBAPIClient(
+            bot.config.HTB_CREDS_EMAIL, bot.config.HTB_CREDS_PASS
+        )
 
     @commands.group()
     async def htb(self, ctx):

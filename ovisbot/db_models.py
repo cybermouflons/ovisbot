@@ -5,20 +5,61 @@ from ovisbot.helpers import escape_md
 import ovisbot.locale as i118n
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 from ovisbot.utils.progressbar import draw_bar
+from texttable import Texttable
 
 logger = logging.getLogger(__name__)
-connect("mongodb://mongo/ovisdb")
+
+
+class CogDetails(MongoModel):
+    name = fields.CharField(required=True)
+    local_path = fields.CharField(required=True)
+    enabled = fields.BooleanField(default=True)
+    loaded = fields.BooleanField(default=False)
+    url = fields.CharField(required=False)
+    description = fields.CharField(required=False)
+    open_source = fields.BooleanField(default=True)
+
+    def tolist(self):
+        return [
+            "✅" if self.enabled else "❌",
+            "✅" if self.loaded else "❌",
+            self.name,
+            self.url if self.url else "BUILTIN",
+            "YES" if self.open_source else "NO",
+        ]
 
 
 class BotConfig(MongoModel):
-    ANNOUNCEMENTS_CHANNEL = fields.IntegerField()
-    REMINDERS_CHANNEL = fields.IntegerField()
+    REMINDERS_CHANNEL = fields.IntegerField(blank=True)
     IS_MAINTENANCE = fields.BooleanField()
+    CTFTIME_TEAM_ID = fields.CharField()
+    HTB_TEAM_ID = fields.CharField()
+    EXTENSIONS = fields.EmbeddedDocumentListField(CogDetails, default=[])
 
 
-class InstalledCogs(MongoModel):
+class SSHKey(MongoModel):
     name = fields.CharField(required=True)
-    enabled = fields.BooleanField(default=True)
+    owner_id = fields.CharField(required=True)
+    owner_name = fields.CharField(required=True)
+    private_key = fields.CharField(required=True)
+    public_key = fields.CharField(required=True)
+
+    def table_row_serialize(self):
+        return [self.name, self.owner_name, self.public_key]
+
+    @classmethod
+    def table_serialize(cls):
+        table = Texttable()
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_dtype(["a", "a", "a"])  # automatic
+        table.set_cols_align(["c", "c", "l"])
+        table.add_rows(
+            [
+                ["name", "owner", "public_key_url"],
+                *[key.table_row_serialize() for key in cls.objects.all()],
+            ]
+        )
+        return table.draw()
 
 
 class HTBUserMapping(MongoModel):
@@ -98,10 +139,9 @@ class CTF(MongoModel):
             else:
                 unsolved_response += f':thinking: {challenge_details} Attempted by: [{escape_md(", ".join(challenge.attempted_by))}]\n'
 
-        summary = (
+        return (
             f"\\>>> Solved\n{solved_response}" + f"\\>>> Unsolved\n{unsolved_response}"
         )
-        return summary
 
     class Meta:
         collection_name = "ctf"

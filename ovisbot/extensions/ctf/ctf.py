@@ -152,7 +152,7 @@ class Ctf(commands.Cog):
         general_channel = await self.guild.create_text_channel(
             name="general", category=category
         )
-        CTF(name=category, created_at=datetime.datetime.now()).save()
+        CTF(name=category, created_at=datetime.datetime.now(), challenges=[]).save()
         await success(ctx.message)
         await general_channel.send(f"@here Καλως ορίσατε στο {category} CTF")
 
@@ -419,6 +419,7 @@ class Ctf(commands.Cog):
         CTF.objects.get({"name": scat})
         ctfrole = discord.utils.get(self.guild.roles, name="Team-" + scat)
         await ctx.message.author.add_roles(ctfrole)
+        await success(ctx.message)
 
     @join.error
     async def join_error(self, ctx, error):
@@ -598,14 +599,13 @@ class Ctf(commands.Cog):
             await ctx.channel.send("Malformatted URL...?")
 
     @ctf.command(aliases=[])
-    async def startdate(self, ctx, date=None):
+    async def startdate(self, ctx, *, date=None):
         """
         Sets the start date of the CTF
         """
         ctf = self._get_channel_ctf(ctx)
         if date:
-            full_params = date
-            startdate = dateutil.parser.parse(full_params)
+            startdate = dateutil.parser.parse(date)
             if ctf.end_date and startdate >= ctf.end_date:
                 raise DateMisconfiguredException
 
@@ -624,14 +624,13 @@ class Ctf(commands.Cog):
                 await ctx.channel.send("**Start time:** {0}".format(startdate))
 
     @ctf.command(aliases=[])
-    async def enddate(self, ctx, date=None):
+    async def enddate(self, ctx, *, date=None):
         """
         Sets the end date of the CTF
         """
         ctf = self._get_channel_ctf(ctx)
         if date:
-            full_params = " ".join(date)
-            enddate = dateutil.parser.parse(full_params)
+            enddate = dateutil.parser.parse(date)
 
             if ctf.start_date and enddate <= ctf.start_date:
                 raise DateMisconfiguredException
@@ -671,7 +670,7 @@ class Ctf(commands.Cog):
         """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
-        if not ctf.username or not ctf.password:
+        if not (ctf.username and ctf.password):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
         await ctx.channel.send(embed=emb)
