@@ -25,7 +25,9 @@ jobs:
       - run:
           name: Deploy Bot to AWS
           command: |
-            ssh -o "StrictHostKeyChecking no" -t ubuntu@ec2-35-180-156-137.eu-west-3.compute.amazonaws.com "sudo rm -rf KyriosZolo && git clone https://github.com/apogiatzis/KyriosZolo && cd KyriosZolo && env > .env && docker-compose up --build -d"
+            ssh -o "StrictHostKeyChecking no" -t ubuntu@ec2-35-180-156-137.eu-west-3.compute.amazonaws.com "sudo rm -rf ovisbot && git clone https://github.com/apogiatzis/KyriosZolo ovisbot"
+            env > .env && scp -o "StrictHostKeyChecking no" .env ubuntu@ec2-35-180-156-137.eu-west-3.compute.amazonaws.com:./ovisbot/.env
+            ssh -o "StrictHostKeyChecking no" -t ubuntu@ec2-35-180-156-137.eu-west-3.compute.amazonaws.com "cd ovisbot && docker-compose up --build -d"
             
 workflows:
   version: 2
