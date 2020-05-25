@@ -248,7 +248,7 @@ class ManageCommandsMixin:
         @extensions.command()
         async def install(ctx, url, sshkey_name=None):
             """Installs a third party extension either by git url"""
-            sshkey = SSHKey.objects.get({"name": sshkey_name})
+            sshkey = SSHKey.objects.get({'name': sshkey_name}) if sshkey_name else None
             self.cog_manager.install_cog_by_git_url(url, sshkey)
             await success(ctx.message)
 
