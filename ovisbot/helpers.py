@@ -1,3 +1,4 @@
+import inspect
 import requests
 import os
 import urllib.parse
@@ -29,8 +30,7 @@ def wolfram_simple_query(query):
     base_url = "https://api.wolframalpha.com/v2/result?i={0}&appid={1}"
     app_id = os.getenv("WOLFRAM_ALPHA_APP_ID")
     query_url = base_url.format(urllib.parse.quote(query), app_id)
-    res = requests.get(query_url).text
-    return res
+    return requests.get(query_url).text
 
 
 def td_format(td_object):
@@ -55,5 +55,14 @@ def td_format(td_object):
     return ", ".join(strings)
 
 
+def get_props(obj):
+    """Returns properties of the class"""
+    return inspect.getmembers(obj, lambda a: not (inspect.isroutine(a)))
+
+
 async def success(message):
     await message.add_reaction("✅")
+
+
+async def failed(message):
+    await message.add_reaction("❌")

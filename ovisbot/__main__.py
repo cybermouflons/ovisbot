@@ -1,16 +1,20 @@
 import logging
-import ovisbot.logger
+import ovisbot.utils.logging
 
-from ovisbot.core import launch
+from colorama import init as colorama_init
+
 from ovisbot.locale import setup_locale
+from ovisbot.bot import OvisBot
 
 logger = logging.getLogger(__name__)
 
 
 def run():
-    logger.info("Launching bot....")
+    colorama_init(autoreset=True)
     setup_locale()
-    launch()
+
+    bot = OvisBot()
+    bot.launch()
 
 
 if __name__ == "__main__":
