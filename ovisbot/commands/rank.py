@@ -7,7 +7,7 @@ import ovisbot.locale as i118n
 from datetime import datetime
 from discord.ext.commands import CommandError
 
-from ovisbot.helpers import chunkify, wolfram_simple_query
+from ovisbot.helpers import chunkify
 from ovisbot.db_models import CTF, Challenge, BotConfig
 
 logger = logging.getLogger(__name__)

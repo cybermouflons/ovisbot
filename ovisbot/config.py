@@ -140,7 +140,6 @@ class AbstractConfig:
 
 class Config(AbstractConfig):
     """Parent configuration class."""
-
     DB_URL = environ.get("OVISBOT_DB_URL", "mongodb://mongo/ovisdb")
     COMMAND_PREFIX = environ.get("OVISBOT_COMMAND_PREFIX", "!")
     DISCORD_BOT_TOKEN = environ.get("OVISBOT_DISCORD_TOKEN")
@@ -149,21 +148,21 @@ class Config(AbstractConfig):
         "OVISBOT_THIRD_PARTY_COGS_INSTALL_DIR", "/usr/local/share/ovisbot/cogs"
     )
     EXTENSIONS = environ.get("OVISBOT_EXTENSIONS", [])
-    ADMIN_ROLE = environ.get(
-        "OVISBOT_ADMIN_ROLE"  # TODO: Make required config vars. Find best way to do so
-    )
+
     COMMAND_CORRECTION_WINDOW = environ.get(
         "OVISBOT_COMMAND_CORRECTION_WINDOW", 30  # time in seconds
     )
     GIT_REPO = environ.get(
         "OVISBOT_GIT_REPO", "https://github.com/apogiatzis/KyriosZolo"
     )
-    CTFTIME_TEAM_ID = ConfigurableProperty(environ.get("OVISBOT_CTFTIME_TEAM_ID"))
 
-    HTB_TEAM_ID = ConfigurableProperty(environ.get("OVISBOT_HTB_TEAM_ID"))
+    WOLFRAM_ALPHA_APP_ID = environ.get("OVISBOT_WOLFRAM_ALPHA_APP_ID")
     HTB_CREDS_EMAIL = environ.get("OVISBOT_HTB_CREDS_EMAIL")
     HTB_CREDS_PASS = environ.get("OVISBOT_HTB_CREDS_PASS")
 
+    ADMIN_ROLE = ConfigurableProperty(environ.get("OVISBOT_ADMIN_ROLE"))
+    CTFTIME_TEAM_ID = ConfigurableProperty(environ.get("OVISBOT_CTFTIME_TEAM_ID"))
+    HTB_TEAM_ID = ConfigurableProperty(environ.get("OVISBOT_HTB_TEAM_ID"))
     REMINDERS_CHANNEL = ConfigurableProperty(environ.get("OVISBOT_REMINDERS_CHANNEL"))
     IS_MAINTENANCE = ConfigurableProperty(environ.get("OVISBOT_IS_MAINTENANCE", False))
 

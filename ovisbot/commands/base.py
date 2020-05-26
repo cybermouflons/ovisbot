@@ -33,7 +33,9 @@ class BaseCommandsMixin:
             """
             Ask wolfram anything you want
             """
-            await ctx.channel.send(wolfram_simple_query(query))
+            await ctx.channel.send(
+                wolfram_simple_query(query, bot.config.WOLFRAM_ALPHA_APP_ID)
+            )
 
         @bot.command()
         async def chucknorris(ctx):
