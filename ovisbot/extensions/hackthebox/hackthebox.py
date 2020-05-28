@@ -12,9 +12,10 @@ from discord.ext import commands
 from ovisbot.helpers import success, escape_md
 from ovisbot.db_models import HTBUserMapping
 from json.decoder import JSONDecodeError
-from functools import wraps
+from functools import wraps, partial
 from bs4 import BeautifulSoup
 from parse import parse
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -146,14 +147,13 @@ class HTBAPIClient(object):
         }
         page = self.session.get(url, headers=headers)
         soup = BeautifulSoup(page.content, "lxml")
-        htb_stats = HTBStats.parse(
+        return HTBStats.parse(
             self._get_points_from_soup(soup),
             self._get_user_owns_from_soup(soup),
             self._get_system_owns_from_soup(soup),
             self._get_challsolved_from_soup(soup),
             self._get_rank_from_soup(soup),
         )
-        return htb_stats
 
 
 class HackTheBox(commands.Cog):
@@ -260,15 +260,27 @@ class HackTheBox(commands.Cog):
         """
         limit = 10
         mappings = HTBUserMapping.objects.all()
-        scores = [
-            (
+
+        async def getscore(mapping):
+            return (
                 escape_md(self.bot.get_user(mapping.discord_user_id).name),
                 self.api_client.parse_user_stats(mapping.htb_user_id),
             )
-            for mapping in mappings
-        ][:limit]
 
-        scores = sorted(scores, key=lambda s: s[1].points, reverse=True)
+        tasks = [getscore(mapping) for mapping in mappings]
+        scores = [s for s in await asyncio.gather(*tasks)]
+
+        # scores = [
+        #     (
+        #         escape_md(
+        #             self.bot.get_user(mapping.discord_user_id).name
+        #         ),
+        #         self.api_client.parse_user_stats(mapping.htb_user_id),
+        #     )
+        #     for mapping in mappings
+        # ]
+
+        scores = sorted(scores, key=lambda s: s[1].points, reverse=True)[:limit]
         scoreboard = "\n".join(
             "{0}. **{1}**\t{2}".format(idx + 1, s[0], s[1].points)
             for idx, s in enumerate(scores)

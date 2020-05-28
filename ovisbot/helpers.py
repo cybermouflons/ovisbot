@@ -26,9 +26,8 @@ def create_corimd_notebook():
     return res.url
 
 
-def wolfram_simple_query(query):
+def wolfram_simple_query(query, app_id):
     base_url = "https://api.wolframalpha.com/v2/result?i={0}&appid={1}"
-    app_id = os.getenv("WOLFRAM_ALPHA_APP_ID")
     query_url = base_url.format(urllib.parse.quote(query), app_id)
     return requests.get(query_url).text
 

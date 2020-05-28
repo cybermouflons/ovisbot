@@ -19,6 +19,7 @@ from ovisbot.error_handling import hook_error_handlers
 from ovisbot.commands.base import BaseCommandsMixin
 from ovisbot.commands.rank import RankCommandsMixin
 from ovisbot.commands.manage import ManageCommandsMixin
+from discord.ext.commands.errors import ExtensionNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,11 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
         hook_events(self)
 
         # Load Cogs
-        self.cog_manager = CogManager(self)
-        self.cog_manager.load_cogs()
+        try:
+            self.cog_manager = CogManager(self)
+            self.cog_manager.load_cogs()
+        except ExtensionNotFound:
+            pass
 
     def launch(self) -> None:
         logger.info("Launching bot...")

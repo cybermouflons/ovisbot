@@ -21,6 +21,10 @@ class CogAlreadyInstalledException(Exception):
     pass
 
 
+class CogSpecificationMissingException(Exception):
+    pass
+
+
 class CogManager(object):
     """This class is responsible for loading arbitrary cogs (extensions)
     """
@@ -51,7 +55,7 @@ class CogManager(object):
     def _third_party_cogs(self):
         """Returns a list of CogDetails objects for the third party cogs
         as specified in the config"""
-        return []
+        return list(filter(lambda c: c.url is not None, CogDetails.objects.all()))
 
     def _create_cogs_from_path(self, path):
         """Creates CogDetails objects by traversing a given path"""
@@ -72,50 +76,20 @@ class CogManager(object):
                 Fore.GREEN
                 + "[Success] Extension: {0} from {1}".format(cog.name, cog.local_path)
             )
+            cog.enabled = True
             cog.loaded = True
         except Exception as error:
+            logger.info(type(error))
             cog.enabled = False
+            cog.loaded = False
             logger.info(
                 Fore.RED
                 + "[Failed] Extension: {0} from {1}".format(cog.name, cog.local_path)
             )
             logger.error("Cog `{0}` failed to load. Error: {1}".format(cog.name, error))
+            cog.save()  # Hacky workaround...
+            raise error
         return cog
-
-    def _load_cog(self, path, name) -> bool:
-        """Loads cog with given name in the given path
-        """
-        try:
-            if os.path.join(path, name) not in sys.path:
-                sys.path.insert(1, os.path.join(path, name))
-            self._bot.load_extension(name)
-            logger.info(
-                Fore.GREEN + "[Success] Extension: {0} from {1}".format(name, path)
-            )
-            return (name, True)
-        except Exception as error:
-            logger.info(
-                Fore.RED + "[Failed] Extension: {0} from {1}".format(name, path)
-            )
-            logger.error("Cog `{0}` failed to load. Error: {1}".format(name, error))
-            return (name, False)
-
-    def _load_cogs_in_path(self, path) -> Tuple[str, bool]:
-        """
-        Loads cogs in given path. In order for the cog to be loaded
-        it must be defined in its own directory with the same
-        filename.
-
-        Returns:
-             list: List of cogs along with a flag which indicates if they were loaded or not
-        """
-        return [
-            self._load_cog(path, diritem)
-            for diritem in os.listdir(path)
-            if os.path.isdir(os.path.join(path, diritem))
-            and not diritem.startswith("__")
-            and not diritem.endswith("__")
-        ]
 
     def cog_table(self):
         """Returns an ASCII table with details for installed cogs"""
@@ -131,10 +105,10 @@ class CogManager(object):
         )
         return table.draw()
 
-    def is_cog_installed(self, name, url):
+    def is_cog_installed(self, name):
         """Returns true if the third party extension is already installed"""
         try:
-            CogDetails.objects.get({"name": name, "url": url})
+            CogDetails.objects.get({"name": name})
         except CogDetails.DoesNotExist:
             return False
         return True
@@ -145,8 +119,11 @@ class CogManager(object):
         Used to read metadata for third party cogs
         """
         data = None
-        with open(os.path.join(path, "extension.json")) as json_file:
-            data = json.load(json_file)
+        try:
+            with open(os.path.join(path, "extension.json")) as json_file:
+                data = json.load(json_file)
+        except FileNotFoundError:
+            raise CogSpecificationMissingException
         return data
 
     def load_cogs(self) -> List[CogDetails]:
@@ -160,8 +137,8 @@ class CogManager(object):
 
         builtin_cogs = self._builitin_cogs()
         third_party_cogs = self._third_party_cogs()
-
-        for cog in builtin_cogs + third_party_cogs:
+        all_cogs = builtin_cogs + third_party_cogs
+        for cog in all_cogs:
             if cog.enabled:
                 cog = self._load_cog_from_object(cog)
                 cog.save()
@@ -171,15 +148,25 @@ class CogManager(object):
     def reset(self):
         """Deletes all third party installed cogs and resets builtin cogs"""
         for cog in self.cogs:
-            if cog.enabled:
-                try:
-                    self._bot.unload_extension(cog.name)
-                except ExtensionNotLoaded:
-                    logger.error(
-                        "Attempted to unload extension, without loading... Investigate this..."
-                    )
-            cog.delete()
+            self.remove(cog.name)
         self.load_cogs()
+
+    def remove(self, cog_name):
+        """Deletes an instlled cog"""
+        cog = CogDetails.objects.get({"name": cog_name})
+        if cog.enabled:
+            try:
+                self._bot.unload_extension(cog.name)
+            except ExtensionNotLoaded:
+                logger.error(
+                    "Attempted to unload extension, without loading... Investigate this..."
+                )
+        cog.delete()
+        if cog.local_path in sys.path:
+            sys.path.remove(cog.local_path)
+
+        if cog.url is not None and cog.local_path:
+            shutil.rmtree(cog.local_path, ignore_errors=True)
 
     def disable_cog(self, name) -> NoReturn:
         """Disables the specified cog
@@ -195,6 +182,27 @@ class CogManager(object):
         cog = CogDetails.objects.get({"name": name})
         self._load_cog_from_object(cog)
         cog.save()
+
+    def reload_cog(self, name) -> NoReturn:
+        """Reloads an installed cog"""
+        cog = CogDetails.objects.get({"name": name})
+        if cog.enabled:
+            self._bot.unload_extension(cog.name)
+            self._bot.load_extension(cog.name)
+
+    def install_cog_by_path(self, path) -> CogDetails:
+        """Installs a Cog the given path. (Mainly for dev purposes)"""
+        cog_spec = self.parse_cog_spec(path)
+        name = cog_spec["name"]
+
+        if self.is_cog_installed(name):
+            raise CogAlreadyInstalledException(name)
+
+        cog = CogDetails(name=name, local_path=path, url=path, open_source=False,)
+        self._load_cog_from_object(cog)
+        cog.save()
+
+        return cog
 
     def install_cog_by_git_url(self, url, sshkey=None) -> CogDetails:
         """Installs a Cog from a git repository"""
@@ -231,15 +239,29 @@ class CogManager(object):
         cog_spec = self.parse_cog_spec(path)
         name = cog_spec["name"]
 
-        if self.is_cog_installed(name, url):
+        if self.is_cog_installed(name):
             shutil.rmtree(path, ignore_errors=True)
             raise CogAlreadyInstalledException(name)
-        else:
-            cog = CogDetails(
-                name=name,
-                local_path=path,
-                url=url,
-                open_source=False if sshkey else True,
+
+        cog = CogDetails(
+            name=name, local_path=path, url=url, open_source=False if sshkey else True,
+        )
+        self._load_cog_from_object(cog)
+        cog.save()
+
+        return cog
+
+    def install(self, url, sshkey=None) -> CogDetails:
+        """Attempts to install a cog based on a path/url. If path not found locally it
+        fallsback to git"""
+        if os.path.exists(url):
+            logger.info(
+                Fore.YELLOW + "[INFO] Extension found locally at {0}".format(url)
             )
-            self._load_cog_from_object(cog)
-            cog.save()
+            self.install_cog_by_path(url)
+        else:
+            logger.info(
+                Fore.YELLOW
+                + "[INFO] Trying to install extension from git: {0}".format(url)
+            )
+            self.install_cog_by_git_url(url, sshkey)

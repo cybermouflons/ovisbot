@@ -9,7 +9,10 @@ from discord.ext import commands
 from functools import partial
 
 from ovisbot import __version__
-from ovisbot.cog_manager import CogAlreadyInstalledException
+from ovisbot.cog_manager import (
+    CogAlreadyInstalledException,
+    CogSpecificationMissingException,
+)
 from ovisbot.helpers import success, failed
 from ovisbot.db_models import CTF, SSHKey
 
@@ -235,29 +238,50 @@ class ManageCommandsMixin:
 
         @extensions.command()
         async def enable(ctx, name):
-            """Disables an installed extension"""
+            """Enables an installed extension"""
             self.cog_manager.enable_cog(name)
             await success(ctx.message)
 
         @extensions.command()
         async def reset(ctx):
-            """Disables an installed extension"""
+            """Resets extensions (Removes all third party extensions and enables builtin extensions)"""
             self.cog_manager.reset()
             await success(ctx.message)
 
         @extensions.command()
+        async def reload(ctx, name):
+            """Reloads an enabled extension"""
+            self.cog_manager.reload(name)
+            await success(ctx.message)
+
+        @extensions.command()
+        async def rm(ctx, name):
+            """Removes an intalled extension"""
+            self.cog_manager.remove(name)
+            await success(ctx.message)
+
+        @extensions.command()
         async def install(ctx, url, sshkey_name=None):
-            """Installs a third party extension either by git url"""
-            sshkey = SSHKey.objects.get({'name': sshkey_name}) if sshkey_name else None
-            self.cog_manager.install_cog_by_git_url(url, sshkey)
+            """Installs a third party extension by git url"""
+            sshkey = SSHKey.objects.get({"name": sshkey_name}) if sshkey_name else None
+            self.cog_manager.install(url, sshkey)
             await success(ctx.message)
 
         @install.error
+        @enable.error
         async def install_error(ctx, err):
             if isinstance(err.original, CogAlreadyInstalledException):
                 await ctx.channel.send(i118n._("Extension already installed"))
             elif isinstance(err.original, SSHKey.DoesNotExist):
                 await ctx.channel.send(i118n._("This key does not exist."))
+            elif isinstance(err.original, CogSpecificationMissingException):
+                await ctx.channel.send(
+                    i118n._("Extension specification (extension.json) does not exist!")
+                )
+            elif isinstance(err.original, discord.ext.commands.errors.ExtensionFailed):
+                await ctx.channel.send(i118n._("Error when loading:"))
+                logger.info(dir(err.original))
+                await ctx.channel.send("```" + err.original.args[0] + "```")
             await failed(ctx.message)
 
         @manage.command()

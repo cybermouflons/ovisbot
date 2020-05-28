@@ -34,6 +34,7 @@ class BotConfig(MongoModel):
     IS_MAINTENANCE = fields.BooleanField()
     CTFTIME_TEAM_ID = fields.CharField()
     HTB_TEAM_ID = fields.CharField()
+    ADMIN_ROLE = fields.CharField()
     EXTENSIONS = fields.EmbeddedDocumentListField(CogDetails, default=[])
 
 
