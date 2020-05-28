@@ -60,7 +60,7 @@ class HTBAPIClient(object):
             try:
                 return func(inst, *args, **kwargs)
             except JSONDecodeError as e:
-                return HTBAPIException(e)
+                raise HTBAPIException(e)
 
         return func_wrapper
 
@@ -100,10 +100,12 @@ class HTBAPIClient(object):
 
     def _get_rank_from_soup(self, soup):
         elem = soup(text=re.compile(r"is at position.*of the Hall of Fame"))
-        return parse(
-            "Member {username} is at position {rank} of the Hall of Fame.",
-            str(elem[0]).strip(),
-        )["rank"]
+        if elem:
+            return parse(
+                "Member {username} is at position {rank} of the Hall of Fame.",
+                str(elem[0]).strip(),
+            )["rank"]
+        return "0"
 
     def _get_challsolved_from_soup(self, soup):
         elem = soup(text=re.compile(r".*has solved.*challenges"))
@@ -131,6 +133,9 @@ class HTBAPIClient(object):
             logger.info("HTB authentication successful!")
         else:
             logger.error("HTB authentication failed... Disabling commands...")
+
+    def login(self):
+        self._login(self.htb_creds_email, self.htb_creds_pass)
 
     @handle_errors
     def identify_user(self, identifier):
@@ -261,6 +266,8 @@ class HackTheBox(commands.Cog):
         limit = 10
         mappings = HTBUserMapping.objects.all()
 
+        self.api_client.login()  # just to avoid parallel logins
+
         async def getscore(mapping):
             return (
                 escape_md(self.bot.get_user(mapping.discord_user_id).name),
@@ -269,16 +276,6 @@ class HackTheBox(commands.Cog):
 
         tasks = [getscore(mapping) for mapping in mappings]
         scores = [s for s in await asyncio.gather(*tasks)]
-
-        # scores = [
-        #     (
-        #         escape_md(
-        #             self.bot.get_user(mapping.discord_user_id).name
-        #         ),
-        #         self.api_client.parse_user_stats(mapping.htb_user_id),
-        #     )
-        #     for mapping in mappings
-        # ]
 
         scores = sorted(scores, key=lambda s: s[1].points, reverse=True)[:limit]
         scoreboard = "\n".join(
