@@ -255,6 +255,12 @@ class ManageCommandsMixin:
             await success(ctx.message)
 
         @extensions.command()
+        async def rm(ctx, name):
+            """Removes an intalled extension"""
+            self.cog_manager.remove(name)
+            await success(ctx.message)
+
+        @extensions.command()
         async def install(ctx, url, sshkey_name=None):
             """Installs a third party extension by git url"""
             sshkey = SSHKey.objects.get({"name": sshkey_name}) if sshkey_name else None
@@ -262,6 +268,7 @@ class ManageCommandsMixin:
             await success(ctx.message)
 
         @install.error
+        @enable.error
         async def install_error(ctx, err):
             if isinstance(err.original, CogAlreadyInstalledException):
                 await ctx.channel.send(i118n._("Extension already installed"))
@@ -271,6 +278,10 @@ class ManageCommandsMixin:
                 await ctx.channel.send(
                     i118n._("Extension specification (extension.json) does not exist!")
                 )
+            elif isinstance(err.original, discord.ext.commands.errors.ExtensionFailed):
+                await ctx.channel.send(i118n._("Error when loading:"))
+                logger.info(dir(err.original))
+                await ctx.channel.send("```" + err.original.args[0] + "```")
             await failed(ctx.message)
 
         @manage.command()

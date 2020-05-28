@@ -140,6 +140,7 @@ class AbstractConfig:
 
 class Config(AbstractConfig):
     """Parent configuration class."""
+
     DB_URL = environ.get("OVISBOT_DB_URL", "mongodb://mongo/ovisdb")
     COMMAND_PREFIX = environ.get("OVISBOT_COMMAND_PREFIX", "!")
     DISCORD_BOT_TOKEN = environ.get("OVISBOT_DISCORD_TOKEN")

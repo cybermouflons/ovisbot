@@ -81,11 +81,14 @@ class CogManager(object):
         except Exception as error:
             logger.info(type(error))
             cog.enabled = False
+            cog.loaded = False
             logger.info(
                 Fore.RED
                 + "[Failed] Extension: {0} from {1}".format(cog.name, cog.local_path)
             )
             logger.error("Cog `{0}` failed to load. Error: {1}".format(cog.name, error))
+            cog.save()  # Hacky workaround...
+            raise error
         return cog
 
     def cog_table(self):
@@ -145,15 +148,25 @@ class CogManager(object):
     def reset(self):
         """Deletes all third party installed cogs and resets builtin cogs"""
         for cog in self.cogs:
-            if cog.enabled:
-                try:
-                    self._bot.unload_extension(cog.name)
-                except ExtensionNotLoaded:
-                    logger.error(
-                        "Attempted to unload extension, without loading... Investigate this..."
-                    )
-            cog.delete()
+            self.remove(cog.name)
         self.load_cogs()
+
+    def remove(self, cog_name):
+        """Deletes an instlled cog"""
+        cog = CogDetails.objects.get({"name": cog_name})
+        if cog.enabled:
+            try:
+                self._bot.unload_extension(cog.name)
+            except ExtensionNotLoaded:
+                logger.error(
+                    "Attempted to unload extension, without loading... Investigate this..."
+                )
+        cog.delete()
+        if cog.local_path in sys.path:
+            sys.path.remove(cog.local_path)
+
+        if cog.url is not None and cog.local_path:
+            shutil.rmtree(cog.local_path, ignore_errors=True)
 
     def disable_cog(self, name) -> NoReturn:
         """Disables the specified cog
@@ -243,8 +256,12 @@ class CogManager(object):
         fallsback to git"""
         if os.path.exists(url):
             logger.info(
-                Fore.Yellow + "[INFO] Extension found locally at {0}".format(url)
+                Fore.YELLOW + "[INFO] Extension found locally at {0}".format(url)
             )
             self.install_cog_by_path(url)
         else:
+            logger.info(
+                Fore.YELLOW
+                + "[INFO] Trying to install extension from git: {0}".format(url)
+            )
             self.install_cog_by_git_url(url, sshkey)

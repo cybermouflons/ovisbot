@@ -263,11 +263,10 @@ class HackTheBox(commands.Cog):
 
         async def getscore(mapping):
             return (
-                escape_md(
-                    self.bot.get_user(mapping.discord_user_id).name
-                ),
-                self.api_client.parse_user_stats(mapping.htb_user_id)
+                escape_md(self.bot.get_user(mapping.discord_user_id).name),
+                self.api_client.parse_user_stats(mapping.htb_user_id),
             )
+
         tasks = [getscore(mapping) for mapping in mappings]
         scores = [s for s in await asyncio.gather(*tasks)]
 
