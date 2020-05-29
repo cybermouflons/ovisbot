@@ -2,7 +2,7 @@ import os
 import discord
 import sys
 import logging
-import ovisbot.locale as i118n
+import ovisbot.locale as i18n
 
 from discord.ext.commands import Bot
 from dotenv import load_dotenv
@@ -66,7 +66,7 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
         logger.info("Launching bot...")
 
         if self.config.DISCORD_BOT_TOKEN is None:
-            raise ValueError(i118n._("DISCORD_BOT_TOKEN variable has not been set!"))
+            raise ValueError(i18n._("DISCORD_BOT_TOKEN variable has not been set!"))
         self.run(self.config.DISCORD_BOT_TOKEN)
 
     def init_db(self) -> NoReturn:

@@ -1,7 +1,7 @@
 import discord
 import logging
 import requests
-import ovisbot.locale as i118n
+import ovisbot.locale as i18n
 
 from ovisbot.helpers import chunkify, wolfram_simple_query
 from ovisbot.db_models import CTF, Challenge, BotConfig
@@ -26,7 +26,7 @@ class BaseCommandsMixin:
             """
             Orders a cold frappe!
             """
-            await ctx.channel.send(i118n._("Frappe on it's way...!"))
+            await ctx.channel.send(i18n._("Frappe on it's way...!"))
 
         @bot.command()
         async def wolfram(ctx, query):
@@ -71,7 +71,7 @@ class BaseCommandsMixin:
                 status_response += ctf_doc.status(len(ctfrole.members))
 
             if len(status_response) == 0:
-                status_response = i118n._("CTF list is empty!")
+                status_response = i18n._("CTF list is empty!")
                 await ctx.channel.send(status_response)
                 return
 
