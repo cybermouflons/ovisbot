@@ -1,6 +1,6 @@
 import logging
 import sys
-import ovisbot.locale as i118n
+import ovisbot.locale as i18n
 
 from discord.ext.commands.errors import (
     CommandNotFound,
@@ -36,22 +36,22 @@ def hook_error_handlers(bot):
 
         if isinstance(error, MissingPermissions):
             # Handle missing permissions
-            await ctx.channel.send(i118n._("Permission denied."))
+            await ctx.channel.send(i18n._("Permission denied."))
         elif isinstance(error, NoPrivateMessage):
             await ctx.channel.send(
-                i118n._("This command cannot be used in private messages.")
+                i18n._("This command cannot be used in private messages.")
             )
         elif isinstance(error, MissingRole):
             await ctx.channel.send(
-                i118n._("You don't have the required role to run this")
+                i18n._("You don't have the required role to run this")
             )
         elif isinstance(error, CommandNotFound):
-            await ctx.channel.send(i118n._("Command not found"))
+            await ctx.channel.send(i18n._("Command not found"))
         elif isinstance(error, ExpectedClosingQuoteError):
-            await ctx.channel.send(i118n._("Missing a quote?"))
+            await ctx.channel.send(i18n._("Missing a quote?"))
         else:
             # TODO: Send this only if the exception was not handled already... How to check this??
-            # await ctx.channel.send(i118n._("Something went wrong..."))
+            # await ctx.channel.send(i18n._("Something went wrong..."))
             if hasattr(error, "original"):
                 raise error.original
             else:
