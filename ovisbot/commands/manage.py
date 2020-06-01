@@ -285,8 +285,19 @@ class ManageCommandsMixin:
             await failed(ctx.message)
 
         @manage.command()
+        @commands.has_role(bot.config.ADMIN_ROLE)
+        async def sayin(ctx, channel_id, *, msg):
+            """Sends the given message to the channel with the specified channel id"""
+            channel = discord.utils.get(ctx.guild.text_channels, id=int(channel_id))
+            if channel is None:
+                await ctx.channel.send(i18n._("Could not find channel..."))
+            else:
+                await channel.send(msg)
+                await success(ctx.message)
+
+        @manage.command()
         @commands.has_permissions(administrator=True)
-        async def dropctfs(self, ctx):
+        async def dropctfs(ctx):
             """Deletes CTF collection"""
             CTF._mongometa.collection.drop()
             await ctx.channel.send("Πάππαλα τα CTFs....")
