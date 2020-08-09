@@ -673,7 +673,21 @@ class Ctf(commands.Cog):
         if not (ctf.username and ctf.password):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
-        await ctx.channel.send(embed=emb)
+
+        msg = await ctx.channel.send(embed=emb)
+
+        # pin message 
+        if ctf.credentials_pinned: # replace already pinned message
+            pins = await ctx.channel.pins()
+            for pin in pins:
+                if pin.id == ctf.credentials_pin_id: 
+                    pin.unpin()
+                    msg.pin()
+                    ctf.credentials_pin_id = msg.id
+        else:
+            await msg.pin()
+            ctf.credentials_pin_id = msg.id
+
 
     @showcreds.error
     async def showcreds_error(self, ctx, error):

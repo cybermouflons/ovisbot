@@ -95,6 +95,7 @@ class CTF(MongoModel):
     url = fields.URLField()
     username = fields.CharField()
     password = fields.CharField()
+    credentials_pin_id = fields.IntegerField()
     challenges = fields.EmbeddedDocumentListField(Challenge, default=[], blank=True)
     pending_reminders = fields.ListField(blank=True, default=[])
 
