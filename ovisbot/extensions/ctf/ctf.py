@@ -681,8 +681,8 @@ class Ctf(commands.Cog):
             pins = await ctx.channel.pins()
             for pin in pins:
                 if pin.id == ctf.credentials_pin_id: 
-                    pin.unpin()
-                    msg.pin()
+                    await pin.unpin()
+                    await msg.pin()
                     ctf.credentials_pin_id = msg.id
         else:
             await msg.pin()
