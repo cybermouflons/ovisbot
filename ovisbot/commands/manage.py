@@ -39,7 +39,7 @@ class ManageCommandsMixin:
 
         @manage.command()
         async def showconfig(ctx):
-            """Displays bot version"""
+            """Displays bot config"""
             await ctx.send("```{0}```".format(bot.config.__dict__))
 
         @manage.command()
@@ -58,18 +58,15 @@ class ManageCommandsMixin:
             """
             Group of commangs to manage bot configuration / Displays a config opions and values if run without a subcommand
             """
-            if ctx.subcommand_passed == ctx.command.name:
+            if ctx.subcommand_passed is None:
                 await ctx.send("```" + bot.config.options_table() + "```")
-            else:
-                if ctx.invoked_subcommand is None:
-                    self.help_command.context = ctx
-                    await failed(ctx.message)
-                    await ctx.send(
-                        i18n._("**Invalid command passed**. See below for more help")
-                    )
-                    await self.help_command.command_callback(
-                        ctx, command=str(ctx.command)
-                    )
+            elif ctx.invoked_subcommand is None:
+                self.help_command.context = ctx
+                await failed(ctx.message)
+                await ctx.send(
+                    i18n._("**Invalid command passed**. See below for more help")
+                )
+                await self.help_command.command_callback(ctx, command=str(ctx.command))
 
         @config.command()
         async def set(ctx, option, value):
@@ -88,18 +85,15 @@ class ManageCommandsMixin:
             """
             Group of commangs to manage extensions / Displays a list of all installed extensions if no subcommand passed
             """
-            if ctx.subcommand_passed == ctx.command.name:
+            if ctx.subcommand_passed is None:
                 await ctx.send("```" + SSHKey.table_serialize() + "```")
-            else:
-                if ctx.invoked_subcommand is None:
-                    self.help_command.context = ctx
-                    await failed(ctx.message)
-                    await ctx.send(
-                        i18n._("**Invalid command passed**. See below for more help")
-                    )
-                    await self.help_command.command_callback(
-                        ctx, command=str(ctx.command)
-                    )
+            elif ctx.invoked_subcommand is None:
+                self.help_command.context = ctx
+                await failed(ctx.message)
+                await ctx.send(
+                    i18n._("**Invalid command passed**. See below for more help")
+                )
+                await self.help_command.command_callback(ctx, command=str(ctx.command))
 
         @keys.command()
         async def add(ctx, keyname):
@@ -116,9 +110,7 @@ class ManageCommandsMixin:
 
             if not isinstance(ctx.channel, discord.DMChannel):
                 await ctx.send(
-                    i18n._(
-                        "This is a public channel. Continue the process through DM."
-                    )
+                    i18n._("This is a public channel. Continue the process through DM.")
                 )
 
             # TODO: Create key manager to handle these sort of tasks
@@ -157,9 +149,7 @@ class ManageCommandsMixin:
                             i18n._("Timed out... Try running `addkey` again")
                         )
                     else:
-                        await ctx.author.send(
-                            i18n._("Saved private key successfully!")
-                        )
+                        await ctx.author.send(i18n._("Saved private key successfully!"))
                         url = message.attachments[0].url
                     return url
 
@@ -217,18 +207,15 @@ class ManageCommandsMixin:
             """
             Group of commangs to manage extensions / Displays a list of all installed extensions if no subcommand passed
             """
-            if ctx.subcommand_passed == ctx.command.name:
+            if ctx.subcommand_passed is None:
                 await ctx.send("```" + self.cog_manager.cog_table() + "```")
-            else:
-                if ctx.invoked_subcommand is None:
-                    self.help_command.context = ctx
-                    await failed(ctx.message)
-                    await ctx.send(
-                        i18n._("**Invalid command passed**. See below for more help")
-                    )
-                    await self.help_command.command_callback(
-                        ctx, command=str(ctx.command)
-                    )
+            elif ctx.invoked_subcommand is None:
+                self.help_command.context = ctx
+                await failed(ctx.message)
+                await ctx.send(
+                    i18n._("**Invalid command passed**. See below for more help")
+                )
+                await self.help_command.command_callback(ctx, command=str(ctx.command))
 
         @extensions.command()
         async def disable(ctx, name):

@@ -8,6 +8,8 @@ import requests
 import dateutil.parser
 import pytz
 
+import ovisbot.locale as i18n
+
 from datetime import timedelta
 from dateutil.utils import default_tzinfo
 from discord.ext import commands
@@ -33,6 +35,7 @@ from ovisbot.helpers import (
     chunkify,
     create_corimd_notebook,
     escape_md,
+    failed,
     success,
     td_format,
 )
@@ -690,7 +693,7 @@ class Ctf(commands.Cog):
         Group of commands to manage reminders.
         Displays existing reminders if called without a subcommand.
         """
-        if ctx.subcommand_passed == ctx.command.name:
+        if ctx.subcommand_passed is None:
             # No subcommand passed
             ctf = self._get_channel_ctf(ctx)
             if ctf.pending_reminders:
@@ -704,14 +707,19 @@ class Ctf(commands.Cog):
                 await ctx.send(
                     "Εν έσσιει κανένα reminder ρε τσιάκκο... Εν να βάλεις όξα?"
                 )
-        else:
-            if ctx.invoked_subcommand is None:
-                subcomms = [sub_command for sub_command in ctx.command.all_commands]
-                await ctx.send(
-                    "Invalid command passed. Use !help for more info.\nAvailable subcommands are:\n```{0}```".format(
-                        " ".join(subcomms)
-                    )
-                )
+        elif ctx.invoked_subcommand is None:
+            self.help_command.context = ctx
+            await failed(ctx.message)
+            await ctx.send(
+                i18n._("**Invalid command passed**. See below for more help")
+            )
+            await self.help_command.command_callback(ctx, command=str(ctx.command))
+            # subcomms = [sub_command for sub_command in ctx.command.all_commands]
+            # await ctx.send(
+            #     "Invalid command passed. Use !help for more info.\nAvailable subcommands are:\n```{0}```".format(
+            #         " ".join(subcomms)
+            #     )
+            # )
 
     @ctf.command(name="countdown")
     async def countdown(self, ctx):

@@ -28,6 +28,9 @@ class ConfigurableProperty:
     def value(self):
         return self._value
 
+    def __str__(self):
+        return str(self._value)
+
 
 class AbstractConfig:
     """Singleton abstract config class"""
@@ -36,7 +39,9 @@ class AbstractConfig:
 
     def __new__(cls):
         if AbstractConfig.__instance__ is None:
-            logger.info(Fore.YELLOW + "[+]" + Fore.RESET + "Creating config...")
+            logger.info(
+                Fore.YELLOW + "[+]" + Fore.RESET + "Creating config instance..."
+            )
             AbstractConfig.__instance__ = object.__new__(cls)
             AbstractConfig.__instance__._copy_from_class()
             AbstractConfig.__instance__._load_props_from_db()

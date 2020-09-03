@@ -74,7 +74,9 @@ class CogManager(object):
             self._bot.load_extension(cog.name)
             logger.info(
                 Fore.GREEN
-                + "[Success] Extension: {0} from {1}".format(cog.name, cog.local_path)
+                + "[Success]"
+                + Fore.RESET
+                + " Extension: {0} from {1}".format(cog.name, cog.local_path)
             )
             cog.enabled = True
             cog.loaded = True
@@ -84,7 +86,9 @@ class CogManager(object):
             cog.loaded = False
             logger.info(
                 Fore.RED
-                + "[Failed] Extension: {0} from {1}".format(cog.name, cog.local_path)
+                + "[Failed]"
+                + Fore.RESET
+                + " Extension: {0} from {1}".format(cog.name, cog.local_path)
             )
             logger.error("Cog `{0}` failed to load. Error: {1}".format(cog.name, error))
             cog.save()  # Hacky workaround...

@@ -10,6 +10,8 @@ from pathlib import Path
 from os import environ
 from typing import NoReturn
 from pymodm import connect
+from pymongo.errors import ServerSelectionTimeoutError
+from colorama import Fore
 
 from ovisbot import __version__
 from ovisbot import commands
@@ -32,12 +34,17 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
         )
         load_dotenv(dotenv_path=env_path, verbose=True)
         env = environ.get("OVISBOT_ENV", "dev")
-
         from ovisbot.config import bot_config
 
-        self.config_cls = bot_config[env]
-        self.init_db()
-        self.config = self.config_cls()
+        try:
+            self.config_cls = bot_config[env]
+            self.init_db()
+            self.config = self.config_cls()
+        except ServerSelectionTimeoutError:
+            logging.error(
+                "Database timeout error! Make use an instance of mongodb is running and your OVISBOT_DB_URL env variable is valid! Terminating... "
+            )
+            exit(1)
 
         super().__init__(*args, command_prefix=self.config.COMMAND_PREFIX, **kwargs)
 
