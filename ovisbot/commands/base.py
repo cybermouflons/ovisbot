@@ -52,7 +52,7 @@ class BaseCommandsMixin:
             """
             Shows contribute information
             """
-            await ctx.channel.send("https://github.com/apogiatzis/KyriosZolo")
+            await ctx.channel.send("https://github.com/cybermouflons/ovisbot")
 
         @bot.command()
         async def status(ctx):
