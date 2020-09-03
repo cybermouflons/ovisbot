@@ -3,3 +3,4 @@ services:
   bot:
     build:
       dockerfile: Dockerfile-prod
+    volumes: []

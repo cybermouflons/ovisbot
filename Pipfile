@@ -1,0 +1,48 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+bump2version = "*"
+setuptools = "*"
+wheel = "*"
+twine = "*"
+secretstorage = {markers = "sys_platform == 'linux'"}
+keyring = "==19.1.0"
+black = "==19.10b0"
+pipenv-setup = "*"
+pytest = "*"
+ovisbot = {editable = true,path = "."}
+flake8 = "*"
+sphinx = "*"
+
+[packages]
+discord-py = "*"
+colorama = "*"
+pytz = "*"
+python-dotenv = "*"
+pymodm = "*"
+texttable = "*"
+requests = "*"
+feedparser = "*"
+colorthief = "*"
+beautifulsoup4 = "*"
+parse = "*"
+pycryptodome = "*"
+gitpython = "*"
+pynacl = "*"
+python-dateutil = "*"
+click = "*"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+build = "python setup.py sdist bdist_wheel"
+publish = "twine upload dist/*"
+reformat = "bash -c \"python -m black $(git ls-files '*.py')\""
+setupenv = "python tools/setupenv.py"
+setup-sync = "pipenv-setup sync"
+docker = "docker-compose up"
+docker-prod = "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up"

@@ -1,5 +1,0 @@
-version: '2'
-services:
-  bot:
-    command: bash -c "pip install --no-deps -e . && ovisbot"
-    restart: "no"

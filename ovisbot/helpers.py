@@ -2,7 +2,9 @@ import inspect
 import requests
 import os
 import urllib.parse
+
 from discord.ext.commands.core import GroupMixin
+from texttable import Texttable
 
 
 def chunkify(text, limit):
@@ -57,6 +59,17 @@ def td_format(td_object):
 def get_props(obj):
     """Returns properties of the class"""
     return inspect.getmembers(obj, lambda a: not (inspect.isroutine(a)))
+
+
+def draw_options_table(options):
+    table = Texttable()
+    table.set_deco(Texttable.VLINES | Texttable.HEADER | Texttable.HLINES)
+    table.set_cols_dtype(["a", "a"])  # automatic
+    table.set_cols_align(["l", "l"])
+    table.add_rows(
+        [["name", "value"], *[[name, val] for name, val in options], ]
+    )
+    return table.draw()
 
 
 async def success(message):
