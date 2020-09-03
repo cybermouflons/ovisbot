@@ -159,7 +159,7 @@ class Config(AbstractConfig):
         "OVISBOT_COMMAND_CORRECTION_WINDOW", 30  # time in seconds
     )
     GIT_REPO = environ.get(
-        "OVISBOT_GIT_REPO", "https://github.com/apogiatzis/KyriosZolo"
+        "OVISBOT_GIT_REPO", "https://github.com/cybermouflons/ovisbot"
     )
 
     WOLFRAM_ALPHA_APP_ID = environ.get("OVISBOT_WOLFRAM_ALPHA_APP_ID")

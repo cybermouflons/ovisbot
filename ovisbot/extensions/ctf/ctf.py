@@ -278,7 +278,7 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def notes(self, ctx):
         """
-        Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
+        Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then ovis gets mad.
         """
         chall_name = ctx.channel.name
         ctf = CTF.objects.get({"name": ctx.channel.category.name})

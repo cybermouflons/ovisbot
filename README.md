@@ -13,14 +13,14 @@
 
 <p align="center">
 
-  <a href="https://www.codefactor.io/repository/github/apogiatzis/kyrioszolo">
-    <img src="https://www.codefactor.io/repository/github/apogiatzis/KyriosZolo/badge">
+  <a href="https://www.codefactor.io/repository/github/cybermouflons/ovisbot">
+    <img src="https://www.codefactor.io/repository/github/cybermouflons/ovisbot/badge">
   </a>
 
   <a href="http://makeapullrequest.com">
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
   </a>
-  <a href="https://github.com/apogiatzis/KyriosZolo/issues"><img src="https://img.shields.io/github/issues/apogiatzis/KyriosZolo.svg"/></a>
+  <a href="https://github.com/cybermouflons/ovisbot/issues"><img src="https://img.shields.io/github/issues/cybermouflons/ovisbot.svg"/></a>
 
   <a href="https://github.com/ambv/black">
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style: Black">
@@ -83,13 +83,17 @@ Installation using docker takes care of running mongo db automatically without r
 
 Firstly clone this repository:
 ```
-git clone https://github.com/apogiatzis/KyriosZolo ovisbot && ovisbot
+git clone https://github.com/cybermouflons/ovisbot ovisbot && ovisbot
 ```
 
 For the next step make sure that you have your environment variables configured properly and run:
 ```
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
 ```
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/cybermouflons/ovisbot/tags).
 
 # Contribution
 
