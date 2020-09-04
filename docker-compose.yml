@@ -7,7 +7,7 @@ services:
     volumes:
       - ./ovisbot:/ovisbot/ovisbot
     working_dir: /ovisbot
-    command: pipenv run ovisbot
+    command: pipenv run ovisbot run
     links:
       - mongo
   mongo:
