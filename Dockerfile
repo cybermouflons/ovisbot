@@ -4,4 +4,5 @@ COPY . /ovisbot
 
 WORKDIR /ovisbot
 
-RUN pip install -e .
+RUN pip install pipenv
+RUN pipenv install -e .

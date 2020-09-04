@@ -2,84 +2,104 @@
   <img src="https://i.imgur.com/XOxm3Zb.png" alt="drawing" width="150"/>
 </p>
 
+
 <h1 align="center">
-  OvisBot CTF Discord Bot
+  OvisBot
 </h1>
 
+<h4 align="center">Open source Discord bot for CTF teams</h4>
+
+<br />
+
 <p align="center">
-  <a href="https://github.com/ambv/black">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style: Black">
+
+  <a href="https://www.codefactor.io/repository/github/cybermouflons/ovisbot">
+    <img src="https://www.codefactor.io/repository/github/cybermouflons/ovisbot/badge">
   </a>
+
   <a href="http://makeapullrequest.com">
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
   </a>
+  <a href="https://github.com/cybermouflons/ovisbot/issues"><img src="https://img.shields.io/github/issues/cybermouflons/ovisbot.svg"/></a>
+
+  <a href="https://github.com/ambv/black">
+    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style: Black">
+  </a>  
 </p>
 
+<p align="center">
+  <a href="#overview">Overview</a>
+  •
+  <a href="#installation">Installation</a>
+  •
+  <a href="http://ovisbot.readthedocs.io/en/stable/index.html">Documentation</a>
+  •
+  <a href="#contribution">Contribution</a>
+  •
+  <a href="#license">License</a>
+</p>
 
-> ### _A [discord.py](http://discordpy.readthedocs.io/en/latest/) bot focused on providing CTF tools for collaboration in Discord servers. If you have a feature request, make it a GitHub issue_
+# Overview
 
-# How to Use
+OvisBot is a modular, feature-extensive Discord bot for managing CTF teams through discord. It facilitates collaboration and organisation by providing well defined commands to create/delete/update discord category/channels in order to structure CTF problems and provide more efficient team commmunication. In addition the bot provides basic utility functions to assist the solving process of CTF challenges (encoding schemes, etc.. ). Finally, promotes competitiveness amongst team members by providing a aut-synchronised leaderboard to common cybersecurity training platforms such as <a href="https://cryptohack.org/">CryptoHack</a> and <a href="https://www.hackthebox.eu/">Hack The Box</a>, 
 
-## General
+Note that the majority of the features are provided by isolated plugins and thus they can be enabled/disabled on demand.
 
-- `!help` Displays help information and more information about available commands of the bot
+This is a self-hosted bot, therefore it requires to be hosted on a private server in order to be used. Further instructions to do so are provided below. It also required a running instance of MongoDB on the server but still, the docker-based installation instructions take care of that.
 
-- `!status` Returns the current status of the server with regards to CTFs. i.e. Information about which CTFs have been finished/are active, how many members are working on it and the number of challenges solved/unsolved.
+# Installation
 
-- `!wolfram <question>` Calls wolfram API to answer your question/query. Can be used for unit conversion, arithmetic, general queries
+There are couple ways to install the bot but generally the installing using docker-compose is the most convenient way to do it. Nevertheless, don't hesitate to use any other methods that suits you.
 
-- `!chucknorris` Tells you a chunk norris joke 
+## Installing using pip
 
-## CTF
+To install using pip run the following command
+```
+pip install ovisbot
+```
+The above will install `ovisbot` in your python environment and will introduce the `ovisbot` cli. The cli provides commands to launch and interact with ovisbot.
 
-> This bot has commands for encoding/decoding, ciphers, and other commonly accessed tools during CTFs. But, the main use of the bot is to easily set up a CTF for your discord server to play as a team. The following commands listed are probably going to be used the most.
+At runtime, the bot requires a running MongoDB server. An easy way to run a local mongodb server is using docker. You skip this step if you already have one running
+```
+docker run -d -p 27017-27019:27017-27019 --name mongodb mongo
+```
 
-- `!ctf create <ctf_name>` This is the command you'll use when you want to begin a new CTF. This command will make a private category channel with a general text channel in your server, with your supplied name.
+Since OvisBot requires some predifined configuration before launch, it is necessary the you set your environment variables accordingly. Alternatively you can create a `.env` file that defined the required variables. Refer to [.env.example](.env.example) for an example.
 
-- `!ctf delete <ctf_name>` Deletes category, channels and roles related to the ctf. Note that the data are still kept in the DB.
-  **Must have manage channels and roles permissions to do that**
+OvisBot cli provides the `setupenv` command which assists the creation of a .env file. Therefore to contrinue run and fill in the variables.
+```
+ovisbot setupenv
+```
+At the end of the process a new `.env` file will be create in your current directory. 
 
-- `!ctf join <ctf_name>` Using this command will either give or remove the role of a created ctf to/from you.
+Finally to launch the bot, run:
+```
+ovisbot run
+```
 
-- `!ctf archive <ctf_name>` Arcive a CTF to the DB and remove it from discord.
+## Installing using docker
 
-_NOTE: the following ctf specific commands will only be accepted under the category created for that ctf. This is to avoid clashes with multiple ctfs going on in the same server._
+Installation using docker takes care of running mongo db automatically without requiring any extra steps. To achieve this, `docker-compose` is utilised therefore make sure that you have `docker` and `docker-compose` installed on your system.
 
-- `!ctf status` This displays the status of the CTF. It displays the added challenges, who's working on what, and if a challenge is solved (and by who).
+Firstly clone this repository:
+```
+git clone https://github.com/cybermouflons/ovisbot ovisbot && ovisbot
+```
 
-- `!ctf addchallenge <challenge_name>` Allows users to add challenges to a list. Creates a new private text channel with the challenge name given.
+For the next step make sure that you have your environment variables configured properly and run:
+```
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+```
 
-- `!ctf rmchall <challenge_name>` Removes the challenge with the given name.
+## Versioning
 
-- `!ctf attempt <challenge_name>` Gives you permission to view the text channel of the challenge given and adds you to the members working on it. Note the challenge name must match the exact name from `!ctf status`
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/cybermouflons/ovisbot/tags).
 
-- `!ctf solve [<teammate> <teammate> ...]` Marks the challenge as solved and sets you as the solver. To work you must be in a text channel of a challenge. If other teammates helped solving the challenge you can add them as optional mentions in the arguments and they will be added to the solvers as well.
+# Contribution
 
-- `!ctf unsolve` Resets solved status of a challenges. Simarly with the solve command you have to be in the text channel of the challenge. The purpose of this is to allow you to rollback accidental changes when running solve. (Forgot to add teammates, etc..)
+Have a feature request? Make a GitHub issue and feel free to contribute. To get started with contributing refer to [CONTRIBUTE.md](./CONTRIBUTE.md).
 
-- `!ctf notes` Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then Kyrios Zolos gets mad.
-
-- `!ctf setcreds <username> <password> [<link>]` Sets shared credentials to be used by the team
-
-- `!ctf showcreds` Reveals shared credentials that have been set for the CTF
-
-- `!ctf reminder` Sets a reminder to alert the team members before the CTF starts. The date is automatically fetched from ctftime but it can also be set manually if a date is provided as a parameter
-
----
-## Ctftime
-
- - `!ctftime upcoming` Returns the 3 most recent upcoming CTFs from ctftime.
-
- - `!ctftime writeups <number (default:3)>` Returns the most recent writeups from ctftime.
-
----
-## Utils
-
-- `!utils stol <string>` Converts a string to long. Useful for crypto challenges
-
-- `!utils ltos <long>` Converts a long to string
-
-# Contributors
+### Current Contributors:
 
 - [apogiatzis](https://github.com/apogiatzis)
 - [kgeorgiou](https://github.com/kgeorgiou)
@@ -87,4 +107,6 @@ _NOTE: the following ctf specific commands will only be accepted under the categ
 - [npitsillos](https://github.com/npitsillos)
 - [Sikkis](https://github.com/Sikkis)
 
-## Have a feature request? Make a GitHub issue and feel free to contribute.
+# License
+
+Released under the GNU GPL v3 license.

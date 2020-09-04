@@ -9,7 +9,7 @@ from ovisbot.bot import OvisBot
 logger = logging.getLogger(__name__)
 
 
-def run():
+def launch():
     colorama_init(autoreset=True)
     setup_locale()
 
@@ -18,4 +18,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    launch()

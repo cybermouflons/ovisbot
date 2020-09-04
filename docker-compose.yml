@@ -5,9 +5,9 @@ services:
     container_name: 'ovisbot'
     restart: always
     volumes:
-      - .:/ovisbot
+      - ./ovisbot:/ovisbot/ovisbot
     working_dir: /ovisbot
-    command: bash -c "pip install -e . && ovisbot"
+    command: pipenv run ovisbot
     links:
       - mongo
   mongo:

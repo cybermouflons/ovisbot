@@ -1,8 +1,8 @@
 import os
 import logging
+import ovisbot.locale as i18n
 
 from ovisbot.helpers import escape_md
-import ovisbot.locale as i18n
 from pymodm import MongoModel, EmbeddedMongoModel, fields, connect
 from ovisbot.utils.progressbar import draw_bar
 from texttable import Texttable
