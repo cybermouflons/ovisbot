@@ -55,9 +55,9 @@ class Utils(commands.Cog):
     async def rotn(self, ctx, shift, *params):
         shift = int(shift)
         msg = ' '.join(params)
-        letters = string.ascii_letters
-        shifted = letters[shift:] + letters[:shift]
-        shifted_tab = str.maketrans(letters, shifted)
+        shifted = string.ascii_lowercase[shift:] + string.ascii_lowercase[:shift] +\
+                  string.ascii_uppercase[shift:] + string.ascii_uppercase[:shift]
+        shifted_tab = str.maketrans(string.ascii_letters, shifted)
         shifted_str = msg.translate(shifted_tab)
         await ctx.send(f"{msg} => {shifted_str}")
 
