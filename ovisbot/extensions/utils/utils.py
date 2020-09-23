@@ -1,5 +1,6 @@
 import logging
 import struct
+import string
 
 from Crypto.Util.number import long_to_bytes, bytes_to_long
 from discord.ext import commands
@@ -39,7 +40,7 @@ class Utils(commands.Cog):
         Converts string to hex
         """
         joined_params = " ".join(params)
-        await ctx.send("`{0}`".format(joined_params.encode("latin-1").hex()))
+        await ctx.send("`{0}`".format(joined_params.encode("latin-1").hex())) # << .hex() ?
 
     @utils.command()
     async def hex2str(self, ctx, param):
@@ -47,6 +48,14 @@ class Utils(commands.Cog):
         Converts hex to string
         """
         await ctx.send("`{0}`".format(bytearray.fromhex(param).decode()))
+
+    @utils.command()
+    async def rotn(self, ctx, msg, shift):
+        letters = string.ascii_letters
+        shifted = letters[shift:] + letters[:shift]
+        shifted_tab = str.maketrans(letters, shifted)
+        shifted_str = msg.translate(shifted_tab)
+        await ctx.send(f'{msg} => {shifted_str}')
 
 
 def setup(bot):
