@@ -30,6 +30,7 @@ from ovisbot.exceptions import (
     CtfimeNameDoesNotMatch,
     DateMisconfiguredException,
     MissingStartDateException,
+    MissingEndDateException,
 )
 from ovisbot.helpers import (
     chunkify,
@@ -113,7 +114,7 @@ class Ctf(commands.Cog):
             await c.delete()
 
         await category.delete()
-        ctf.name == "__ARCHIVED__" + ctf.name
+        ctf.name = "__ARCHIVED__" + ctf.name # bug fix (==)
         ctf.save()
 
     @archive.error
@@ -725,6 +726,7 @@ class Ctf(commands.Cog):
     async def countdown(self, ctx):
         """
         Displays countdown unitl CTF starts. Requires a start date to be set.
+        @raises MissingStartDateException if ctf.start_date is None
         """
         ctf = self._get_channel_ctf(ctx)
 
@@ -735,7 +737,12 @@ class Ctf(commands.Cog):
         if now < ctf.start_date:
             await ctx.channel.send("⏰   **" + td_format(ctf.start_date - now) + "**")
         else:
-            await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
+            if ctf.end_date is None:
+                await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
+            elif now < ctf.end_date:
+                await ctx.channel.send("⏰   **" + td_format(ctf.end_date - now) + "**")
+            else:
+                await ctx.channel.send("Ρε παίχτη μου ετέλειωσεν... ξύπνα!")
 
     @reminders.command(name="add")
     async def reminders_add(self, ctx, unit, amount):
@@ -749,7 +756,8 @@ class Ctf(commands.Cog):
             raise MissingStartDateException
 
         amount = int(amount)
-        unit = unit
+        # unit = unit 
+        # ?? unnesecary assignment to self
         td = timedelta(**{unit: amount})
 
         reminder_date = ctf.start_date + td
