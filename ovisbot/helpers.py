@@ -67,7 +67,10 @@ def draw_options_table(options):
     table.set_cols_dtype(["a", "a"])  # automatic
     table.set_cols_align(["l", "l"])
     table.add_rows(
-        [["name", "value"], *[[name, val] for name, val in options], ]
+        [
+            ["name", "value"],
+            *[[name, val] for name, val in options],
+        ]
     )
     return table.draw()
 

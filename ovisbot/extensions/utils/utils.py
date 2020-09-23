@@ -40,7 +40,9 @@ class Utils(commands.Cog):
         Converts string to hex
         """
         joined_params = " ".join(params)
-        await ctx.send("`{0}`".format(joined_params.encode("latin-1").hex())) # << .hex() ?
+        await ctx.send(
+            "`{0}`".format(joined_params.encode("latin-1").hex())
+        )
 
     @utils.command()
     async def hex2str(self, ctx, param):
@@ -50,12 +52,14 @@ class Utils(commands.Cog):
         await ctx.send("`{0}`".format(bytearray.fromhex(param).decode()))
 
     @utils.command()
-    async def rotn(self, ctx, msg, shift):
+    async def rotn(self, ctx, shift, *params):
+        shift = int(shift)
+        msg = ' '.join(params)
         letters = string.ascii_letters
         shifted = letters[shift:] + letters[:shift]
         shifted_tab = str.maketrans(letters, shifted)
         shifted_str = msg.translate(shifted_tab)
-        await ctx.send(f'{msg} => {shifted_str}')
+        await ctx.send(f"{msg} => {shifted_str}")
 
 
 def setup(bot):
