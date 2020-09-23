@@ -106,6 +106,7 @@ Have a feature request? Make a GitHub issue and feel free to contribute. To get 
 - [condiom](https://github.com/condiom)
 - [npitsillos](https://github.com/npitsillos)
 - [Sikkis](https://github.com/Sikkis)
+- [ishtar](https://github.com/xmpf)
 
 # License
 

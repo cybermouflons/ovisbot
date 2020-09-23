@@ -55,5 +55,9 @@ class MissingStartDateException(Exception):
     pass
 
 
+class MissingEndDateException(Exception):
+    pass
+
+
 class CryptoHackApiException(Exception):
     pass

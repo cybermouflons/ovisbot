@@ -26,8 +26,7 @@ class CogSpecificationMissingException(Exception):
 
 
 class CogManager(object):
-    """This class is responsible for loading arbitrary cogs (extensions)
-    """
+    """This class is responsible for loading arbitrary cogs (extensions)"""
 
     def __init__(self, bot):
         self._bot = bot
@@ -173,16 +172,14 @@ class CogManager(object):
             shutil.rmtree(cog.local_path, ignore_errors=True)
 
     def disable_cog(self, name) -> NoReturn:
-        """Disables the specified cog
-        """
+        """Disables the specified cog"""
         cog = CogDetails.objects.get({"name": name})
         self._bot.unload_extension(cog.name)
         cog.enabled = False
         cog.save()
 
     def enable_cog(self, name) -> NoReturn:
-        """Enables the specified cog
-        """
+        """Enables the specified cog"""
         cog = CogDetails.objects.get({"name": name})
         self._load_cog_from_object(cog)
         cog.save()
@@ -202,7 +199,12 @@ class CogManager(object):
         if self.is_cog_installed(name):
             raise CogAlreadyInstalledException(name)
 
-        cog = CogDetails(name=name, local_path=path, url=path, open_source=False,)
+        cog = CogDetails(
+            name=name,
+            local_path=path,
+            url=path,
+            open_source=False,
+        )
         self._load_cog_from_object(cog)
         cog.save()
 
@@ -248,7 +250,10 @@ class CogManager(object):
             raise CogAlreadyInstalledException(name)
 
         cog = CogDetails(
-            name=name, local_path=path, url=url, open_source=False if sshkey else True,
+            name=name,
+            local_path=path,
+            url=url,
+            open_source=False if sshkey else True,
         )
         self._load_cog_from_object(cog)
         cog.save()

@@ -171,7 +171,8 @@ class CryptoHack(commands.Cog):
 
         embed.set_thumbnail(url="https://cryptohack.org/static/img/main.png")
         embed.set_footer(
-            text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
+            text="CYberMouflons",
+            icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
         )
 
         await ctx.send(embed=embed)
