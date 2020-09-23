@@ -114,7 +114,7 @@ class Ctf(commands.Cog):
             await c.delete()
 
         await category.delete()
-        ctf.name = "__ARCHIVED__" + ctf.name # bug fix (==)
+        ctf.name = "__ARCHIVED__" + ctf.name  # bug fix (==)
         ctf.save()
 
     @archive.error
@@ -735,12 +735,16 @@ class Ctf(commands.Cog):
 
         now = datetime.datetime.now()
         if now < ctf.start_date:
-            await ctx.channel.send("⏰   **" + td_format(ctf.start_date - now) + "** to start")
+            await ctx.channel.send(
+                "⏰   **" + td_format(ctf.start_date - now) + "** to start"
+            )
         else:
             if ctf.end_date is None:
                 await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
             elif now < ctf.end_date:
-                await ctx.channel.send("⏰   **" + td_format(ctf.end_date - now) + "** to finish")
+                await ctx.channel.send(
+                    "⏰   **" + td_format(ctf.end_date - now) + "** to finish"
+                )
             else:
                 await ctx.channel.send("Ρε παίχτη μου ετέλειωσεν... ξύπνα!")
 
@@ -756,7 +760,7 @@ class Ctf(commands.Cog):
             raise MissingStartDateException
 
         amount = int(amount)
-        # unit = unit 
+        # unit = unit
         # ?? unnesecary assignment to self
         td = timedelta(**{unit: amount})
 

@@ -292,7 +292,8 @@ class HackTheBox(commands.Cog):
 
         embed.set_thumbnail(url="https://forum.hackthebox.eu/uploads/RJZMUY81IQLQ.png")
         embed.set_footer(
-            text="CYberMouflons", icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
+            text="CYberMouflons",
+            icon_url="https://i.ibb.co/yW2mYjq/cybermouflons.png",
         )
 
         await ctx.send(embed=embed)
