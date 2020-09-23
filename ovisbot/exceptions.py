@@ -51,17 +51,13 @@ class DateMisconfiguredException(Exception):
     pass
 
 
-'''
-ctf.start_date is None
-'''
 class MissingStartDateException(Exception):
+    ''' ctf.start_date is None '''
     pass
 
 
-'''
-ctf.end_date is None
-'''
 class MissingEndDateException(Exception):
+    ''' ctf.end_date is None '''
     pass
 
 

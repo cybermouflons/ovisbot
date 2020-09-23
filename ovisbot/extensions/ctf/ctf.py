@@ -735,12 +735,12 @@ class Ctf(commands.Cog):
 
         now = datetime.datetime.now()
         if now < ctf.start_date:
-            await ctx.channel.send("⏰   **" + td_format(ctf.start_date - now) + "**")
+            await ctx.channel.send("⏰   **" + td_format(ctf.start_date - now) + "** to start")
         else:
             if ctf.end_date is None:
                 await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
             elif now < ctf.end_date:
-                await ctx.channel.send("⏰   **" + td_format(ctf.end_date - now) + "**")
+                await ctx.channel.send("⏰   **" + td_format(ctf.end_date - now) + "** to finish")
             else:
                 await ctx.channel.send("Ρε παίχτη μου ετέλειωσεν... ξύπνα!")
 
