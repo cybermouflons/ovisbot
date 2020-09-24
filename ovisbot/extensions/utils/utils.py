@@ -1,6 +1,7 @@
 import logging
 import struct
 import string
+import crypt
 
 from Crypto.Util.number import long_to_bytes, bytes_to_long
 from discord.ext import commands
@@ -61,6 +62,39 @@ class Utils(commands.Cog):
         shifted_str = msg.translate(shifted_tab)
         await ctx.send(f"{msg} => {shifted_str}")
 
+    @utils.command()
+    async def genshadow(self, ctx, *params):
+        argc = len(params)            
+        if argc == 1 or argc == 2:
+            cleartext = params[0]
+            method = None
+            if argc == 2:
+                method = params[1]
+                
+            __methods = {
+                "1": crypt.METHOD_MD5,
+                "MD5": crypt.METHOD_MD5,
+
+                "2": crypt.METHOD_BLOWFISH,
+                "BLOWFISH": crypt.METHOD_BLOWFISH,
+
+                "5": crypt.METHOD_SHA256,
+                "SHA256": crypt.METHOD_SHA256,
+
+                "6": crypt.METHOD_SHA512,
+                "SHA512": crypt.METHOD_SHA512
+            }
+            if method:
+                method = method.upper() if method.isalpha() else method
+                method = __methods.get(method.upper(), None)
+            
+            unix_passwd = crypt.crypt(cleartext, method)
+            shadow = f"root:{unix_passwd}:0:0:99999:7::"
+            await ctx.send(f"{cleartext}:\n" +\
+                        f"=> {unix_passwd}\n" +\
+                        f"=> {shadow}")
+        else:
+            await ctx.send("!utils genshadow <cleartext> [<method]>'")
 
 def setup(bot):
     bot.add_cog(Utils(bot))
