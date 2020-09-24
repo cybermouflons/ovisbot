@@ -87,7 +87,7 @@ class Utils(commands.Cog):
             "6": crypt.METHOD_SHA512,
             "SHA512": crypt.METHOD_SHA512
         }
-        if method and method.isnumeric() == False:
+        if method and not method.isnumeric():
             method = method.upper()
         method = __methods.get(method, None)
         
