@@ -87,9 +87,9 @@ class Utils(commands.Cog):
             "6": crypt.METHOD_SHA512,
             "SHA512": crypt.METHOD_SHA512
         }
-        if method:
-            method = method.upper() if method.isalpha() else method
-            method = __methods.get(method, None)
+        if method and method.isnumeric() == False:
+            method = method.upper()
+        method = __methods.get(method, None)
         
         unix_passwd = crypt.crypt(cleartext, method)
         shadow = f"root:{unix_passwd}:0:0:99999:7::"
