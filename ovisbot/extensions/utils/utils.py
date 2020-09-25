@@ -1,6 +1,7 @@
 import logging
 import struct
 import string
+import crypt
 
 from Crypto.Util.number import long_to_bytes, bytes_to_long
 from discord.ext import commands
@@ -61,6 +62,40 @@ class Utils(commands.Cog):
         shifted_str = msg.translate(shifted_tab)
         await ctx.send(f"{msg} => {shifted_str}")
 
+    @utils.command()
+    async def genshadow(self, ctx, cleartext, method = None):
+        '''
+        genshadow, generates a UNIX password hash and a corresponding /etc/shadow entry
+        and is intended for usage in boot2root environments
+
+        Available hash types:
+            + MD5
+            + Blowfish
+            + SHA-256
+            + SHA-512
+        '''
+        __methods = {
+            "1": crypt.METHOD_MD5,
+            "MD5": crypt.METHOD_MD5,
+
+            "2": crypt.METHOD_BLOWFISH,
+            "BLOWFISH": crypt.METHOD_BLOWFISH,
+
+            "5": crypt.METHOD_SHA256,
+            "SHA256": crypt.METHOD_SHA256,
+
+            "6": crypt.METHOD_SHA512,
+            "SHA512": crypt.METHOD_SHA512
+        }
+        if method and not method.isnumeric():
+            method = method.upper()
+        method = __methods.get(method, None)
+        
+        unix_passwd = crypt.crypt(cleartext, method)
+        shadow = f"root:{unix_passwd}:0:0:99999:7::"
+        await ctx.send(f"{cleartext}:\n" +\
+                    f"=> {unix_passwd}\n" +\
+                    f"=> {shadow}")
 
 def setup(bot):
     bot.add_cog(Utils(bot))
