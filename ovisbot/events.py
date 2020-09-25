@@ -26,7 +26,7 @@ def hook_events(bot):
 
     @bot.event
     async def on_message(message):
-        # TODO: URI regex to catch shared links # noqa
+        ''' TODO: URI regex to catch shared links '''
         if bot.user in message.mentions:
             await message.channel.send(i18n._("What?!"))
         await bot.process_commands(message)
