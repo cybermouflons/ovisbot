@@ -26,7 +26,7 @@ def hook_events(bot):
 
     @bot.event
     async def on_message(message):
-        # TODO: URI regex to catch shared links
+        # TODO: URI regex to catch shared links # noqa
         if bot.user in message.mentions:
             await message.channel.send(i18n._("What?!"))
         await bot.process_commands(message)
@@ -54,5 +54,5 @@ def hook_events(bot):
         )
         if announcements is not None:
             await announcements.send(
-                    i18n._(f"Welcome {member.name}! Take your time to briefly introduce yourself")
+                i18n._(f"Welcome {member.name}! Take your time to briefly introduce yourself")
             )
