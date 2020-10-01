@@ -63,11 +63,12 @@ class Event():
         })
         return e_dict
 
-    '''
-    Given @name finds @event_id and fills needed fields to be used by @find_event_by_id
-    Raises @ValueError
-    '''
     def find_event_by_name(self):
+        '''
+        Given @name finds @event_id and fills needed fields to be used by @find_event_by_id
+        Raises @ValueError
+        '''
+        
         url = 'https://ctftime.org/event/list/past'
         r = (self.s).get(url=url, headers=HEADERS)
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -92,10 +93,11 @@ class Event():
         if not found:
             raise ValueError('Event not found')
     
-    '''
-    Using the @event_id finds and collects available writeups into a list
-    '''
     def find_event_by_id(self):
+        '''
+        Using the @event_id finds and collects available writeups into a list
+        '''
+        
         url = f'https://ctftime.org/event/{ str(self.e_id) }/tasks/'
         r = (self.s).get(url=url, headers=HEADERS)
         soup = BeautifulSoup(r.text, 'html.parser')
