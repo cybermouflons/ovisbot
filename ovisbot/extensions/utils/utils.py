@@ -64,22 +64,22 @@ class Utils(commands.Cog):
         Returns the ROT-n encoding of a message.
         '''
         msg = ' '.join(params)
+        out = '```\n'
+        out += 'Original message:\n' + msg
 
         if shift == "*":
-            out = 'Original message:\n' + msg
             for s in range(1, 14):
                 out += f'\n=[ ROT({s}) ]=\n'
                 out += rotn_helper(s, msg)
-            await ctx.send(out)
+            out += '\n```'
         else:
             shift = int(shift)
             shifted_str = rotn_helper(shift, msg)
 
-            out = 'Original message:\n' + msg
             out += f'\n=[ ROT({shift}) ]=\n'
-            out += 'Encoded message:\n' + shifted_str
+            out += 'Encoded message:\n' + shifted_str + '\n```'
 
-            await ctx.send(out)
+        await ctx.send(out)
 
     @utils.command()
     async def genshadow(self, ctx, cleartext, method = None):
