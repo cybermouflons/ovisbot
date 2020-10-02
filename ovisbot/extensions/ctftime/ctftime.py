@@ -116,11 +116,11 @@ class Ctf(commands.Cog):
             return
         
         for writeup in ctf_writeups:
-            info = dict(writeup)
+            info = writeup.__dict__
 
             embed = discord.Embed(
                 title = info["name"],
-                url = info["url"],
+                url = "https://ctftime.org" + info["url"],
                 description=ctf_name,
                 color=0x8cff00
             )

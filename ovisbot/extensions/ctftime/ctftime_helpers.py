@@ -4,12 +4,14 @@ import re
 import sys
 import json
 import requests
+import os
+
 
 from bs4 import BeautifulSoup
+from dataclasses import dataclass
 
 # Type Hints
-from typing import List
-from typing import Dict
+from typing import List, Sequence, Dict
 
 # write machinery to find `eventID` according to the CTF
 URL = 'https://ctftime.org/event/{EVENT_ID}/tasks/'
@@ -120,12 +122,13 @@ class Event():
             writeups.append( writeup )
 
         self.writeups = writeups
-        return event.e_name, self.writeups
+        return self.e_name, self.writeups
 
     def find_event_writeups(self):
         self.find_event_by_name()
         return self.find_event_by_id()
 
+@dataclass
 class Writeup():
     '''
     Writeup Class
@@ -135,29 +138,11 @@ class Writeup():
         no_writeups : int
         url : str
     '''
-    def __init__(self, name : str = '',
-                points : int = 0,
-                tags = None,
-                no_writeups : int = 0,
-                url : str = ''):
-        self.name = name
-        self.points = points
-        self.tags = tags or []
-        self.no_writeups = no_writeups
-        self.url = url
-
-    def __dict__(self) -> Dict:
-        '''
-        Create a dictionary for class Writeup
-        '''
-        w_dict = dict ({
-            "name:" : str( self.name ),
-            "points" : int( self.points ),
-            "tags" : list( self.tags ),
-            "no_writeups" : int( self.no_writeups ),
-            "url" : str( self.url )
-        })
-        return w_dict
+    name : str = ''
+    points : int = 0
+    tags : Sequence[str] = None
+    no_writeups : int = 0
+    url : str = ''
 
     def __str__(self) -> str:
         '''

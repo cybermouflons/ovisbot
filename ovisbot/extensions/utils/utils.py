@@ -1,4 +1,5 @@
 import logging
+from ovisbot.helpers import chunkify
 import struct
 import string
 import crypt
@@ -8,12 +9,11 @@ from discord.ext import commands
 
 logger = logging.getLogger(__name__)
 
-def rotn_helper(offset, string):
+def rotn_helper(offset, text):
     shifted = string.ascii_lowercase[offset:] + string.ascii_lowercase[:offset] +\
             string.ascii_uppercase[offset:] + string.ascii_uppercase[:offset]
     shifted_tab = str.maketrans(string.ascii_letters, shifted)
-    shifted_str = string.translate(shifted_tab)
-    return shifted_str
+    return text.translate(shifted_tab)
 
 class Utils(commands.Cog):
     def __init__(self, bot):
@@ -64,22 +64,20 @@ class Utils(commands.Cog):
         Returns the ROT-n encoding of a message.
         '''
         msg = ' '.join(params)
-        out = '```\n'
-        out += 'Original message:\n' + msg
-
+        out = 'Original message:\n' + msg
         if shift == "*":
             for s in range(1, 14):
                 out += f'\n=[ ROT({s}) ]=\n'
                 out += rotn_helper(s, msg)
-            out += '\n```'
         else:
             shift = int(shift)
             shifted_str = rotn_helper(shift, msg)
 
             out += f'\n=[ ROT({shift}) ]=\n'
-            out += 'Encoded message:\n' + shifted_str + '\n```'
-
-        await ctx.send(out)
+            out += 'Encoded message:\n' + shifted_str 
+ 
+        for chunk in chunkify(out, 1700):
+            await ctx.send("".join(["```", chunk, "```"]))
 
     @utils.command()
     async def genshadow(self, ctx, cleartext, method = None):
