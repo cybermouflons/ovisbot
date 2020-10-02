@@ -582,6 +582,12 @@ class Ctf(commands.Cog):
         ctf.save()
         await success(ctx.message)
 
+        if not (ctf.username and ctf.password):
+            raise CTFSharedCredentialsNotSet
+        emb = discord.Embed(description=ctf.credentials(), colour=4387968)
+        msg = await ctx.channel.send(embed=emb)
+        await msg.pin()
+
     @setcreds.error
     async def setcreds_error(self, ctx, error):
         if isinstance(error, commands.errors.MissingRequiredArgument):
@@ -678,7 +684,7 @@ class Ctf(commands.Cog):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
         await ctx.channel.send(embed=emb)
-
+  
     @showcreds.error
     async def showcreds_error(self, ctx, error):
         if isinstance(error, CTF.DoesNotExist):
