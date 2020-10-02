@@ -5,6 +5,10 @@ import re
 import requests
 import feedparser
 
+import json
+from bs4 import BeautifulSoup
+import ctftime_helpers as ctfh
+
 from colorthief import ColorThief
 from discord.ext import commands
 from urllib.request import urlopen
@@ -97,22 +101,47 @@ class Ctf(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-    @ctftime.command()
-    async def writeups(self, ctx, limit=3):
+    @ctftime.command( aliases = ["w"] )
+    async def writeups(self, ctx, name):
         """
-        Returns the latest N writeups. Default: N=3
+        Returns the submitted writeups for a given CTF
+        !ctftime writeups <name>
+        !ctftime w <name>
         """
-        writeups_url = "https://ctftime.org/writeups/rss/"
-        news_feed = feedparser.parse(writeups_url)
-        limit = int(limit)
-        if limit > len(news_feed.entries):
-            limit = len(news_feed.entries)
-        for i in range(limit):
-            entry = news_feed.entries[i]
-            writeup_title = entry["title"]
-            writeup_url = entry["original_url"]
-            embed = discord.Embed(title=writeup_title, url=writeup_url, color=231643)
+        event = ctfh.Event( e_name = name )
+        try:
+            ctf_name, ctf_writeups = event.find_event_writeups()
+        except ValueError:
+            await ctx.channel.send( "Could not find such event" )
+            return
+        
+        for writeup in ctf_writeups:
+            info = dict(writeup)
+
+            embed = discord.Embed(
+                title = info["name"],
+                url = info["url"],
+                description=ctf_name,
+                color=0x8cff00
+            )
+            embed.add_field(
+                name = "Points",
+                value = info["points"],
+                inline = True
+            )
+            embed.add_field(
+                name = "Total Writeups",
+                value = info["no_writeups"],
+                inline = True
+            )
+            embed.add_field(
+                name = "Tags",
+                value = info["tags"],
+                inline = False
+            )
+
             await ctx.channel.send(embed=embed)
+
 
     @writeups.error
     async def writeups_error(self, ctx, error):
