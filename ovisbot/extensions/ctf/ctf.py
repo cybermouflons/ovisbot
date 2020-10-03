@@ -392,7 +392,7 @@ class Ctf(commands.Cog):
 
         reward = DIFFICULTY_REWARDS[difficulty]
         reward_emoji, reward_text = reward
-        if isinstance(reward_text) is 'list':
+        if isinstance(reward_text, list):
             reward_text = random.choice(reward_text)
 
         await ctx.channel.send(
