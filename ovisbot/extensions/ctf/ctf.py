@@ -55,6 +55,7 @@ CHALLENGE_CATEGORIES = [
     "reverse",
     "stego",
     "forensics",
+    "osint",
     "htb",
 ]
 
