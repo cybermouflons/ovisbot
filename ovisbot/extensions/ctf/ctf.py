@@ -191,6 +191,11 @@ class Ctf(commands.Cog):
     async def addchallenge(self, ctx, challname, category, difficulty="none"):
         """
         Creates a private channel for a challenge.
+
+        Parameters:
+            challenge (str): Name of the challenge
+            category (str): Name of challenge's category
+            difficulty (str): Can be one of ["none", "easy", "medium", "hard"]. Optional, defaults to "none".
         """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
@@ -251,6 +256,10 @@ class Ctf(commands.Cog):
         elif isinstance(error.original, ChallengeInvalidCategory):
             await ctx.channel.send(
                 "Not valid challenge category provided. !help for more info"
+            )
+        elif isinstance(error.original, ChallengeInvalidDifficulty):
+            await ctx.channel.send(
+                "Not valid challenge difficulty provided. !help for more info"
             )
         elif isinstance(error.original, ChallengeExistsException):
             await ctx.channel.send(
