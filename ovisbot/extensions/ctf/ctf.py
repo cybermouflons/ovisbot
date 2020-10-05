@@ -69,10 +69,10 @@ CHALLENGE_DIFFICULTIES = [
 
 # difficulty -> (:emoji:, text)
 DIFFICULTY_REWARDS = {
-    "none": (":candy:", "μιαν κουφεττούα"),
-    "easy": (":cookie:", "ένα πισκοττούιν"),
-    "medium": (":lollipop:", ["ένα μηλούιν", "έναν πίππιλλο", "ένα γλειφιτζούρι"]),
-    "hard": (":icecream:", "ένα παωτόν"),
+    "none": (":candy:", "κουφεττούα"),
+    "easy": (":cookie:", "πισκοττούιν"),
+    "medium": (":lollipop:", ["μηλούιν", "πίππιλλο", "γλειφιτζούρι"]),
+    "hard": (":icecream:", "παωτόν"),
 }
 
 class Ctf(commands.Cog):
