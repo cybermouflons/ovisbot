@@ -9,6 +9,8 @@ class ChallengeExistsException(Exception):
 class ChallengeInvalidCategory(Exception):
     pass
 
+class ChallengeInvalidDifficulty(Exception):
+    pass
 
 class ChallengeAlreadySolvedException(Exception):
     def __init__(self, solved_by, *args, **kwargs):

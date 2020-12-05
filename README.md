@@ -83,7 +83,7 @@ Installation using docker takes care of running mongo db automatically without r
 
 Firstly clone this repository:
 ```
-git clone https://github.com/cybermouflons/ovisbot ovisbot && ovisbot
+git clone https://github.com/cybermouflons/ovisbot ovisbot && cd ovisbot
 ```
 
 For the next step make sure that you have your environment variables configured properly and run:
