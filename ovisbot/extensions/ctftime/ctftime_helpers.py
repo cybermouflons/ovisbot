@@ -116,7 +116,7 @@ class Event():
                 all_td = i.find_all('td')
                 writeup.points = all_td[1].get_text()
                 writeup.no_writeups = int(all_td[-2].get_text())
-            except:
+            except Exception:
                 pass
 
             writeups.append( writeup )
