@@ -107,18 +107,18 @@ class Event():
         writeups = []
         all_tr = soup.find_all('tr')[1:]
         for i in all_tr:
-            url = (i.a).get("href")
-            name = (i.a).get_text()
-            tags = list(map(lambda x: x.get_text(), i.find_all('span')))
-            all_td = i.find_all('td')
-            points = all_td[1].get_text()
-            no_writeups = all_td[-2].get_text()
+            writeup = Writeup()
+            writeup.url = (i.a).get("href")
+            writeup.name = (i.a).get_text()
 
-            writeup = Writeup(name=name, 
-                    points=points,
-                    tags=tags,
-                    no_writeups=no_writeups,
-                    url=url)
+            try:
+                writeup.tags = list(map(lambda x: x.get_text(), i.find_all('span')))
+                all_td = i.find_all('td')
+                writeup.points = all_td[1].get_text()
+                writeup.no_writeups = int(all_td[-2].get_text())
+            except:
+                pass
+
             writeups.append( writeup )
 
         self.writeups = writeups
