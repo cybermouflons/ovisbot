@@ -195,7 +195,8 @@ class Ctf(commands.Cog):
 
         Parameters:
             challenge (str): Name of the challenge
-            category (str): Name of challenge's category
+            category (str): Name of challenge's category. Can be one of ["crypto", "web", "misc", "pwn",
+                            "reverse", "stego", "forensics", "osint", "htb"].
             difficulty (str): Can be one of ["none", "easy", "medium", "hard"]. Optional, defaults to "none".
         """
         channel_name = str(ctx.channel.category)
