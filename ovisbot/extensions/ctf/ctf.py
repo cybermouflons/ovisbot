@@ -1,4 +1,6 @@
+import base64
 import copy
+import os
 import discord
 import datetime
 import logging
@@ -107,13 +109,40 @@ class Ctf(commands.Cog):
         ctf = CTF.objects.get({"name": ctf_name})
         category = discord.utils.get(ctx.guild.categories, name=ctf_name)
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
-
+        
         if ctfrole is not None:
             await ctfrole.delete()
+
         for c in category.channels:
+            f = open(c.name + ".md","w")
+
+            pinnedMessages = await c.pins()
+
+            for pinned in pinnedMessages:
+                f.write(pinned.content + os.linesep)
+
+                attachs = pinned.attachments
+                for a in attachs:
+                    base64string = base64.b64encode(await a.read())
+                    # convert the image base 64 to a string
+                    image_string = str(base64string)
+                    # replace the newline characters
+                    image_string = image_string.replace("\\n", "")
+                    # replace the initial binary
+                    image_string = image_string.replace("b'", "")
+                    # replace the final question mark
+                    image_string = image_string.replace("'", "")
+
+                    f.write("![attachment](data:" + a.content_type + ";base64," + image_string + ")"+ os.linesep)
+                
+                f.write("---" + os.linesep)
+
+            f.close()
+
             await c.delete()
 
         await category.delete()
+
         ctf.name = "__ARCHIVED__" + ctf.name  # bug fix (==)
         ctf.save()
 
