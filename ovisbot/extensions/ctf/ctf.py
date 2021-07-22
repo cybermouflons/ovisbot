@@ -9,6 +9,8 @@ import re
 import requests
 import dateutil.parser
 import pytz
+import random
+import json
 
 import ovisbot.locale as i18n
 
@@ -114,30 +116,11 @@ class Ctf(commands.Cog):
             await ctfrole.delete()
 
         for c in category.channels:
-            f = open(c.name + ".md","w")
 
-            pinnedMessages = await c.pins()
-
-            for pinned in pinnedMessages:
-                f.write(pinned.content + os.linesep)
-
-                attachs = pinned.attachments
-                for a in attachs:
-                    base64string = base64.b64encode(await a.read())
-                    # convert the image base 64 to a string
-                    image_string = str(base64string)
-                    # replace the newline characters
-                    image_string = image_string.replace("\\n", "")
-                    # replace the initial binary
-                    image_string = image_string.replace("b'", "")
-                    # replace the final question mark
-                    image_string = image_string.replace("'", "")
-
-                    f.write("![attachment](data:" + a.content_type + ";base64," + image_string + ")"+ os.linesep)
-                
-                f.write("---" + os.linesep)
-
-            f.close()
+            challenge = next((ch for ch in ctf.challenges if ch.name == c.name), None)
+            if not not challenge and challenge.solved_at:
+                await harvestPins(c)
+                self.pushToGitHub(ctf_name,c.name)
 
             await c.delete()
 
@@ -937,7 +920,47 @@ class Ctf(commands.Cog):
                     )
             except CTF.DoesNotExist:
                 continue
+    
+    def pushToGitHub(self,ctf_name,challenge_name):
 
+        pinsDir = os.path.abspath(os.getcwd()) + '/pins/'
+        for filename in os.listdir(pinsDir):
+            url = self.bot.config_cls.GITHUB_SOLVES_REPO + ctf_name + "/" + challenge_name + "/" + filename
+            file = base64.b64encode(open(pinsDir + filename, "rb").read())
+
+            token = self.bot.config_cls.GITHUB_TOKEN
+            message = json.dumps({
+                        "message":"add pins for challenge " + challenge_name + " of ctf " + ctf_name,
+                        "branch": "main",
+                        "content": file.decode("utf-8")
+            })
+
+            resp=requests.put(url, data = message, headers = {"Accept": "application/vnd.github.v3+json", "Authorization": "token "+token})
+            os.remove(pinsDir + filename)
+
+# Gathers all pinned messages and files in the /pins folder
+async def harvestPins(channel):
+    pinsDir = os.path.abspath(os.getcwd()) + '/pins'
+    completeName = os.path.join(pinsDir, channel.name + ".md") 
+    f = open(completeName,"w")
+
+    pinnedMessages = await channel.pins()
+
+    # reversed as to write first pinned message, first.
+    # otherwise, the last pinned message is the first to be written.
+    for pinned in reversed(pinnedMessages):
+
+        f.write(pinned.content + os.linesep)
+
+        attachs = pinned.attachments
+        if(len(attachs) != 0):
+            for a in attachs:
+                await a.save(os.path.join(pinsDir, a.filename))
+                f.write("check file " + a.filename + " in this directory." + os.linesep)
+        
+        f.write(os.linesep + "---" + os.linesep)
+
+    f.close()
 
 def setup(bot):
     bot.add_cog(Ctf(bot))
