@@ -921,6 +921,7 @@ class Ctf(commands.Cog):
             except CTF.DoesNotExist:
                 continue
     
+    # TODO Make async somehow to avoid request stall
     def pushToGitHub(self,ctf_name,challenge_name):
 
         pinsDir = os.path.abspath(os.getcwd()) + '/pins/'
@@ -930,7 +931,7 @@ class Ctf(commands.Cog):
 
             token = self.bot.config_cls.GITHUB_TOKEN
             message = json.dumps({
-                        "message":"add pins for challenge " + challenge_name + " of ctf " + ctf_name,
+                        "message":"store pins of challenge " + challenge_name + " from " + ctf_name + " ctf.",
                         "branch": "main",
                         "content": file.decode("utf-8")
             })
@@ -956,7 +957,8 @@ async def harvestPins(channel):
         if(len(attachs) != 0):
             for a in attachs:
                 await a.save(os.path.join(pinsDir, a.filename))
-                f.write("check file " + a.filename + " in this directory." + os.linesep)
+                file = "[" + a.filename + "]" + "(./" + a.filename + ")"
+                f.write(os.linesep + file + os.linesep)
         
         f.write(os.linesep + "---" + os.linesep)
 
