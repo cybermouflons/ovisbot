@@ -24,6 +24,7 @@ from ovisbot.exceptions import (
     FewParametersException,
     ChallengeAlreadySolvedException,
     ChallengeInvalidCategory,
+    ChallengeInvalidDifficulty,
     ChallengeExistsException,
     ChallengeDoesNotExistException,
     NotInChallengeChannelException,
@@ -59,9 +60,24 @@ CHALLENGE_CATEGORIES = [
     "reverse",
     "stego",
     "forensics",
+    "osint",
     "htb",
 ]
 
+CHALLENGE_DIFFICULTIES = [
+    "none",
+    "easy",
+    "medium",
+    "hard"
+]
+
+# difficulty -> (:emoji:, text)
+DIFFICULTY_REWARDS = {
+    "none": (":candy:", "κουφεττούα"),
+    "easy": (":cookie:", "πισκοττούιν"),
+    "medium": (":lollipop:", ["μηλούιν", "πίππιλλο", "γλειφιτζούρι"]),
+    "hard": (":icecream:", "παωτόν"),
+}
 
 class Ctf(commands.Cog):
     def __init__(self, bot):
@@ -183,17 +199,27 @@ class Ctf(commands.Cog):
             )
 
     @ctf.command(aliases=["addchall"])
-    async def addchallenge(self, ctx, challname, category):
+    async def addchallenge(self, ctx, challname, category, difficulty="none"):
         """
-        Creates a private channel for a challenge. Valid category names are: crypto, web, misc, pwn, reverse, stego
+        Creates a private channel for a challenge.
+
+        Parameters:
+            challenge (str): Name of the challenge
+            category (str): Name of challenge's category
+            difficulty (str): Can be one of ["none", "easy", "medium", "hard"]. Optional, defaults to "none".
         """
         channel_name = str(ctx.channel.category)
         ctf = CTF.objects.get({"name": channel_name})
 
         challenge_name = challname.lower()
+
         category = category.lower()
         if category not in CHALLENGE_CATEGORIES:
             raise ChallengeInvalidCategory
+
+        difficulty = difficulty.lower()
+        if difficulty not in CHALLENGE_DIFFICULTIES:
+            raise ChallengeInvalidDifficulty
 
         challenges = [
             c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
@@ -214,7 +240,7 @@ class Ctf(commands.Cog):
         )
         new_challenge = Challenge(
             name=challenge_channel.name,
-            tags=[category],
+            tags=[category, difficulty],
             created_at=datetime.datetime.now(),
             attempted_by=[ctx.message.author.name],
             notebook_url=notebook_url,
@@ -241,6 +267,10 @@ class Ctf(commands.Cog):
         elif isinstance(error.original, ChallengeInvalidCategory):
             await ctx.channel.send(
                 "Not valid challenge category provided. !help for more info"
+            )
+        elif isinstance(error.original, ChallengeInvalidDifficulty):
+            await ctx.channel.send(
+                "Not valid challenge difficulty provided. !help for more info"
             )
         elif isinstance(error.original, ChallengeExistsException):
             await ctx.channel.send(
@@ -346,7 +376,8 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def solve(self, ctx):
         """
-        Marks the current challenge as solved by you. Addition of team mates that helped to solve is optional
+        Marks the current challenge as solved by you. 
+        Addition of team mates that helped to solve is optional
         """
         chall_name = ctx.channel.name
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
@@ -370,16 +401,30 @@ class Ctf(commands.Cog):
                 [ctx.message.author.name] + [m.name for m in ctx.message.mentions]
             )
         )
+
+        # look for difficulty in challenge's tags
+        # default to "none" if no matching difficulty is found
+        difficulty = "none"
+        tags_lower = [x.lower() for x in challenge.tags]
+        for d in DIFFICULTY_REWARDS:
+            if d.lower() in tags_lower:
+                difficulty = d
+
+        reward = DIFFICULTY_REWARDS[difficulty]
+        reward_emoji, reward_text = reward
+        if isinstance(reward_text, list):
+            reward_text = random.choice(reward_text)
+
         await ctx.channel.send(
-            "Πελλαμός! {0}! Congrats for solving {1}. Έλα κουφεττούα :candy:".format(
-                solvers_str, chall_name
+            "Πελλαμός! {0}! Congrats for solving {1}. Έλα {2} {3}".format(
+                solvers_str, chall_name, reward_text, reward_emoji
             )
         )
         general_channel = discord.utils.get(
             ctx.channel.category.channels, name="general"
         )
         await general_channel.send(
-            f"{solvers_str} solved the {chall_name} challenge! :candy: :candy:"
+            f"{solvers_str} solved the {chall_name} challenge! {reward_emoji} {reward_emoji}"
         )
 
     @solve.error
