@@ -34,7 +34,6 @@ gitpython = "*"
 pynacl = "*"
 python-dateutil = "*"
 click = "*"
-discord = "*"
 
 [requires]
 python_version = "3.7"

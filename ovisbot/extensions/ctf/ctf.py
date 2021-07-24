@@ -116,9 +116,8 @@ class Ctf(commands.Cog):
             await ctfrole.delete()
 
         for c in category.channels:
-
             challenge = next((ch for ch in ctf.challenges if ch.name == c.name), None)
-            if not not challenge and challenge.solved_at:
+            if challenge is not None and challenge.solved_at:
                 await harvestPins(c)
                 self.pushToGitHub(ctf_name,c.name)
 
@@ -923,15 +922,15 @@ class Ctf(commands.Cog):
     
     # TODO Make async somehow to avoid request stall
     def pushToGitHub(self,ctf_name,challenge_name):
+        pinsDir = f'{os.path.abspath(os.getcwd())}/pins/'
 
-        pinsDir = os.path.abspath(os.getcwd()) + '/pins/'
         for filename in os.listdir(pinsDir):
-            url = self.bot.config_cls.GITHUB_SOLVES_REPO + ctf_name + "/" + challenge_name + "/" + filename
+            url = f'{self.bot.config_cls.GITHUB_SOLVES_REPO}{ctf_name}/{challenge_name}/{filename}'
             file = base64.b64encode(open(pinsDir + filename, "rb").read())
 
             token = self.bot.config_cls.GITHUB_TOKEN
             message = json.dumps({
-                        "message":"store pins of challenge " + challenge_name + " from " + ctf_name + " ctf.",
+                        "message":f'store pins of challenge {challenge_name} from {ctf_name} ctf.',
                         "branch": "main",
                         "content": file.decode("utf-8")
             })
@@ -941,8 +940,8 @@ class Ctf(commands.Cog):
 
 # Gathers all pinned messages and files in the /pins folder
 async def harvestPins(channel):
-    pinsDir = os.path.abspath(os.getcwd()) + '/pins'
-    completeName = os.path.join(pinsDir, channel.name + ".md") 
+    pinsDir = f'{os.path.abspath(os.getcwd())}/pins/'
+    completeName = os.path.join(pinsDir, f'{channel.name}.md') 
     f = open(completeName,"w")
 
     pinnedMessages = await channel.pins()
@@ -950,14 +949,13 @@ async def harvestPins(channel):
     # reversed as to write first pinned message, first.
     # otherwise, the last pinned message is the first to be written.
     for pinned in reversed(pinnedMessages):
-
         f.write(pinned.content + os.linesep)
 
         attachs = pinned.attachments
         if(len(attachs) != 0):
             for a in attachs:
                 await a.save(os.path.join(pinsDir, a.filename))
-                file = "[" + a.filename + "]" + "(./" + a.filename + ")"
+                file = f'[{a.filename}](./{a.filename})'
                 f.write(os.linesep + file + os.linesep)
         
         f.write(os.linesep + "---" + os.linesep)
