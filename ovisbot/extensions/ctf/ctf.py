@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import copy
 import os
@@ -11,6 +12,7 @@ import dateutil.parser
 import pytz
 import random
 import json
+import time
 
 import ovisbot.locale as i18n
 
@@ -64,12 +66,7 @@ CHALLENGE_CATEGORIES = [
     "htb",
 ]
 
-CHALLENGE_DIFFICULTIES = [
-    "none",
-    "easy",
-    "medium",
-    "hard"
-]
+CHALLENGE_DIFFICULTIES = ["none", "easy", "medium", "hard"]
 
 # difficulty -> (:emoji:, text)
 DIFFICULTY_REWARDS = {
@@ -78,6 +75,7 @@ DIFFICULTY_REWARDS = {
     "medium": (":lollipop:", ["μηλούιν", "πίππιλλο", "γλειφιτζούρι"]),
     "hard": (":icecream:", "παωτόν"),
 }
+
 
 class Ctf(commands.Cog):
     def __init__(self, bot):
@@ -120,6 +118,7 @@ class Ctf(commands.Cog):
 
     @ctf.command()
     async def archive(self, ctx, ctf_name):
+        start = time.time()
         """
         Arcive a CTF to the DB and remove it from discord
         """
@@ -127,20 +126,21 @@ class Ctf(commands.Cog):
         ctf = CTF.objects.get({"name": ctf_name})
         category = discord.utils.get(ctx.guild.categories, name=ctf_name)
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
-        
+
         if ctfrole is not None:
             await ctfrole.delete()
 
         for c in category.channels:
             challenge = next((ch for ch in ctf.challenges if ch.name == c.name), None)
-            if challenge is not None and challenge.solved_at:
-                await harvestPins(c)
-                self.pushToGitHub(ctf_name,c.name)
+            if challenge is not None:
+                await harvest_pins(c)
+                asyncio.ensure_future(self.push_to_github(ctf_name, c.name))
 
             await c.delete()
 
         await category.delete()
 
+        print(f"Took {(time.time() - start)} seconds to archive")
         ctf.name = "__ARCHIVED__" + ctf.name  # bug fix (==)
         ctf.save()
 
@@ -376,7 +376,7 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def solve(self, ctx):
         """
-        Marks the current challenge as solved by you. 
+        Marks the current challenge as solved by you.
         Addition of team mates that helped to solve is optional
         """
         chall_name = ctx.channel.name
@@ -740,7 +740,7 @@ class Ctf(commands.Cog):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
         await ctx.channel.send(embed=emb)
-  
+
     @showcreds.error
     async def showcreds_error(self, ctx, error):
         if isinstance(error, CTF.DoesNotExist):
@@ -964,48 +964,59 @@ class Ctf(commands.Cog):
                     )
             except CTF.DoesNotExist:
                 continue
-    
-    # TODO Make async somehow to avoid request stall
-    def pushToGitHub(self,ctf_name,challenge_name):
-        pinsDir = f'{os.path.abspath(os.getcwd())}/pins/'
 
-        for filename in os.listdir(pinsDir):
-            url = f'{self.bot.config_cls.GITHUB_SOLVES_REPO}{ctf_name}/{challenge_name}/{filename}'
-            file = base64.b64encode(open(pinsDir + filename, "rb").read())
-
+    async def push_to_github(self, ctf_name, challenge_name):
+        pins_dir = f"{os.path.abspath(os.getcwd())}/pins/{challenge_name}/"
+        for filename in os.listdir(pins_dir):
+            user = self.bot.config_cls.GITHUB_USER
+            repo = self.bot.config_cls.GITHUB_REPO
+            url = f"https://api.github.com/repos/{user}/{repo}/contents/{ctf_name}/{challenge_name}/{filename}"
+            file = base64.b64encode(open(pins_dir + filename, "rb").read())
             token = self.bot.config_cls.GITHUB_TOKEN
-            message = json.dumps({
-                        "message":f'store pins of challenge {challenge_name} from {ctf_name} ctf.',
-                        "branch": "main",
-                        "content": file.decode("utf-8")
-            })
+            message = json.dumps(
+                {
+                    "message": f"store pins of challenge {challenge_name} from {ctf_name} ctf",
+                    "branch": "main",
+                    "content": file.decode("utf-8"),
+                }
+            )
+            resp = requests.put(
+                url,
+                data=message,
+                headers={
+                    "Accept": "application/vnd.github.v3+json",
+                    "Authorization": "token " + token,
+                },
+            )
+            os.remove(pins_dir + filename)
+        os.rmdir(pins_dir)
 
-            resp=requests.put(url, data = message, headers = {"Accept": "application/vnd.github.v3+json", "Authorization": "token "+token})
-            os.remove(pinsDir + filename)
 
 # Gathers all pinned messages and files in the /pins folder
-async def harvestPins(channel):
-    pinsDir = f'{os.path.abspath(os.getcwd())}/pins/'
-    completeName = os.path.join(pinsDir, f'{channel.name}.md') 
-    f = open(completeName,"w")
+async def harvest_pins(channel):
+    pins_dir = f"{os.path.abspath(os.getcwd())}/pins/{channel.name}"
+    os.makedirs(pins_dir)
+    complete_path = os.path.join(pins_dir, f"{channel.name}.md")
+    f = open(complete_path, "x")
 
-    pinnedMessages = await channel.pins()
+    pinned_messages = await channel.pins()
 
     # reversed as to write first pinned message, first.
     # otherwise, the last pinned message is the first to be written.
-    for pinned in reversed(pinnedMessages):
+    for pinned in reversed(pinned_messages):
         f.write(pinned.content + os.linesep)
 
         attachs = pinned.attachments
-        if(len(attachs) != 0):
+        if len(attachs) != 0:
             for a in attachs:
-                await a.save(os.path.join(pinsDir, a.filename))
-                file = f'[{a.filename}](./{a.filename})'
+                await a.save(os.path.join(pins_dir, a.filename))
+                file = f"[{a.filename}](./{a.filename})"
                 f.write(os.linesep + file + os.linesep)
-        
+
         f.write(os.linesep + "---" + os.linesep)
 
     f.close()
+
 
 def setup(bot):
     bot.add_cog(Ctf(bot))
