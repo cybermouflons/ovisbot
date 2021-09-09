@@ -149,6 +149,9 @@ class Config(AbstractConfig):
     DB_URL = environ.get("OVISBOT_DB_URL", "mongodb://mongo/ovisdb")
     COMMAND_PREFIX = environ.get("OVISBOT_COMMAND_PREFIX", "!")
     DISCORD_BOT_TOKEN = environ.get("OVISBOT_DISCORD_TOKEN")
+    GITHUB_CTFSOLVES_TOKEN = environ.get("OVISBOT_CTFSOLVES_GITHUB_TOKEN")
+    GITHUB_CTFSOLVES_USER = environ.get("OVISBOT_CTFSOLVES_GITHUB_USER")
+    GITHUB_CTFSOLVES_REPO = environ.get("OVISBOT_CTFSOLVES_GITHUB_REPO")
 
     THIRD_PARTY_COGS_INSTALL_DIR = environ.get(
         "OVISBOT_THIRD_PARTY_COGS_INSTALL_DIR", "/usr/local/share/ovisbot/cogs"

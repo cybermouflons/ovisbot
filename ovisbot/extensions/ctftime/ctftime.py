@@ -102,25 +102,24 @@ class Ctf(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-    @ctftime.command( aliases = ["w"] )
+    @ctftime.command(aliases=["w"])
     async def writeups(self, ctx, name):
         """
         Returns the submitted writeups for a given CTF
         !ctftime writeups <name>
         !ctftime w <name>
         """
-        event = ctfh.Event( e_name = name )
+        event = ctfh.Event(e_name=name)
         try:
             ctf_name, ctf_writeups = event.find_event_writeups()
         except ValueError:
-            await ctx.channel.send( "Could not find such event" )
+            await ctx.channel.send("Could not find such event")
             return
-        
-        writeups = '\n'.join(ctf_writeups)
+
+        writeups = "\n".join(ctf_writeups)
         writeups = chunkify(writeups, 1700)
         for chunk in writeups:
             await ctx.channel.send(chunk)
-
 
     @writeups.error
     async def writeups_error(self, ctx, error):
