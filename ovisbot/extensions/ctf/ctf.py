@@ -968,15 +968,15 @@ class Ctf(commands.Cog):
     async def push_to_github(self, ctf_name, challenge_name):
         pins_dir = f"{os.path.abspath(os.getcwd())}/pins/{challenge_name}/"
         for filename in os.listdir(pins_dir):
-            user = self.bot.config_cls.GITHUB_USER
-            repo = self.bot.config_cls.GITHUB_REPO
+            user = self.bot.config_cls.GITHUB_CTFSOLVES_USER
+            repo = self.bot.config_cls.GITHUB_CTFSOLVES_REPO
             url = f"https://api.github.com/repos/{user}/{repo}/contents/{ctf_name}/{challenge_name}/{filename}"
             file = base64.b64encode(open(pins_dir + filename, "rb").read())
-            token = self.bot.config_cls.GITHUB_TOKEN
+            token = self.bot.config_cls.GITHUB_CTFSOLVES_TOKEN
             message = json.dumps(
                 {
                     "message": f"store pins of challenge {challenge_name} from {ctf_name} ctf",
-                    "branch": "main",
+                    "branch": "master",
                     "content": file.decode("utf-8"),
                 }
             )
