@@ -19,16 +19,16 @@ def databases_list():
     return(list_databases)
 
 # Query a Database
-def databases_query(id):
-    list_databases_response = notion.databases.query(id)
+def databases_query(database_id):
+    list_databases_response = notion.databases.query(database_id)
     pprint(list_databases_response)
 
 # Query a database which contains a string
-def database_query_string(id,text):
+def database_query_string(database_id,text):
     try:
         my_page = notion.databases.query(
             **{
-                "database_id": f"{id}",
+                "database_id": f"{database_id}",
                 "filter": {
                     "property": f"{text}",
                     "text": {
@@ -46,16 +46,16 @@ def database_query_string(id,text):
             logging.exception('ERROR')
 
 # Retrieve a page
-def pages_retreive(id):
-    page_content = notion.pages.retrieve(id)
+def pages_retreive(page_id):
+    page_content = notion.pages.retrieve(page_id)
     pprint(page_content)
 
     #retieve a property
     print(page_content['properties']['Difficulty']['multi_select'][0]['name'])
 
 # Update a page
-def pages_update(id,page_content):
-    notion.pages.update(f"{id}",**page_content)
+def pages_update(page_id,page_content):
+    notion.pages.update(f"{page_id}",**page_content)
 
 # Create a page
 def pages_create(page_content):
