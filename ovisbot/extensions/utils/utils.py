@@ -64,9 +64,9 @@ class Utils(commands.Cog):
 
     @utils.command()
     async def rotn(self, ctx, shift, *params):
-        """
+        '''
         Returns the ROT-n encoding of a message.
-        """
+        '''
         msg = " ".join(params)
         out = "Original message:\n" + msg
         if shift == "*":
