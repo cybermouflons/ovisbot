@@ -34,7 +34,6 @@ from ovisbot.exceptions import (
 )
 from ovisbot.helpers import (
     chunkify,
-    create_corimd_notebook,
     escape_md,
     failed,
     success,
@@ -197,7 +196,6 @@ class Ctf(commands.Cog):
             self.bot.user: discord.PermissionOverwrite(read_messages=True),
             ctx.message.author: discord.PermissionOverwrite(read_messages=True),
         }
-        notebook_url = create_corimd_notebook()
         challenge_channel = await ctx.channel.category.create_text_channel(
             channel_name + "-" + challenge_name, overwrites=overwrites
         )
@@ -206,16 +204,11 @@ class Ctf(commands.Cog):
             tags=[category],
             created_at=datetime.datetime.now(),
             attempted_by=[ctx.message.author.name],
-            notebook_url=notebook_url,
         )
         ctf.challenges.append(new_challenge)
         ctf.save()
         await success(ctx.message)
         await challenge_channel.send("@here Ατε να δούμε δώστου πίεση!")
-        notebook_msg = await challenge_channel.send(
-            f"Ετο τζαι το δευτερούι σου: {notebook_url}"
-        )
-        await notebook_msg.pin()
 
     @addchallenge.error
     async def addchallenge_error(self, ctx, error):
@@ -274,34 +267,6 @@ class Ctf(commands.Cog):
         elif isinstance(error.original, ChallengeDoesNotExistException):
             await ctx.channel.send(
                 "Παρέα μου... εν κουτσιάς... Εν έσιει έτσι challenge!"
-            )
-
-    @ctf.command()
-    async def notes(self, ctx):
-        """
-        Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then ovis gets mad.
-        """
-        chall_name = ctx.channel.name
-        ctf = CTF.objects.get({"name": ctx.channel.category.name})
-
-        # Find challenge in CTF by name
-        challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
-
-        if not challenge:
-            raise NotInChallengeChannelException
-
-        if challenge.notebook_url != "":
-            await ctx.channel.send(f"Notes: {challenge.notebook_url}")
-        else:
-            await ctx.channel.send("Εν έσσιει έτσι πράμα δαμέ...Τζίλα το...")
-
-    @notes.error
-    async def notes_error(self, ctx, error):
-        if isinstance(
-            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
-        ):
-            await ctx.channel.send(
-                "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
             )
 
     @ctf.command()
