@@ -1,7 +1,7 @@
 import logging
+from ovisbot.helpers import chunkify
 import struct
 import string
-from ovisbot.helpers import chunkify
 
 
 from Crypto.Util.number import long_to_bytes, bytes_to_long
