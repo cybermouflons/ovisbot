@@ -25,7 +25,7 @@ if os.getenv("READTHEDOCS", False):
             "idna==2.10",
             "multidict==4.7.6",
             "parse==1.17.0",
-            "pillow==7.2.0",
+            "pillow==9.0.0",
             "pycparser==2.20",
             "pycryptodome==3.9.8",
             "pymodm==0.4.3",
