@@ -488,6 +488,12 @@ class Ctf(commands.Cog):
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
         await ctx.message.author.remove_roles(ctfrole)
 
+    def is_joinable(challenge):
+        return not (ctx.message.author.name in challenge.attempted_by)
+
+    def is_unsolved(challenge):
+        return challenge.solved_at is None
+
     @ctf.command()
     async def attempt(self, ctx, challname):
         """
@@ -518,6 +524,16 @@ class Ctf(commands.Cog):
 
             ctf.save()
             await ctx.channel.send(f"Άμα είσαι κουνόσσιηλλος...")
+
+        elif chall_name in ['--unsolved', '--rem']:
+            unsolved = filter(lambda x: is_unsolved(x) and is_joinable(x), ctf.challenges)
+            for challenge in unsolved:
+                challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name] # why not .append()?
+                chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
+                await chall_channel.set_permissions(ctx.message.author, read_messages=True)
+            ctf.save()
+            await ctx.channel.send(f"Δώστους βιτσιά {ctx.message.author.name} μου!!")
+
         else:
             challenge = next(
                 (c for c in ctf.challenges if c.name == ctf_name + "-" + chall_name),
