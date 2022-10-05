@@ -40,7 +40,7 @@ if os.getenv("READTHEDOCS", False):
             "soupsieve==2.0.1",
             "texttable==1.6.2",
             "typing-extensions==3.7.4.3; python_version < '3.8'",
-            "urllib3==1.25.10",
+            "urllib3==1.26.5",
             "yarl==1.5.1",
         ],
         **kwargs,
