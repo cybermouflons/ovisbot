@@ -190,5 +190,5 @@ class CryptoHack(commands.Cog):
             await ctx.channel.send("Ούπς... κατι επήε λάθος ρε τσιάκκο!")
 
 
-def setup(bot):
-    bot.add_cog(CryptoHack(bot))
+async def setup(bot):
+    await bot.add_cog(CryptoHack(bot))

@@ -1,5 +1,6 @@
 __pycache__
 *.env
+*.env.local.*
 .vscode
 .DS_Store
 *.egg-info

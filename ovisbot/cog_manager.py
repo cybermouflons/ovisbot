@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import logging
@@ -70,7 +71,7 @@ class CogManager(object):
         """Loads a cog based ona CogDetails object"""
         try:
             sys.path.insert(1, cog.local_path)
-            self._bot.load_extension(cog.name)
+            asyncio.run(self._bot.load_extension(cog.name))
             logger.info(
                 Fore.GREEN
                 + "[Success]"

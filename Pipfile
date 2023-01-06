@@ -18,7 +18,7 @@ flake8 = "*"
 sphinx = "*"
 
 [packages]
-discord-py = "*"
+discord-py = "==2.1.0"
 colorama = "*"
 pytz = "*"
 python-dotenv = "*"
@@ -36,7 +36,7 @@ python-dateutil = "*"
 click = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
 
 [scripts]
 build = "python setup.py sdist bdist_wheel"

@@ -114,5 +114,5 @@ class Utils(commands.Cog):
                     f"=> {unix_passwd}\n" +\
                     f"=> {shadow}")
 
-def setup(bot):
-    bot.add_cog(Utils(bot))
+async def setup(bot):
+    await bot.add_cog(Utils(bot))

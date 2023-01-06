@@ -46,7 +46,10 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
             )
             exit(1)
 
-        super().__init__(*args, command_prefix=self.config.COMMAND_PREFIX, **kwargs)
+        intents = discord.Intents.default()
+        intents.message_content = True
+
+        super().__init__(*args, command_prefix=self.config.COMMAND_PREFIX, intents=intents, **kwargs)
 
         # Perform necessary tasks
         Path(self.config.THIRD_PARTY_COGS_INSTALL_DIR).mkdir(
@@ -67,7 +70,7 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
             self.cog_manager = CogManager(self)
             self.cog_manager.load_cogs()
         except ExtensionNotFound:
-            pass
+            logger.error("Extension not found")
 
     def launch(self) -> None:
         logger.info("Launching bot...")
