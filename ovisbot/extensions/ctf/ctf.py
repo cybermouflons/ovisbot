@@ -518,6 +518,17 @@ class Ctf(commands.Cog):
 
             ctf.save()
             await ctx.channel.send(f"Άμα είσαι κουνόσσιηλλος...")
+        elif chall_name == '--unsolved':
+            author = ctx.message.author.name
+            # fetch all challenges that have an empty "solved_at" attribute
+            for challenge in filter(lambda x: not x.solved_at, ctf.challenges):
+                if author in challenge.attempted_by:
+                    continue
+                challenge.attempted_by.append(author)
+                chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
+                await chall_channel.set_permissions(author, read_messages=True)
+            ctf.save()
+            await ctx.channel.send("Άτε ρε παιχτουρα μου δωκε μεσα...")
         else:
             challenge = next(
                 (c for c in ctf.challenges if c.name == ctf_name + "-" + chall_name),
