@@ -529,10 +529,10 @@ class Ctf(commands.Cog):
                 await chall_channel.set_permissions(author, read_messages=True)
             ctf.save()
             await ctx.channel.send("Άτε ρε παιχτουρα μου δωκε μεσα...")
-        elif chall_name.startswith("--") and chall_name[2:] in ['web', 'pwn', 'misc', 'crypto', 'forensics', 'hardware']:
+        elif chall_name.startswith("--unsolved-") and chall_name[11:] in ['web', 'pwn', 'misc', 'crypto', 'forensics', 'hardware']:
             author = ctx.message.author.name
             # fetch unsolved challenges which are in the mentioned category
-            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[2:]), ctf.challenges):
+            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[11:]), ctf.challenges):
                 if author in challenge.attempted_by:
                     continue
                 challenge.attempted_by.append(author)
