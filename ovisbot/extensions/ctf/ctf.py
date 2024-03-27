@@ -518,6 +518,28 @@ class Ctf(commands.Cog):
 
             ctf.save()
             await ctx.channel.send(f"Άμα είσαι κουνόσσιηλλος...")
+        elif chall_name == '--unsolved':
+            author = ctx.message.author.name
+            # fetch all challenges that have an empty "solved_at" attribute
+            for challenge in filter(lambda x: not x.solved_at, ctf.challenges):
+                if author in challenge.attempted_by:
+                    continue
+                challenge.attempted_by.append(author)
+                chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
+                await chall_channel.set_permissions(author, read_messages=True)
+            ctf.save()
+            await ctx.channel.send("Άτε ρε παιχτουρα μου δωκε μεσα...")
+        elif chall_name.startswith("--unsolved-") and chall_name[11:] in ['web', 'pwn', 'misc', 'crypto', 'forensics', 'hardware']:
+            author = ctx.message.author.name
+            # fetch unsolved challenges which are in the mentioned category
+            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[11:]), ctf.challenges):
+                if author in challenge.attempted_by:
+                    continue
+                challenge.attempted_by.append(author)
+                chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
+                await chall_channel.set_permissions(author, read_messages=True)
+            ctf.save()
+            await ctx.channel.send("Είσαι μια πίεση απίεστη λαλούμεν...")
         else:
             challenge = next(
                 (c for c in ctf.challenges if c.name == ctf_name + "-" + chall_name),
