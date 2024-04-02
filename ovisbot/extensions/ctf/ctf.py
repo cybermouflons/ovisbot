@@ -49,6 +49,8 @@ import pymodm
 
 logger = logging.getLogger(__name__)
 
+UNSOLVED_PREFIX_LEN = len('--unsolved-') - 1
+
 CHALLENGE_CATEGORIES = [
     "crypto",
     "web",
@@ -529,10 +531,10 @@ class Ctf(commands.Cog):
                 await chall_channel.set_permissions(author, read_messages=True)
             ctf.save()
             await ctx.channel.send("Άτε ρε παιχτουρα μου δωκε μεσα...")
-        elif chall_name.startswith("--unsolved-") and chall_name[11:] in ['web', 'pwn', 'misc', 'crypto', 'forensics', 'hardware']:
+        elif chall_name.startswith("--unsolved-") and chall_name[UNSOLVED_PREFIX_LEN:] in CHALLENGE_CATEGORIES:
             author = ctx.message.author.name
             # fetch unsolved challenges which are in the mentioned category
-            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[11:]), ctf.challenges):
+            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[UNSOLVED_PREFIX_LEN:]), ctf.challenges):
                 if author in challenge.attempted_by:
                     continue
                 challenge.attempted_by.append(author)
