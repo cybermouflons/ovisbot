@@ -49,6 +49,8 @@ import pymodm
 
 logger = logging.getLogger(__name__)
 
+UNSOLVED_PREFIX_LEN = len('--unsolved-') - 1
+
 CHALLENGE_CATEGORIES = [
     "crypto",
     "web",
@@ -76,6 +78,7 @@ DIFFICULTY_REWARDS = {
     "medium": (":lollipop:", ["μηλούιν", "πίππιλλο", "γλειφιτζούρι"]),
     "hard": (":icecream:", "παωτόν"),
 }
+
 
 class Ctf(commands.Cog):
     def __init__(self, bot):
@@ -367,7 +370,7 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def solve(self, ctx):
         """
-        Marks the current challenge as solved by you. 
+        Marks the current challenge as solved by you.
         Addition of team mates that helped to solve is optional
         """
         chall_name = ctx.channel.name
@@ -459,7 +462,7 @@ class Ctf(commands.Cog):
                 "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
             )
         elif isinstance(error.original, ChallengeNotSolvedException):
-            await ctx.channel.send(f"Ρε κουμπάρε.. αφού ένεν λυμένη η ασκηση.")
+            await ctx.channel.send("Ρε κουμπάρε.. αφού ένεν λυμένη η ασκηση.")
 
     @ctf.command()
     async def join(self, ctx, *params):
@@ -517,7 +520,7 @@ class Ctf(commands.Cog):
                 )
 
             ctf.save()
-            await ctx.channel.send(f"Άμα είσαι κουνόσσιηλλος...")
+            await ctx.channel.send("Άμα είσαι κουνόσσιηλλος...")
         elif chall_name == '--unsolved':
             author = ctx.message.author.name
             # fetch all challenges that have an empty "solved_at" attribute
@@ -529,10 +532,10 @@ class Ctf(commands.Cog):
                 await chall_channel.set_permissions(author, read_messages=True)
             ctf.save()
             await ctx.channel.send("Άτε ρε παιχτουρα μου δωκε μεσα...")
-        elif chall_name.startswith("--unsolved-") and chall_name[11:] in ['web', 'pwn', 'misc', 'crypto', 'forensics', 'hardware']:
+        elif chall_name.startswith("--unsolved-") and chall_name[UNSOLVED_PREFIX_LEN:] in CHALLENGE_CATEGORIES:
             author = ctx.message.author.name
             # fetch unsolved challenges which are in the mentioned category
-            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[11:]), ctf.challenges):
+            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[UNSOLVED_PREFIX_LEN:]), ctf.challenges):
                 if author in challenge.attempted_by:
                     continue
                 challenge.attempted_by.append(author)
@@ -753,7 +756,7 @@ class Ctf(commands.Cog):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
         await ctx.channel.send(embed=emb)
-  
+
     @showcreds.error
     async def showcreds_error(self, ctx, error):
         if isinstance(error, CTF.DoesNotExist):
