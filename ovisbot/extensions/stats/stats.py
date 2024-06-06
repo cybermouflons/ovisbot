@@ -71,5 +71,5 @@ class Stats(commands.Cog):
         await ctx.send(f"{p_choice}\n```CSS\n{to_ret}```")
 
 
-def setup(bot):
-    bot.add_cog(Stats(bot))
+async def setup(bot):
+    await bot.add_cog(Stats(bot))
