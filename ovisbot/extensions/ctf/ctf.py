@@ -69,6 +69,18 @@ CHALLENGE_DIFFICULTIES = [
     "hard"
 ]
 
+EMOJI = {
+    "solved": "✅",
+    "unsolved": "⌛"
+}
+
+CHALLENGE_TAGS = ({
+    'solved': discord.ForumTag(name="solved", emoji=EMOJI["solved"]),
+    'unsolved': discord.ForumTag(name="unsolved", emoji=EMOJI["unsolved"])
+} | {x: discord.ForumTag(name=x) for x in CHALLENGE_CATEGORIES}
+    | {x: discord.ForumTag(name=x) for x in CHALLENGE_DIFFICULTIES}
+)
+
 # difficulty -> (:emoji:, text)
 DIFFICULTY_REWARDS = {
     "none": (":candy:", "κουφεττούα"),
@@ -76,6 +88,7 @@ DIFFICULTY_REWARDS = {
     "medium": (":lollipop:", ["μηλούιν", "πίππιλλο", "γλειφιτζούρι"]),
     "hard": (":icecream:", "παωτόν"),
 }
+
 
 class Ctf(commands.Cog):
     def __init__(self, bot):
@@ -119,7 +132,7 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def archive(self, ctx, ctf_name):
         """
-        Arcive a CTF to the DB and remove it from discord
+        Archive a CTF to the DB and remove it from discord
         """
         ctf_name = ctf_name.lower()
         ctf = CTF.objects.get({"name": ctf_name})
@@ -174,6 +187,12 @@ class Ctf(commands.Cog):
         general_channel = await self.guild.create_text_channel(
             name="general", category=category
         )
+
+        chall_overwrites = overwrites
+        chall_overwrites[ctfrole].send_messages = False
+        chall_channel = await self.guild.create_forum(
+            name="challs", category=category, available_tags=CHALLENGE_TAGS.values(), overwrites=chall_overwrites
+        )
         CTF(name=category, created_at=datetime.datetime.now(), challenges=[]).save()
         await success(ctx.message)
         await general_channel.send(f"@here Καλως ορίσατε στο {category} CTF")
@@ -226,11 +245,25 @@ class Ctf(commands.Cog):
             ctx.message.author: discord.PermissionOverwrite(read_messages=True),
         }
         notebook_url = create_corimd_notebook()
-        challenge_channel = await ctx.channel.category.create_text_channel(
-            channel_name + "-" + challenge_name, overwrites=overwrites
-        )
+
+        # Find challenges forum channel
+        category_channels = [x for x in ctx.channel.category.channels if x.name ==
+                             "challs" and isinstance(x, discord.ForumChannel)]
+        if len(category_channels) != 1:
+            raise CTF.DoesNotExist
+
+        challenges_forum = category_channels[0]
+        chosen_tags = ['unsolved', category]
+        if difficulty != 'none':
+            chosen_tags.append(difficulty)
+        tags = [
+            tag for tag in challenges_forum.available_tags if tag.name in chosen_tags]
+        challenge_channel, _ = await challenges_forum.create_thread(
+            name=f"{EMOJI['unsolved']} - {challenge_name}", content="@here Ατε να δούμε δώστου πίεση!",
+            applied_tags=tags)
+
         new_challenge = Challenge(
-            name=challenge_channel.name,
+            name=challenge_name,
             tags=[category, difficulty],
             created_at=datetime.datetime.now(),
             attempted_by=[ctx.message.author.name],
@@ -239,7 +272,6 @@ class Ctf(commands.Cog):
         ctf.challenges.append(new_challenge)
         ctf.save()
         await success(ctx.message)
-        await challenge_channel.send("@here Ατε να δούμε δώστου πίεση!")
         notebook_msg = await challenge_channel.send(
             f"Ετο τζαι το δευτερούι σου: {notebook_url}"
         )
@@ -317,7 +349,8 @@ class Ctf(commands.Cog):
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
 
         # Find challenge in CTF by name
-        challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+        challenge = next(
+            (c for c in ctf.challenges if c.name == chall_name), None)
 
         if not challenge:
             raise NotInChallengeChannelException
@@ -370,11 +403,12 @@ class Ctf(commands.Cog):
         Marks the current challenge as solved by you. 
         Addition of team mates that helped to solve is optional
         """
-        chall_name = ctx.channel.name
+        chall_name = get_chall_name(ctx)
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
 
         # Find challenge in CTF by name
-        challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+        challenge = next(
+            (c for c in ctf.challenges if c.name == chall_name), None)
 
         if not challenge:
             raise NotInChallengeChannelException
@@ -389,7 +423,8 @@ class Ctf(commands.Cog):
 
         solvers_str = escape_md(
             ", ".join(
-                [ctx.message.author.name] + [m.name for m in ctx.message.mentions]
+                [ctx.message.author.name] +
+                [m.name for m in ctx.message.mentions]
             )
         )
 
@@ -406,6 +441,10 @@ class Ctf(commands.Cog):
         if isinstance(reward_text, list):
             reward_text = random.choice(reward_text)
 
+        new_tags = change_tags(
+            ctx.channel, add=['solved'], remove=['unsolved'])
+        await ctx.channel.edit(name=f"{EMOJI['solved']} - {chall_name}", applied_tags=new_tags)
+
         await ctx.channel.send(
             "Πελλαμός! {0}! Congrats for solving {1}. Έλα {2} {3}".format(
                 solvers_str, chall_name, reward_text, reward_emoji
@@ -415,7 +454,8 @@ class Ctf(commands.Cog):
             ctx.channel.category.channels, name="general"
         )
         await general_channel.send(
-            f"{solvers_str} solved the {chall_name} challenge! {reward_emoji} {reward_emoji}"
+            f"{solvers_str} solved the {chall_name} challenge! {
+                reward_emoji} {reward_emoji}"
         )
 
     @solve.error
@@ -428,7 +468,8 @@ class Ctf(commands.Cog):
             )
         elif isinstance(error.original, ChallengeAlreadySolvedException):
             await ctx.channel.send(
-                f'Άρκησες! This challenge has already been solved by {", ".join(error.original.solved_by)}!'
+                f'Άρκησες! This challenge has already been solved by {
+                    ", ".join(error.original.solved_by)}!'
             )
 
     @ctf.command()
@@ -436,10 +477,15 @@ class Ctf(commands.Cog):
         """
         Marks the current challenge as unsolved. Allows to to rollback accidental solves.
         """
-        chall_name = ctx.channel.name
+        chall_name = get_chall_name(ctx)
         ctf = CTF.objects.get({"name": ctx.channel.category.name})
 
-        challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
+        new_tags = change_tags(
+            ctx.channel, add=['unsolved'], remove=['solved'])
+        await ctx.channel.edit(name=f"{EMOJI['unsolved']} - {chall_name}", applied_tags=new_tags)
+
+        challenge = next(
+            (c for c in ctf.challenges if c.name == chall_name), None)
 
         if not challenge:
             raise NotInChallengeChannelException
@@ -487,101 +533,6 @@ class Ctf(commands.Cog):
         ctf_name = str(ctx.channel.category)
         ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
         await ctx.message.author.remove_roles(ctfrole)
-
-    @ctf.command()
-    async def attempt(self, ctx, challname):
-        """
-        Adds you to the private channel of that challenge. Use !ctf status to see active challenges.
-        """
-        ctf_name = str(ctx.channel.category)
-        ctf = CTF.objects.get({"name": ctf_name})
-
-        chall_name = challname.lower()
-
-        if chall_name == "--all":
-            for challenge in ctf.challenges:
-                if (
-                    ctx.message.author.name
-                    in challenge.attempted_by
-                    # or challenge.solved_at
-                ):
-                    continue
-                challenge.attempted_by = challenge.attempted_by + [
-                    ctx.message.author.name
-                ]
-                chall_channel = discord.utils.get(
-                    ctx.channel.category.channels, name=challenge.name
-                )
-                await chall_channel.set_permissions(
-                    ctx.message.author, read_messages=True
-                )
-
-            ctf.save()
-            await ctx.channel.send(f"Άμα είσαι κουνόσσιηλλος...")
-        elif chall_name == '--unsolved':
-            author = ctx.message.author.name
-            # fetch all challenges that have an empty "solved_at" attribute
-            for challenge in filter(lambda x: not x.solved_at, ctf.challenges):
-                if author in challenge.attempted_by:
-                    continue
-                challenge.attempted_by.append(author)
-                chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
-                await chall_channel.set_permissions(author, read_messages=True)
-            ctf.save()
-            await ctx.channel.send("Άτε ρε παιχτουρα μου δωκε μεσα...")
-        elif chall_name.startswith("--unsolved-") and chall_name[11:] in ['web', 'pwn', 'misc', 'crypto', 'forensics', 'hardware']:
-            author = ctx.message.author.name
-            # fetch unsolved challenges which are in the mentioned category
-            for challenge in filter(lambda x: not x.solved_at and x.tags.count(chall_name[11:]), ctf.challenges):
-                if author in challenge.attempted_by:
-                    continue
-                challenge.attempted_by.append(author)
-                chall_channel = discord.utils.get(ctx.channel.category.channels, name=challenge.name)
-                await chall_channel.set_permissions(author, read_messages=True)
-            ctf.save()
-            await ctx.channel.send("Είσαι μια πίεση απίεστη λαλούμεν...")
-        else:
-            challenge = next(
-                (c for c in ctf.challenges if c.name == ctf_name + "-" + chall_name),
-                None,
-            )
-            if not challenge:
-                raise ChallengeDoesNotExistException
-            # if challenge.solved_at:
-            #     raise ChallengeAlreadySolvedException
-            if ctx.message.author.name in challenge.attempted_by:
-                raise UserAlreadyInChallengeChannelException
-
-            chall_channel = discord.utils.get(
-                ctx.channel.category.channels, name=ctf_name + "-" + chall_name
-            )
-            await chall_channel.set_permissions(ctx.message.author, read_messages=True)
-
-            # TODO(investigate): ch.attempted_by.append(ctx.message.author.name) mutates all embedded challenges
-            challenge.attempted_by = challenge.attempted_by + [ctx.message.author.name]
-            ctf.save()
-            await ctx.channel.send(
-                f'Άτε {ctx.message.author.name} μου! Έβαλα σε τζιαι στη λίστα τζείνων που μάχουνται πάνω στο challenge. [{", ".join(challenge.attempted_by)}]'
-            )
-
-    @attempt.error
-    async def attempt_error(self, ctx, error):
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-        elif isinstance(error.original, ChallengeDoesNotExistException):
-            await ctx.channel.send(
-                "Μα περιπέζεις μας; There is not such a challenge. Create it using !ctf addchallenge"
-            )
-        elif isinstance(error.original, ChallengeAlreadySolvedException):
-            await ctx.channel.send("Ρε μπρο μου... Ελύσαμε το τουτο το challenge αφού.")
-        elif isinstance(error.original, UserAlreadyInChallengeChannelException):
-            await ctx.channel.send("Ρε αρφούι μου... Είσαι ήδη μέσα στη λιστούα.")
-        else:
-            await ctx.channel.send(
-                "Εν τα κατάφερα να σε βάλω μέσα στη λιστούα... Σόρρυ."
-            )
 
     @ctf.command()
     async def description(self, ctx, *, description):
@@ -753,7 +704,7 @@ class Ctf(commands.Cog):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
         await ctx.channel.send(embed=emb)
-  
+
     @showcreds.error
     async def showcreds_error(self, ctx, error):
         if isinstance(error, CTF.DoesNotExist):
@@ -800,7 +751,7 @@ class Ctf(commands.Cog):
     @ctf.command(name="countdown")
     async def countdown(self, ctx):
         """
-        Displays countdown unitl CTF starts. Requires a start date to be set.
+        Displays countdown until CTF starts. Requires a start date to be set.
         @raises MissingStartDateException if ctf.start_date is None
         """
         ctf = self._get_channel_ctf(ctx)
@@ -932,12 +883,13 @@ class Ctf(commands.Cog):
                 ctf_doc = CTF.objects.get({"name": ctf.name})
                 now = datetime.datetime.now()
 
-                ## Check Custom Reminders
+                # Check Custom Reminders
                 if ctf_doc.start_date and ctf_doc.pending_reminders:
                     for reminder in copy.deepcopy(ctf_doc.pending_reminders):
                         if now >= reminder:
                             logger.info(
-                                "Sending reminder to {0}".format(reminders_channel)
+                                "Sending reminder to {0}".format(
+                                    reminders_channel)
                             )
                             delta = abs(ctf_doc.start_date - now)
                             if now > ctf_doc.start_date:
@@ -945,12 +897,13 @@ class Ctf(commands.Cog):
                             else:
                                 reminder_text = "⏰  Ντριιιινγκ... Ντριιινγκ!! Ατέ μανα μου, ξυπνάτε! Το **{0}** ξεκινά σε **{1}** λεπτά! ⏰"
                             await reminders_channel.send(
-                                reminder_text.format(ctf.name, int(delta.seconds / 60))
+                                reminder_text.format(
+                                    ctf.name, int(delta.seconds / 60))
                             )
                             ctf_doc.pending_reminders.remove(reminder)
                             ctf_doc.save()
 
-                ## Check Start Reminders
+                # Check Start Reminders
                 now_truncated = now.replace(second=0, microsecond=0)
                 if (
                     ctf_doc.start_date
@@ -963,7 +916,7 @@ class Ctf(commands.Cog):
                         )
                     )
 
-                ## Check End Reminders
+                # Check End Reminders
                 now_truncated = now.replace(second=0, microsecond=0)
                 if (
                     ctf_doc.end_date
@@ -979,5 +932,24 @@ class Ctf(commands.Cog):
                 continue
 
 
-def setup(bot):
-    bot.add_cog(Ctf(bot))
+def change_tags(thread: discord.Thread, add: list[str] = [], remove: list[str] = []):
+    new_tags = thread.applied_tags
+    for t in new_tags:
+        if t.name in remove:
+            new_tags.remove(t)
+    new_tags += [x for x in thread.parent.available_tags
+                 if x.name in add]
+    return new_tags
+
+
+def get_chall_name(ctx):
+    name = ctx.channel.name
+    for emoji in EMOJI.values():
+        if name.startswith(emoji + " - "):
+            return name[len(emoji + " - "):]
+    return name
+
+
+async def setup(bot):
+    await bot.add_cog(Ctf(bot))
+

@@ -37,14 +37,16 @@ class CogManager(object):
 
     def _builitin_cogs(self):
         """Returns a list of CogDetails objects for the builtin cogs"""
-        builtin_cogs_dir = os.path.join(Path(__file__).resolve().parent, "extensions")
+        builtin_cogs_dir = os.path.join(
+            Path(__file__).resolve().parent, "extensions")
         builtin_cogs = self._create_cogs_from_path(builtin_cogs_dir)
 
         # Load builtin cogs from DB or create cog if does not exist
         cogs = []
         for cog in builtin_cogs:
             try:
-                saved_cog = CogDetails.objects.get({"name": cog.name, "url": None})
+                saved_cog = CogDetails.objects.get(
+                    {"name": cog.name, "url": None})
                 cogs.append(saved_cog)
             except CogDetails.DoesNotExist:
                 cogs.append(cog)
@@ -66,11 +68,11 @@ class CogManager(object):
             and not diritem.endswith("__")
         ]
 
-    def _load_cog_from_object(self, cog: CogDetails) -> CogDetails:
+    async def _load_cog_from_object(self, cog: CogDetails) -> CogDetails:
         """Loads a cog based ona CogDetails object"""
         try:
             sys.path.insert(1, cog.local_path)
-            self._bot.load_extension(cog.name)
+            await self._bot.load_extension(cog.name)
             logger.info(
                 Fore.GREEN
                 + "[Success]"
@@ -89,7 +91,8 @@ class CogManager(object):
                 + Fore.RESET
                 + " Extension: {0} from {1}".format(cog.name, cog.local_path)
             )
-            logger.error("Cog `{0}` failed to load. Error: {1}".format(cog.name, error))
+            logger.error(
+                "Cog `{0}` failed to load. Error: {1}".format(cog.name, error))
             cog.save()  # Hacky workaround...
             raise error
         return cog
@@ -129,7 +132,7 @@ class CogManager(object):
             raise CogSpecificationMissingException
         return data
 
-    def load_cogs(self) -> List[CogDetails]:
+    async def load_cogs(self) -> List[CogDetails]:
         """
         Loads builtin and installed cogs
 
@@ -141,25 +144,26 @@ class CogManager(object):
         builtin_cogs = self._builitin_cogs()
         third_party_cogs = self._third_party_cogs()
         all_cogs = builtin_cogs + third_party_cogs
+        logger.info(f'All cogs: {all_cogs}')
         for cog in all_cogs:
             if cog.enabled:
-                cog = self._load_cog_from_object(cog)
+                cog = await self._load_cog_from_object(cog)
                 cog.save()
 
         return self.cogs
 
-    def reset(self):
+    async def reset(self):
         """Deletes all third party installed cogs and resets builtin cogs"""
         for cog in self.cogs:
-            self.remove(cog.name)
+            await self.remove(cog.name)
         self.load_cogs()
 
-    def remove(self, cog_name):
+    async def remove(self, cog_name):
         """Deletes an instlled cog"""
         cog = CogDetails.objects.get({"name": cog_name})
         if cog.enabled:
             try:
-                self._bot.unload_extension(cog.name)
+                await self._bot.unload_extension(cog.name)
             except ExtensionNotLoaded:
                 logger.error(
                     "Attempted to unload extension, without loading... Investigate this..."
@@ -171,27 +175,27 @@ class CogManager(object):
         if cog.url is not None and cog.local_path:
             shutil.rmtree(cog.local_path, ignore_errors=True)
 
-    def disable_cog(self, name) -> NoReturn:
+    async def disable_cog(self, name) -> NoReturn:
         """Disables the specified cog"""
         cog = CogDetails.objects.get({"name": name})
-        self._bot.unload_extension(cog.name)
+        await self._bot.unload_extension(cog.name)
         cog.enabled = False
         cog.save()
 
-    def enable_cog(self, name) -> NoReturn:
+    async def enable_cog(self, name) -> NoReturn:
         """Enables the specified cog"""
         cog = CogDetails.objects.get({"name": name})
-        self._load_cog_from_object(cog)
+        await self._load_cog_from_object(cog)
         cog.save()
 
-    def reload_cog(self, name) -> NoReturn:
+    async def reload_cog(self, name) -> NoReturn:
         """Reloads an installed cog"""
         cog = CogDetails.objects.get({"name": name})
         if cog.enabled:
-            self._bot.unload_extension(cog.name)
-            self._bot.load_extension(cog.name)
+            await self._bot.unload_extension(cog.name)
+            await self._bot.load_extension(cog.name)
 
-    def install_cog_by_path(self, path) -> CogDetails:
+    async def install_cog_by_path(self, path) -> CogDetails:
         """Installs a Cog the given path. (Mainly for dev purposes)"""
         cog_spec = self.parse_cog_spec(path)
         name = cog_spec["name"]
@@ -205,12 +209,12 @@ class CogManager(object):
             url=path,
             open_source=False,
         )
-        self._load_cog_from_object(cog)
+        await self._load_cog_from_object(cog)
         cog.save()
 
         return cog
 
-    def install_cog_by_git_url(self, url, sshkey=None) -> CogDetails:
+    async def install_cog_by_git_url(self, url, sshkey=None) -> CogDetails:
         """Installs a Cog from a git repository"""
         url = url.lower().strip()
 
@@ -222,8 +226,10 @@ class CogManager(object):
         if sshkey:
             logger.info(Fore.CYAN + "[+] Using SSH key to clone extension...")
             key_file_id = os.urandom(16).hex()
-            git_ssh_identity_file = os.path.join("/tmp", "{0}.key".format(key_file_id))
-            logger.info(Fore.CYAN + "[+] Privkey url: {0}".format(sshkey.private_key))
+            git_ssh_identity_file = os.path.join(
+                "/tmp", "{0}.key".format(key_file_id))
+            logger.info(
+                Fore.CYAN + "[+] Privkey url: {0}".format(sshkey.private_key))
 
             r = requests.get(sshkey.private_key)
             with open(git_ssh_identity_file, "wb") as outfile:
@@ -255,7 +261,7 @@ class CogManager(object):
             url=url,
             open_source=False if sshkey else True,
         )
-        self._load_cog_from_object(cog)
+        await self._load_cog_from_object(cog)
         cog.save()
 
         return cog
@@ -265,7 +271,8 @@ class CogManager(object):
         fallsback to git"""
         if os.path.exists(url):
             logger.info(
-                Fore.YELLOW + "[INFO] Extension found locally at {0}".format(url)
+                Fore.YELLOW +
+                "[INFO] Extension found locally at {0}".format(url)
             )
             self.install_cog_by_path(url)
         else:

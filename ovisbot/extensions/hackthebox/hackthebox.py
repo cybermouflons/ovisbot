@@ -311,5 +311,5 @@ class HackTheBox(commands.Cog):
             await ctx.channel.send("Ούπς... κατι επήε λάθος ρε τσιάκκο!")
 
 
-def setup(bot):
-    bot.add_cog(HackTheBox(bot))
+async def setup(bot):
+    await bot.add_cog(HackTheBox(bot))

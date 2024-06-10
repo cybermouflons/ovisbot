@@ -30,7 +30,8 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
     def __init__(self, *args, **kwargs):
         # Load Config
         env_path = os.path.join(
-            Path(sys.modules[__name__].__file__).resolve().parent.parent, ".env"
+            Path(sys.modules[__name__].__file__).resolve(
+            ).parent.parent, ".env"
         )
         load_dotenv(dotenv_path=env_path, verbose=True)
         env = environ.get("OVISBOT_ENV", "dev")
@@ -46,7 +47,9 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
             )
             exit(1)
 
-        super().__init__(*args, command_prefix=self.config.COMMAND_PREFIX, **kwargs)
+        intents = discord.Intents.all()
+        super().__init__(*args, command_prefix=self.config.COMMAND_PREFIX,
+                         intents=intents, **kwargs)
 
         # Perform necessary tasks
         Path(self.config.THIRD_PARTY_COGS_INSTALL_DIR).mkdir(
@@ -62,10 +65,11 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
         hook_error_handlers(self)
         hook_events(self)
 
+    async def setup_hook(self):
         # Load Cogs
         try:
             self.cog_manager = CogManager(self)
-            self.cog_manager.load_cogs()
+            await self.cog_manager.load_cogs()
         except ExtensionNotFound:
             pass
 
@@ -73,7 +77,8 @@ class OvisBot(Bot, BaseCommandsMixin, RankCommandsMixin, ManageCommandsMixin):
         logger.info("Launching bot...")
 
         if self.config.DISCORD_BOT_TOKEN is None:
-            raise ValueError(i18n._("DISCORD_BOT_TOKEN variable has not been set!"))
+            raise ValueError(
+                i18n._("DISCORD_BOT_TOKEN variable has not been set!"))
         self.run(self.config.DISCORD_BOT_TOKEN)
 
     def init_db(self) -> NoReturn:
