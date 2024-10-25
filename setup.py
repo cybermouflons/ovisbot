@@ -9,7 +9,7 @@ kwargs = {
 if os.getenv("READTHEDOCS", False):
     setup(
         install_requires=[
-            "aiohttp==3.6.2",
+            "aiohttp==3.8.1",
             "async-timeout==3.0.1",
             "attrs==20.1.0",
             "beautifulsoup4==4.9.1",
