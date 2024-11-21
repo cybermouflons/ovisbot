@@ -24,7 +24,7 @@
 
   <a href="https://github.com/ambv/black">
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style: Black">
-  </a>  
+  </a>
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@
 
 # Overview
 
-OvisBot is a modular, feature-extensive Discord bot for managing CTF teams through discord. It facilitates collaboration and organisation by providing well defined commands to create/delete/update discord category/channels in order to structure CTF problems and provide more efficient team commmunication. In addition the bot provides basic utility functions to assist the solving process of CTF challenges (encoding schemes, etc.. ). Finally, promotes competitiveness amongst team members by providing a aut-synchronised leaderboard to common cybersecurity training platforms such as <a href="https://cryptohack.org/">CryptoHack</a> and <a href="https://www.hackthebox.eu/">Hack The Box</a>, 
+OvisBot is a modular, feature-extensive Discord bot for managing CTF teams through discord. It facilitates collaboration and organisation by providing well defined commands to create/delete/update discord category/channels in order to structure CTF problems and provide more efficient team commmunication. In addition the bot provides basic utility functions to assist the solving process of CTF challenges (encoding schemes, etc.. ). Finally, promotes competitiveness amongst team members by providing a aut-synchronised leaderboard to common cybersecurity training platforms such as <a href="https://cryptohack.org/">CryptoHack</a> and <a href="https://www.hackthebox.eu/">Hack The Box</a>,
 
 Note that the majority of the features are provided by isolated plugins and thus they can be enabled/disabled on demand.
 
@@ -70,7 +70,7 @@ OvisBot cli provides the `setupenv` command which assists the creation of a .env
 ```
 ovisbot setupenv
 ```
-At the end of the process a new `.env` file will be create in your current directory. 
+At the end of the process a new `.env` file will be create in your current directory.
 
 Finally to launch the bot, run:
 ```
@@ -107,6 +107,7 @@ Have a feature request? Make a GitHub issue and feel free to contribute. To get 
 - [npitsillos](https://github.com/npitsillos)
 - [Sikkis](https://github.com/Sikkis)
 - [ishtar](https://github.com/xmpf)
+- [cfalas](https://github.com/cfalas)
 
 # License
 

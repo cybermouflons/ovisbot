@@ -1,5 +1,4 @@
 services:
   bot:
-    build:
-      dockerfile: Dockerfile-prod
+    image: ghcr.io/cybermouflons/ovisbot:latest
     volumes: []
