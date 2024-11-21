@@ -45,15 +45,6 @@ jobs:
           echo "$ENV_FILE" > .env
           echo ".env file created with the contents of ENV_FILE secret"
 
-      - name: Set up SSH for Deployment
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: >
-          apt-get update && apt-get install -y sshpass
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p ~/ovisbot"
-
       - name: Deploy to Server
         uses: mai-space/action-sshpass-rsync@v1
         with:
