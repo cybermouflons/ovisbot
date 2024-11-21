@@ -1,15 +1,12 @@
 name: Deploy Bot
-
 on:
   push:
     branches:
       - main
-
 jobs:
-  dump-env:
+  deploy:
     runs-on: ubuntu-latest
     environment: PROD
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -26,7 +23,7 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: |
+        run: >
           apt-get update && apt-get install -y sshpass
           sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p ~/ovisbot"
 
@@ -35,23 +32,25 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: |
-          sshpass -p "$SSH_PASSWORD" rsync -avz --exclude '.git' ./ "$SSH_USER@$SSH_HOST:~/ovisbot"
+        run: >
+          sshpass -p "$SSH_PASSWORD" rsync -avz --exclude '.git' ./
+          "$SSH_USER@$SSH_HOST:~/ovisbot"
 
       - name: Deploy Application
-      env:
-        SSH_USER: ${{ secrets.SSH_USER }}
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        SSH_HOST: ${{ secrets.SSH_HOST }}
-      run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" << 'EOF'
-          cd ~/ovisbot
-          if [ -f docker-compose.yml ]; then
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-          else
-            echo "docker-compose.yml not found in the repository!"
-            exit 1
-          fi
-        EOF
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: >
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no
+          "$SSH_USER@$SSH_HOST" << 'EOF'
+            cd ~/ovisbot
+            if [ -f docker-compose.yml ]; then
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            else
+              echo "docker-compose.yml not found in the repository!"
+              exit 1
+            fi
+          EOF
