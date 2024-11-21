@@ -54,23 +54,17 @@ jobs:
           apt-get update && apt-get install -y sshpass
           sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p ~/ovisbot"
 
-      - name: Upload Code to Server
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: >
-          sshpass -p "$SSH_PASSWORD" rsync -avz --exclude '.git' ./
-          "$SSH_USER@$SSH_HOST:~/ovisbot"
-
-      - name: Deploy Application
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        run: >
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no
-          "$SSH_USER@$SSH_HOST" << 'EOF'
+      - name: Deploy to Server
+        uses: mai-space/action-sshpass-rsync@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          user: ${{ secrets.SSH_USER }}
+          port: 22
+          pass: ${{ secrets.SSH_PASS }}
+          local: "."
+          extra: "-avz --exclude '.git'"
+          remote: "~/ovisbot"
+          runAfterDeployment: |
             cd ~/ovisbot
             if [ -f docker-compose.yml ]; then
               docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true
@@ -80,4 +74,3 @@ jobs:
               echo "docker-compose.yml not found in the repository!"
               exit 1
             fi
-          EOF
