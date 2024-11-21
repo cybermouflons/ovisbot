@@ -3,10 +3,7 @@ import io
 import logging
 import re
 import requests
-import feedparser
 
-import json
-from bs4 import BeautifulSoup
 import ctftime_helpers as ctfh
 
 from colorthief import ColorThief
@@ -101,47 +98,36 @@ class Ctf(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-    @ctftime.command( aliases = ["w"] )
+    @ctftime.command(aliases=["w"])
     async def writeups(self, ctx, name):
         """
         Returns the submitted writeups for a given CTF
         !ctftime writeups <name>
         !ctftime w <name>
         """
-        event = ctfh.Event( e_name = name )
+        event = ctfh.Event(e_name=name)
         try:
             ctf_name, ctf_writeups = event.find_event_writeups()
         except ValueError:
-            await ctx.channel.send( "Could not find such event" )
+            await ctx.channel.send("Could not find such event")
             return
-        
+
         for writeup in ctf_writeups:
             info = writeup.__dict__
 
             embed = discord.Embed(
-                title = info["name"],
-                url = "https://ctftime.org" + info["url"],
+                title=info["name"],
+                url="https://ctftime.org" + info["url"],
                 description=ctf_name,
-                color=0x8cff00
+                color=0x8CFF00,
             )
+            embed.add_field(name="Points", value=info["points"], inline=True)
             embed.add_field(
-                name = "Points",
-                value = info["points"],
-                inline = True
+                name="Total Writeups", value=info["no_writeups"], inline=True
             )
-            embed.add_field(
-                name = "Total Writeups",
-                value = info["no_writeups"],
-                inline = True
-            )
-            embed.add_field(
-                name = "Tags",
-                value = info["tags"],
-                inline = False
-            )
+            embed.add_field(name="Tags", value=info["tags"], inline=False)
 
             await ctx.channel.send(embed=embed)
-
 
     @writeups.error
     async def writeups_error(self, ctx, error):

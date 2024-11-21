@@ -19,7 +19,6 @@ if os.getenv("READTHEDOCS", False):
             "colorama==0.4.3",
             "colorthief==0.2.1",
             "discord-py==1.4.1",
-            "feedparser==5.2.1",
             "gitdb==4.0.5",
             "gitpython==3.1.7",
             "idna==2.10",
