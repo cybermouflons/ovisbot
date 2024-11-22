@@ -400,7 +400,7 @@ class Ctf(commands.Cog):
     @ctf.command()
     async def solve(self, ctx):
         """
-        Marks the current challenge as solved by you. 
+        Marks the current challenge as solved by you.
         Addition of team mates that helped to solve is optional
         """
         chall_name = get_chall_name(ctx)
@@ -454,8 +454,7 @@ class Ctf(commands.Cog):
             ctx.channel.category.channels, name="general"
         )
         await general_channel.send(
-            f"{solvers_str} solved the {chall_name} challenge! {
-                reward_emoji} {reward_emoji}"
+            f"{solvers_str} solved the {chall_name} challenge! {reward_emoji} {reward_emoji}"
         )
 
     @solve.error

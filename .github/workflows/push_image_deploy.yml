@@ -58,9 +58,9 @@ jobs:
           runAfterDeployment: |
             cd ~/ovisbot
             if [ -f docker-compose.yml ]; then
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml down || true
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+              docker-compose -f docker-compose.yml -f docker-compose.prod.yml down || true
+              docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
+              docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             else
               echo "docker-compose.yml not found in the repository!"
               exit 1
