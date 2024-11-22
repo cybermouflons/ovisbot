@@ -51,9 +51,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           user: ${{ secrets.SSH_USER }}
           port: 22
-          pass: ${{ secrets.SSH_PASS }}
+          pass: ${{ secrets.SSH_PASSWORD }}
           local: "."
-          extra: "-avz --exclude '.git'"
+          args: "-avz --exclude '.git'"
           remote: "~/ovisbot"
           runAfterDeployment: |
             cd ~/ovisbot
