@@ -59,7 +59,6 @@ CHALLENGE_CATEGORIES = [
     "forensics",
     "hardware",
     "osint",
-    "htb",
 ]
 
 CHALLENGE_DIFFICULTIES = ["none", "easy", "medium", "hard"]
