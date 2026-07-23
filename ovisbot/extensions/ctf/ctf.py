@@ -45,6 +45,7 @@ from ovisbot.helpers import (
 from discord.ext import tasks
 from ovisbot.locale import tz
 from discord.ext.commands.core import GroupMixin
+from typing import Union
 import pymodm
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,27 @@ class Ctf(commands.Cog):
     def _get_channel_ctf(self, ctx):
         channel_name = str(ctx.channel.category)
         return CTF.objects.get({"name": channel_name})
+
+    def _get_ctf_general_channel(
+        self, ctx: Union[commands.Context, discord.CategoryChannel]
+    ) -> discord.TextChannel:
+        """
+        Get the #general channel of the CTF category that the command is being run in.
+
+        Used to send announcements, reminders, etc.
+        """
+        if isinstance(ctx, discord.CategoryChannel):
+            category = ctx
+        else:
+            if not isinstance(ctx.channel, discord.TextChannel):
+                raise NotInChallengeChannelException
+            category = ctx.channel.category
+            if category is None:
+                raise NotInChallengeChannelException
+        channel = discord.utils.get(category.channels, name="general")
+        if channel is None or not isinstance(channel, discord.TextChannel):
+            raise NotInChallengeChannelException
+        return channel
 
     @commands.group()
     async def ctf(self, ctx):
@@ -451,10 +473,7 @@ class Ctf(commands.Cog):
                 solvers_str, chall_name, reward_text, reward_emoji
             )
         )
-        general_channel = discord.utils.get(
-            ctx.channel.category.channels, name="general"
-        )
-        await general_channel.send(
+        await self._get_ctf_general_channel(ctx).send(
             f"{solvers_str} solved the {chall_name} challenge! {reward_emoji} {reward_emoji}"
         )
 
@@ -873,12 +892,12 @@ class Ctf(commands.Cog):
     async def check_reminders(self):
         if len(self.bot.guilds) == 0:
             return
-        REMINDERS_CHANNEL_ID = 579049835064197157
         guild = self.bot.guilds[0]
-        reminders_channel = guild.get_channel(REMINDERS_CHANNEL_ID)
         ctfs = [c for c in guild.categories]
+        lounge_channel = guild.get_channel(896408617622851624)
         for ctf in ctfs:
             try:
+                reminders_channel = self._get_ctf_general_channel(ctf)
                 ctf_doc = CTF.objects.get({"name": ctf.name})
                 now = datetime.datetime.now()
 
@@ -907,11 +926,11 @@ class Ctf(commands.Cog):
                     and ctf_doc.start_date.replace(second=0, microsecond=0)
                     == now_truncated
                 ):
-                    await reminders_channel.send(
-                        "⛳ Το **{0}** άρκεψεν! Ταράσσετε εμπάτε! @here".format(
-                            ctf_doc.name
-                        )
+                    reminder_text = (
+                        f"⛳ Το **{ctf_doc.name}** άρκεψεν! Ταράσσετε εμπάτε!"
                     )
+                    await reminders_channel.send(f"@everyone {reminder_text}")
+                    await lounge_channel.send(reminder_text)
 
                 # Check End Reminders
                 now_truncated = now.replace(second=0, microsecond=0)
@@ -921,11 +940,9 @@ class Ctf(commands.Cog):
                     == now_truncated
                 ):
                     await reminders_channel.send(
-                        "⛳ Πάππαλλα το **{0}**! Τέλος! Εεε? Εδέραμε? @here ".format(
-                            ctf_doc.name
-                        )
+                        f"⛳ Πάππαλλα το **{ctf_doc.name}**! Τέλος! Εεε? Εδέραμε? @here "
                     )
-            except CTF.DoesNotExist:
+            except (CTF.DoesNotExist, NotInChallengeChannelException):
                 continue
 
 
