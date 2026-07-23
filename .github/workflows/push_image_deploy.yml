@@ -35,10 +35,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: PROD
     steps:
-      - name: Reveal Target IP
-        run: |
-          echo "The server host string is:"
-          echo "${{ secrets.SSH_HOST }}" | sed 's/./& /g'
     
       - name: Checkout Repository
         uses: actions/checkout@v3
