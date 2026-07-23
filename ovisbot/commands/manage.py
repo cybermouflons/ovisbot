@@ -220,38 +220,38 @@ class ManageCommandsMixin:
         @extensions.command()
         async def disable(ctx, name):
             """Disables an installed extension"""
-            self.cog_manager.disable_cog(name)
+            await self.cog_manager.disable_cog(name)
             await success(ctx.message)
 
         @extensions.command()
         async def enable(ctx, name):
             """Enables an installed extension"""
-            self.cog_manager.enable_cog(name)
+            await self.cog_manager.enable_cog(name)
             await success(ctx.message)
 
         @extensions.command()
         async def reset(ctx):
             """Resets extensions (Removes all third party extensions and enables builtin extensions)"""
-            self.cog_manager.reset()
+            await self.cog_manager.reset()
             await success(ctx.message)
 
         @extensions.command()
         async def reload(ctx, name):
             """Reloads an enabled extension"""
-            self.cog_manager.reload(name)
+            await self.cog_manager.reload(name)
             await success(ctx.message)
 
         @extensions.command()
         async def rm(ctx, name):
             """Removes an intalled extension"""
-            self.cog_manager.remove(name)
+            await self.cog_manager.remove(name)
             await success(ctx.message)
 
         @extensions.command()
         async def install(ctx, url, sshkey_name=None):
             """Installs a third party extension by git url"""
             sshkey = SSHKey.objects.get({"name": sshkey_name}) if sshkey_name else None
-            self.cog_manager.install(url, sshkey)
+            await self.cog_manager.install(url, sshkey)
             await success(ctx.message)
 
         @install.error
@@ -288,3 +288,10 @@ class ManageCommandsMixin:
             """Deletes CTF collection"""
             CTF._mongometa.collection.drop()
             await ctx.channel.send("Πάππαλα τα CTFs....")
+
+        @manage.command()
+        @commands.has_role(bot.config.ADMIN_ROLE)
+        async def updatetree(ctx):
+            """Updates the command tree"""
+            await self.tree.sync()
+            await success(ctx.message)

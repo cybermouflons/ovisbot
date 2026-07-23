@@ -1,8 +1,11 @@
 import inspect
+from typing import Optional, Union
 import requests
 import os
 import urllib.parse
 
+from discord import Message, Interaction
+from discord.ext.commands import Context
 from discord.ext.commands.core import GroupMixin
 from texttable import Texttable
 
@@ -75,8 +78,25 @@ def draw_options_table(options):
     return table.draw()
 
 
-async def success(message):
-    await message.add_reaction("✅")
+async def success(
+    ctx: Union[Context, Message, Interaction],
+    message: Optional[str] = None,
+    ephemeral: bool = False,
+):
+    if isinstance(ctx, Message):
+        await success_message(ctx, message)
+    elif isinstance(ctx, Context):
+        await success_message(ctx.message, message)
+    else:
+        await ctx.response.send_message(
+            message if message else "Success! ✅", ephemeral=ephemeral
+        )
+
+
+async def success_message(ctx: Message, message: Optional[str] = None):
+    await ctx.add_reaction("✅")
+    if message:
+        await ctx.channel.send(message)
 
 
 async def failed(message):

@@ -1,38 +1,29 @@
 import copy
+from functools import partial
 import discord
 import datetime
 import logging
-import sys
 import re
-import requests
 import dateutil.parser
-import pytz
 import random
-
 import ovisbot.locale as i18n
 
 from datetime import timedelta
-from dateutil.utils import default_tzinfo
 from discord.ext import commands
-from pymodm.errors import ValidationError
 from ovisbot.db_models import CTF, Challenge
+import ovisbot.exceptions
 from ovisbot.exceptions import (
     CTFAlreadyExistsException,
-    FewParametersException,
     ChallengeAlreadySolvedException,
-    ChallengeInvalidCategory,
-    ChallengeInvalidDifficulty,
     ChallengeExistsException,
     ChallengeDoesNotExistException,
     NotInChallengeChannelException,
+    NotInCTFChannelException,
     CTFAlreadyFinishedException,
     ChallengeNotSolvedException,
-    UserAlreadyInChallengeChannelException,
     CTFSharedCredentialsNotSet,
-    CtfimeNameDoesNotMatch,
     DateMisconfiguredException,
     MissingStartDateException,
-    MissingEndDateException,
 )
 from ovisbot.helpers import (
     chunkify,
@@ -43,8 +34,9 @@ from ovisbot.helpers import (
     td_format,
 )
 from discord.ext import tasks
-from ovisbot.locale import tz
-from discord.ext.commands.core import GroupMixin
+from discord import app_commands
+from discord.ext.commands import Context
+from typing import Union, cast, Optional
 import pymodm
 
 logger = logging.getLogger(__name__)
@@ -62,7 +54,7 @@ CHALLENGE_CATEGORIES = [
     "htb",
 ]
 
-CHALLENGE_DIFFICULTIES = ["none", "easy", "medium", "hard"]
+CHALLENGE_DIFFICULTIES = ["easy", "medium", "hard"]
 
 EMOJI = {"solved": "✅", "unsolved": "⌛"}
 
@@ -83,48 +75,112 @@ DIFFICULTY_REWARDS = {
     "hard": (":icecream:", "παωτόν"),
 }
 
+MENTION_REGEX = re.compile(r"<@!?(\d+)>")
 
-class Ctf(commands.Cog):
+
+def is_ctf_channel(
+    channel: Union[discord.abc.GuildChannel, discord.Thread],
+) -> bool:
+    """
+    Checks if the channel is a CTF channel.
+    A CTF channel is a category with a name that is not archived and has a "challs" forum channel.
+    """
+    if not (
+        (
+            isinstance(channel, discord.ForumChannel)
+            or isinstance(channel, discord.TextChannel)
+        )
+        and channel.category is not None
+    ):
+        return False
+
+    category = channel.category
+    if not discord.utils.get(category.channels, name="challs"):
+        return False
+
+    ctf = CTF.objects.get({"name": category.name})
+    if not ctf:
+        return False
+
+    return True
+
+
+def in_ctf_channel(interaction: discord.Interaction) -> bool:
+    """
+    Checks if the command is invoked in a CTF channel.
+    """
+    if (
+        not interaction.channel
+        or isinstance(interaction.channel, (discord.DMChannel, discord.GroupChannel))
+        or not is_ctf_channel(interaction.channel)
+    ):
+        raise NotInCTFChannelException
+    return True
+
+
+def in_challenge_thread(interaction: discord.Interaction) -> bool:
+    """
+    Checks if the command is invoked in a challenge thread.
+    """
+    return (
+        isinstance(interaction.channel, discord.Thread)
+        and interaction.channel.parent is not None
+        and interaction.channel.parent.name == "challs"
+        and is_ctf_channel(interaction.channel.parent)
+    )
+
+
+@app_commands.guild_only()
+class Ctf(
+    commands.GroupCog,
+    group_name="ctf",
+    group_description="Collection of commands to manage CTFs",
+):
     def __init__(self, bot):
         self.bot = bot
         self.check_reminders.start()
 
-    def _get_channel_ctf(self, ctx):
-        channel_name = str(ctx.channel.category)
-        return CTF.objects.get({"name": channel_name})
+    def _get_channel_ctf(self, interaction: discord.Interaction) -> CTF:
+        channel = interaction.channel
+        if isinstance(channel, discord.Thread):
+            channel = channel.parent
+        if channel is None or not isinstance(channel, discord.abc.GuildChannel):
+            raise NotInCTFChannelException
+        ctf_name = cast(discord.CategoryChannel, channel.category).name
+        return CTF.objects.get({"name": ctf_name})
 
-    @commands.group()
-    async def ctf(self, ctx):
-        """
-        Collection of commands to manage CTFs
-        """
-        self.guild = ctx.guild
-        self.gid = ctx.guild.id
+    def _get_ctf_category_channel(
+        self,
+        ctx: Union[Context, discord.Interaction, discord.TextChannel, discord.Thread],
+    ) -> discord.CategoryChannel:
+        channel = (
+            ctx.channel if isinstance(ctx, (Context, discord.Interaction)) else ctx
+        )
+        if not isinstance(channel, discord.ForumChannel) and not isinstance(
+            channel, discord.TextChannel
+        ):
+            raise NotInCTFChannelException
+        if not channel.category:
+            raise NotInCTFChannelException
+        return channel.category
 
-        if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid command passed.  Use !help.")
-
-    @ctf.command()
-    async def status(self, ctx):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def status(self, interaction: discord.Interaction):
         """
         Returns a list of ongoing challenges in the ctf
         """
-        channel_name = str(ctx.channel.category)
-        ctf = CTF.objects.get({"name": channel_name})
+        assert interaction.channel is not None
+
+        ctf = self._get_channel_ctf(interaction)
         summary_chunks = chunkify(ctf.challenge_summary(), 1700)
         for chunk in summary_chunks:
             emb = discord.Embed(description=chunk, colour=4387968)
-            await ctx.channel.send(embed=emb)
+            await interaction.response.send_message(embed=emb)
 
-    @status.error
-    async def status_error(self, ctx, error):
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "Έφκαλεν η γλώσσα μου μαλλιά ρε! For this command you have to be in a channel created by !ctf create."
-            )
-
-    @ctf.command()
-    async def archive(self, ctx, ctf_name):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def archive(self, ctx, ctf_name: str):
         """
         Archive a CTF to the DB and remove it from discord
         """
@@ -141,121 +197,100 @@ class Ctf(commands.Cog):
         await category.delete()
         ctf.name = "__ARCHIVED__" + ctf.name  # bug fix (==)
         ctf.save()
+        await success(ctx)
 
-    @archive.error
-    async def archive_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
-
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "Πε μου εσύ αν θορείς κανένα CTF με έτσι όνομα ... Οι πε μου"
-            )
-        else:
-            logger.error(error)
-            await ctx.channel.send("Ουπς. Κάτι επήε λάθος.")
-
-    @ctf.command()
-    async def create(self, ctx, ctf_name):
+    @app_commands.command()
+    @commands.has_permissions(manage_channels=True, manage_roles=True)
+    async def create(self, interaction: discord.Interaction, ctf_name: str):
         """
         Creates a new CTF
         """
+        await interaction.response.defer()
+        logger.info("Creating CTF with name: %s", ctf_name)
+
+        user = cast(discord.Member, interaction.user)
+        guild = cast(discord.Guild, interaction.guild)
+
         scat = ctf_name.lower()
-        category = discord.utils.get(ctx.guild.categories, name=scat)
+        category = discord.utils.get(guild.categories, name=scat)
 
         if category is not None:
             raise CTFAlreadyExistsException
 
-        user = ctx.message.author
-        ctfrole = await self.guild.create_role(name="Team-" + scat, mentionable=True)
+        ctfrole = await guild.create_role(name="Team-" + scat, mentionable=True)
         await user.add_roles(ctfrole)
         overwrites = {
-            self.guild.get_role(self.gid): discord.PermissionOverwrite(
-                read_messages=False
-            ),
+            guild.get_role(guild.id): discord.PermissionOverwrite(read_messages=False),
             self.bot.user: discord.PermissionOverwrite(read_messages=True),
             ctfrole: discord.PermissionOverwrite(read_messages=True),
         }
-        category = await self.guild.create_category(name=scat, overwrites=overwrites)
-        general_channel = await self.guild.create_text_channel(
+        category = await guild.create_category(name=scat, overwrites=overwrites)
+        general_channel = await guild.create_text_channel(
             name="general", category=category
         )
 
         chall_overwrites = overwrites
         chall_overwrites[ctfrole].send_messages = False
-        chall_channel = await self.guild.create_forum(
+        await guild.create_forum(
             name="challs",
             category=category,
-            available_tags=CHALLENGE_TAGS.values(),
+            available_tags=list(CHALLENGE_TAGS.values()),
             overwrites=chall_overwrites,
         )
         CTF(name=category, created_at=datetime.datetime.now(), challenges=[]).save()
-        await success(ctx.message)
+        await interaction.followup.send(
+            content=f"'Εσιει τζεινούρκο CTF, δώκετε μέσα: {category.name}"
+        )
         await general_channel.send(f"@here Καλως ορίσατε στο {category} CTF")
 
-    @create.error
-    async def create_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
-
-        if isinstance(error.original, CTFAlreadyExistsException):
-            await ctx.channel.send(
-                "Ρε κουμπάρε! This CTF name already exists! Pick another one"
-            )
-
-    @ctf.command(aliases=["addchall"])
-    async def addchallenge(self, ctx, challname, category, difficulty="none"):
+    @app_commands.command()
+    @app_commands.choices(
+        category=[
+            app_commands.Choice(name=cat, value=cat) for cat in CHALLENGE_CATEGORIES
+        ],
+        difficulty=[
+            app_commands.Choice(name=diff, value=diff)
+            for diff in CHALLENGE_DIFFICULTIES
+        ],
+    )
+    async def addchallenge(
+        self,
+        interaction: discord.Interaction,
+        challname: str,
+        category: app_commands.Choice[str],
+        difficulty: Optional[app_commands.Choice[str]],
+    ):
         """
         Creates a private channel for a challenge.
 
         Parameters:
-            challenge (str): Name of the challenge
+            challname (str): Name of the challenge
             category (str): Name of challenge's category
-            difficulty (str): Can be one of ["none", "easy", "medium", "hard"]. Optional, defaults to "none".
+            difficulty (str): Can be one of ["easy", "medium", "hard"]. Optional.
         """
-        channel_name = str(ctx.channel.category)
-        ctf = CTF.objects.get({"name": channel_name})
+        ctf = self._get_channel_ctf(interaction)
 
         challenge_name = challname.lower()
 
-        category = category.lower()
-        if category not in CHALLENGE_CATEGORIES:
-            raise ChallengeInvalidCategory
-
-        difficulty = difficulty.lower()
-        if difficulty not in CHALLENGE_DIFFICULTIES:
-            raise ChallengeInvalidDifficulty
-
-        challenges = [
-            c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
-        ]
+        challenges = [c for c in ctf.challenges if c.name == challenge_name]
         if len(challenges) > 0:
             raise ChallengeExistsException
 
-        overwrites = {
-            self.guild.get_role(self.gid): discord.PermissionOverwrite(
-                read_messages=False
-            ),
-            self.bot.user: discord.PermissionOverwrite(read_messages=True),
-            ctx.message.author: discord.PermissionOverwrite(read_messages=True),
-        }
         notebook_url = create_corimd_notebook()
 
         # Find challenges forum channel
         category_channels = [
             x
-            for x in ctx.channel.category.channels
+            for x in ctf_channel.channels
             if x.name == "challs" and isinstance(x, discord.ForumChannel)
         ]
         if len(category_channels) != 1:
-            raise CTF.DoesNotExist
+            raise NotInCTFChannelException
 
         challenges_forum = category_channels[0]
-        chosen_tags = ["unsolved", category]
-        if difficulty != "none":
-            chosen_tags.append(difficulty)
+        chosen_tags = ["unsolved", category.value]
+        if difficulty:
+            chosen_tags.append(difficulty.value)
         tags = [
             tag for tag in challenges_forum.available_tags if tag.name in chosen_tags
         ]
@@ -267,113 +302,79 @@ class Ctf(commands.Cog):
 
         new_challenge = Challenge(
             name=challenge_name,
-            tags=[category, difficulty],
+            tags=[category.value] + ([difficulty.value] if difficulty else []),
             created_at=datetime.datetime.now(),
-            attempted_by=[ctx.message.author.name],
+            attempted_by=[interaction.user.name],
             notebook_url=notebook_url,
         )
         ctf.challenges.append(new_challenge)
         ctf.save()
-        await success(ctx.message)
+        await success(interaction, ephemeral=True)
         notebook_msg = await challenge_channel.send(
             f"Ετο τζαι το δευτερούι σου: {notebook_url}"
         )
         await notebook_msg.pin()
 
-    @addchallenge.error
-    async def addchallenge_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
-
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-        elif isinstance(error.original, ChallengeInvalidCategory):
-            await ctx.channel.send(
-                "Not valid challenge category provided. !help for more info"
-            )
-        elif isinstance(error.original, ChallengeInvalidDifficulty):
-            await ctx.channel.send(
-                "Not valid challenge difficulty provided. !help for more info"
-            )
-        elif isinstance(error.original, ChallengeExistsException):
-            await ctx.channel.send(
-                "Να μου γελάσεις ρε κοπελλούι; This challenge already exists!"
-            )
-
-    @ctf.command(aliases=["rmchall"])
-    async def rmchallenge(self, ctx, challname):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def rmchallenge(self, interaction: discord.Interaction, challname: str):
         """
         Removes the challenge with the given name.
         """
-        channel_name = str(ctx.channel.category)
-        ctf = CTF.objects.get({"name": channel_name})
+        await interaction.response.defer()
+        ctf = self._get_channel_ctf(interaction)
 
         challenge_name = challname.lower()
-        challenges = [
-            c for c in ctf.challenges if c.name == channel_name + "-" + challenge_name
-        ]
+        challenges = [c for c in ctf.challenges if c.name == challenge_name]
+        challenges = cast(list[Challenge], challenges)
         if len(challenges) == 0:
             raise ChallengeDoesNotExistException
 
+        challenge_channel_name = (
+            EMOJI["solved" if challenges[0].solved_at else "unsolved"]
+            + " - "
+            + challenge_name
+        )
+        forum_channel = discord.utils.get(
+            self._get_ctf_category_channel(interaction).channels, name="challs"
+        )
+        if not isinstance(forum_channel, discord.ForumChannel):
+            raise NotInCTFChannelException
+
         challenge_channel = discord.utils.get(
-            ctx.channel.category.channels, name=channel_name + "-" + challenge_name
+            forum_channel.threads, name=challenge_channel_name
         )
         for i, c in enumerate(ctf.challenges):
-            if c.name == channel_name + "-" + challenge_name:
+            if c.name == challenge_name:
                 del ctf.challenges[i]
                 break
         await challenge_channel.delete()
         ctf.save()
+        await success(interaction)
 
-    @rmchallenge.error
-    async def rmchallenge_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
-
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-        elif isinstance(error.original, ChallengeDoesNotExistException):
-            await ctx.channel.send(
-                "Παρέα μου... εν κουτσιάς... Εν έσιει έτσι challenge!"
-            )
-
-    @ctf.command()
-    async def notes(self, ctx):
+    @app_commands.command()
+    @app_commands.check(in_challenge_thread)
+    async def notes(self, interaction: discord.Interaction):
         """
         Shows the notebook url for the particular challenge channel that you are currently in. If this command is run outside of a challenge channel, then ovis gets mad.
         """
-        chall_name = ctx.channel.name
-        ctf = CTF.objects.get({"name": ctx.channel.category.name})
+        chall_name = get_chall_name(interaction)
+        ctf = self._get_channel_ctf(interaction)
 
         # Find challenge in CTF by name
         challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
-
-        if not challenge:
-            raise NotInChallengeChannelException
-
+        assert challenge is not None
         if challenge.notebook_url != "":
-            await ctx.channel.send(f"Notes: {challenge.notebook_url}")
+            await interaction.response.send_message(f"Notes: {challenge.notebook_url}")
         else:
-            await ctx.channel.send("Εν έσσιει έτσι πράμα δαμέ...Τζίλα το...")
-
-    @notes.error
-    async def notes_error(self, ctx, error):
-        if isinstance(
-            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
-        ):
-            await ctx.channel.send(
-                "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
+            await interaction.response.send_message(
+                "Εν έσσιει έτσι πράμα δαμέ...Τζίλα το..."
             )
 
-    @ctf.command()
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
     @commands.has_permissions(manage_channels=True, manage_roles=True)
-    async def finish(self, ctx, ctf_name):
+    async def finish(self, interaction: discord.Interaction, ctf_name: str):
         """
         Marks CTF as finished. (Requires manage channels permissions)
         """
@@ -382,31 +383,31 @@ class Ctf(commands.Cog):
             raise CTFAlreadyFinishedException
         ctf.finished_at = datetime.datetime.now()
         ctf.save()
-        await ctx.channel.send(
+        await interaction.response.send_message(
             "Ατε.. Μπράβο κοπέλια τζαι κοπέλλες! Να πνάσουμε τζαι εμείς νακκο!"
         )
 
-    @finish.error
-    async def finish_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
-
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "Εισαι τζαι εσού χαλασμένος όπως τα διαστημόπλοια του Κίτσιου... There is not such CTF name. Use `!status`"
-            )
-        if isinstance(error.original, CTFAlreadyFinishedException):
-            await ctx.channel.send("This CTF has already finished!")
-
-    @ctf.command()
-    async def solve(self, ctx):
+    @app_commands.command()
+    @app_commands.check(in_challenge_thread)
+    async def solve(
+        self,
+        interaction: discord.Interaction,
+        solvers: Optional[str],
+    ):
         """
         Marks the current challenge as solved by you.
-        Addition of team mates that helped to solve is optional
+
+        Arguments:
+            solvers (str): A string with mentions of the users that helped you solve the challenge.
         """
-        chall_name = get_chall_name(ctx)
-        ctf = CTF.objects.get({"name": ctx.channel.category.name})
+        chall_name = get_chall_name(interaction)
+        chall_thread = cast(discord.Thread, interaction.channel)
+        chall_forum = cast(discord.ForumChannel, chall_thread.parent)
+        ctf_category = cast(
+            discord.CategoryChannel,
+            chall_forum.category,
+        )
+        ctf = self._get_channel_ctf(interaction)
 
         # Find challenge in CTF by name
         challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
@@ -416,17 +417,24 @@ class Ctf(commands.Cog):
         if challenge.solved_at:
             raise ChallengeAlreadySolvedException(challenge.solved_by)
 
-        challenge.solved_by = [ctx.message.author.name] + [
-            m.name for m in ctx.message.mentions
-        ]
+        # Parse solvers from argument string
+        solvers = solvers if solvers else ""
+        solvers_user_ids = MENTION_REGEX.findall(solvers)
+        users: list[discord.Member] = []
+
+        guild = cast(discord.Guild, interaction.guild)
+        for user_id in solvers_user_ids:
+            user = guild.get_member(int(user_id))
+            if user is None:
+                continue
+            users.append(user)
+
+        solvers_list = [interaction.user.name] + [user.name for user in users]
+        challenge.solved_by = solvers_list
         challenge.solved_at = datetime.datetime.now()
         ctf.save()
 
-        solvers_str = escape_md(
-            ", ".join(
-                [ctx.message.author.name] + [m.name for m in ctx.message.mentions]
-            )
-        )
+        solvers_str = escape_md(", ".join(solvers_list))
 
         # look for difficulty in challenge's tags
         # default to "none" if no matching difficulty is found
@@ -441,48 +449,32 @@ class Ctf(commands.Cog):
         if isinstance(reward_text, list):
             reward_text = random.choice(reward_text)
 
-        new_tags = change_tags(ctx.channel, add=["solved"], remove=["unsolved"])
-        await ctx.channel.edit(
+        new_tags = change_tags(chall_thread, add=["solved"], remove=["unsolved"])
+        await chall_thread.edit(
             name=f"{EMOJI['solved']} - {chall_name}", applied_tags=new_tags
         )
 
-        await ctx.channel.send(
+        await interaction.response.send_message(
             "Πελλαμός! {0}! Congrats for solving {1}. Έλα {2} {3}".format(
                 solvers_str, chall_name, reward_text, reward_emoji
             )
         )
-        general_channel = discord.utils.get(
-            ctx.channel.category.channels, name="general"
-        )
+        logger.info(f"Looking for #general in {ctf_category.channels}")
+        general_channel = discord.utils.get(ctf_category.channels, name="general")
+        if not isinstance(general_channel, discord.TextChannel):
+            raise NotInCTFChannelException
         await general_channel.send(
             f"{solvers_str} solved the {chall_name} challenge! {reward_emoji} {reward_emoji}"
         )
 
-    @solve.error
-    async def solve_error(self, ctx, error):
-        if isinstance(
-            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
-        ):
-            await ctx.channel.send(
-                "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
-            )
-        elif isinstance(error.original, ChallengeAlreadySolvedException):
-            await ctx.channel.send(
-                f'Άρκησες! This challenge has already been solved by {", ".join(error.original.solved_by)}!'
-            )
-
-    @ctf.command()
-    async def unsolve(self, ctx):
+    @app_commands.command()
+    async def unsolve(self, interaction: discord.Interaction):
         """
         Marks the current challenge as unsolved. Allows to to rollback accidental solves.
         """
-        chall_name = get_chall_name(ctx)
-        ctf = CTF.objects.get({"name": ctx.channel.category.name})
-
-        new_tags = change_tags(ctx.channel, add=["unsolved"], remove=["solved"])
-        await ctx.channel.edit(
-            name=f"{EMOJI['unsolved']} - {chall_name}", applied_tags=new_tags
-        )
+        chall_name = get_chall_name(interaction)
+        chall_thread = cast(discord.Thread, interaction.channel)
+        ctf = self._get_channel_ctf(interaction)
 
         challenge = next((c for c in ctf.challenges if c.name == chall_name), None)
 
@@ -491,81 +483,58 @@ class Ctf(commands.Cog):
         if not challenge.solved_at:
             raise ChallengeNotSolvedException
 
+        new_tags = change_tags(chall_thread, add=["unsolved"], remove=["solved"])
+        await chall_thread.edit(
+            name=f"{EMOJI['unsolved']} - {chall_name}", applied_tags=new_tags
+        )
+
         challenge.solved_by = None
         challenge.solved_at = None
         ctf.save()
+        await success(interaction)
 
-    @unsolve.error
-    async def unsolve_error(self, ctx, error):
-        if isinstance(
-            error.original, (NotInChallengeChannelException, CTF.DoesNotExist)
-        ):
-            await ctx.channel.send(
-                "Ρε πελλοβρεμένε! For this command you have to be in a ctf challenge channel created by `!ctf addchallenge`."
-            )
-        elif isinstance(error.original, ChallengeNotSolvedException):
-            await ctx.channel.send(f"Ρε κουμπάρε.. αφού ένεν λυμένη η ασκηση.")
-
-    @ctf.command()
-    async def join(self, ctx, *params):
+    @app_commands.command()
+    async def join(self, interaction: discord.Interaction, ctf_name: str):
         """
         Join an ongoing ctf. Use `status` to see available CTFs.
         """
-        scat = "-".join(list(params)).replace("'", "").lower()
+        scat = "-".join(ctf_name).replace("'", "").lower()
         CTF.objects.get({"name": scat})
-        ctfrole = discord.utils.get(self.guild.roles, name="Team-" + scat)
-        await ctx.message.author.add_roles(ctfrole)
-        await success(ctx.message)
+        guild = cast(discord.Guild, interaction.guild)
+        ctfrole = discord.utils.get(guild.roles, name="Team-" + scat)
+        if ctfrole is None:
+            raise CTF.DoesNotExist
+        user = cast(discord.Member, interaction.user)
+        await user.add_roles(ctfrole)
+        await success(interaction)
 
-    @join.error
-    async def join_error(self, ctx, error):
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "Εεεε!! Τι κάμνεις? There is no such CTF name. Use `!status`"
-            )
-
-    @ctf.command()
-    async def leave(self, ctx):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def leave(self, interaction: discord.Interaction):
         """
         Leave the current CTF.
         """
-        ctf_name = str(ctx.channel.category)
-        ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + ctf_name)
-        await ctx.message.author.remove_roles(ctfrole)
+        ctf_name = self._get_ctf_category_channel(interaction).name
+        guild = cast(discord.Guild, interaction.guild)
+        ctfrole = discord.utils.get(guild.roles, name="Team-" + ctf_name)
+        ctfrole = cast(discord.Role, ctfrole)
+        user = cast(discord.Member, interaction.user)
+        await user.remove_roles(ctfrole)
+        await success(interaction, ephemeral=True)
 
-    @ctf.command()
-    async def description(self, ctx, *, description):
-        """
-        Sets the description of an existing CTF
-        """
-        channel_name = str(ctx.channel.category)
-
-        ctf = CTF.objects.get({"name": channel_name})
-        ctf.description = " ".join(description)
-        ctf.save()
-        await success(ctx.message)
-
-    @description.error
-    async def description_error(self, ctx, error):
-        if isinstance(error.original, FewParametersException):
-            await ctx.channel.send(
-                "Πεε που σου νέφκω που παεις... !ctf description takes parameters. !help for more info."
-            )
-        elif isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-
-    @ctf.command()
+    @app_commands.command()
     @commands.has_permissions(manage_channels=True, manage_roles=True)
-    async def delete(self, ctx, ctfname):
+    async def delete(self, interaction: discord.Interaction, ctfname: str):
         """
         Delete a CTF category with all its channel and its user role.
         """
         scat = ctfname.replace("'", "").lower()
         ctf = CTF.objects.get({"name": scat})
-        category = discord.utils.get(ctx.guild.categories, name=scat)
-        ctfrole = discord.utils.get(ctx.guild.roles, name="Team-" + scat)
+        guild = cast(discord.Guild, interaction.guild)
+        category = discord.utils.get(guild.categories, name=scat)
+        if category is None:
+            raise CTF.DoesNotExist
+        ctfrole = discord.utils.get(guild.roles, name="Team-" + scat)
 
         if ctfrole is not None:
             await ctfrole.delete()
@@ -574,65 +543,53 @@ class Ctf(commands.Cog):
             await c.delete()
         await category.delete()
         ctf.delete()
+        await success(interaction)
 
-    @delete.error
-    async def delete_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
-
-        if isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "Ρε κουμπάρε! There is not any ongoing CTF with such a name."
-            )
-
-    @ctf.command()
-    async def setcreds(self, ctx, username, password, link=None):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def setcreds(
+        self,
+        interaction: discord.Interaction,
+        username: str,
+        password: str,
+        link: Optional[str] = None,
+    ):
         """
         Sets shared credentials to be used by the team members to login to the CTF. Link is the login/home page of the CTF
         """
-        channel_name = str(ctx.channel.category)
-        ctf = CTF.objects.get({"name": channel_name})
+        ctf = self._get_channel_ctf(interaction)
         ctf.username = username
         ctf.password = password
         if link:
             logger.info(link)
             ctf.url = link
         ctf.save()
-        await success(ctx.message)
+        await success(interaction)
 
         if not (ctf.username and ctf.password):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
-        msg = await ctx.channel.send(embed=emb)
+        ctf_channel = cast(discord.TextChannel, interaction.channel)
+        msg = await ctf_channel.send(embed=emb)
         await msg.pin()
+        await success(interaction, ephemeral=True)
 
     @setcreds.error
-    async def setcreds_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            await ctx.channel.send(
-                "Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 or more parameters."
+    async def setcreds_error(self, interaction: discord.Interaction, error):
+        if isinstance(error.original, pymodm.errors.ValidationError):
+            await interaction.response.send_message(
+                "Βάλε κανένα URL του χαϊρκού!", ephemeral=True
             )
-            self.bot.help_command.context = ctx
-            await self.bot.help_command.command_callback(ctx, command=str(ctx.command))
 
-        if isinstance(error.original, FewParametersException):
-            await ctx.channel.send(
-                "Πεε που σου νέφκω που παεις... !ctf setcreds takes 2 or more parameters. !help for more info."
-            )
-        elif isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-        elif isinstance(error.original, pymodm.errors.ValidationError):
-            await ctx.channel.send("Malformatted URL...?")
-
-    @ctf.command(aliases=[])
-    async def startdate(self, ctx, *, date=None):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def startdate(
+        self, interaction: discord.Interaction, date: Optional[str] = None
+    ):
         """
         Sets the start date of the CTF
         """
-        ctf = self._get_channel_ctf(ctx)
+        ctf = self._get_channel_ctf(interaction)
         if date:
             startdate = dateutil.parser.parse(date)
             if ctf.end_date and startdate >= ctf.end_date:
@@ -641,23 +598,28 @@ class Ctf(commands.Cog):
             ctf.start_date = startdate
             ctf.pending_reminders = []
             ctf.save()
-            await success(ctx.message)
-            await ctx.channel.send("Any reminders have been reset!")
+            await success(interaction)
         else:
             startdate = ctf.start_date
             if startdate is None:
-                await ctx.channel.send(
-                    "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!"
+                await interaction.response.send_message(
+                    "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!",
+                    ephemeral=True,
                 )
             else:
-                await ctx.channel.send("**Start time:** {0}".format(startdate))
+                await interaction.response.send_message(
+                    "**Start time:** {0}".format(startdate)
+                )
 
-    @ctf.command(aliases=[])
-    async def enddate(self, ctx, *, date=None):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def enddate(
+        self, interaction: discord.Interaction, date: Optional[str] = None
+    ):
         """
         Sets the end date of the CTF
         """
-        ctf = self._get_channel_ctf(ctx)
+        ctf = self._get_channel_ctf(interaction)
         if date:
             enddate = dateutil.parser.parse(date)
 
@@ -666,120 +628,103 @@ class Ctf(commands.Cog):
 
             ctf.end_date = enddate
             ctf.save()
-            await success(ctx.message)
+            await success(interaction)
         else:
             enddate = ctf.end_date
             if enddate is None:
-                await ctx.channel.send(
-                    "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!"
+                await interaction.response.send_message(
+                    "Ε αν βάλεις καμιάν ημερομηνία να σου την δείξω τζιόλας...!",
+                    ephemeral=True,
                 )
             else:
-                await ctx.channel.send("**End time:** {0}".format(enddate))
+                await interaction.response.send_message(
+                    "**End time:** {0}".format(enddate)
+                )
 
     @enddate.error
     @startdate.error
-    async def date_error(self, ctx, error):
+    async def date_error(self, interaction: discord.Interaction, error):
         if isinstance(error.original, ValueError):
-            await ctx.channel.send(
-                "Ρε μα ενόμισες μυρίζουμε τα νύσσια μου? Βάλε ρε κουμπάρε μιά ημερομηνία του χαϊρκού!"
-            )
-        elif isinstance(error.original, DateMisconfiguredException):
-            await ctx.channel.send(
-                "Έκαμες τα σαλάτα με τις ημερομηνίες παλε... Πρέπει Start date > End Date"
-            )
-        elif isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "Ατού ο γαβρίλης.. For this command you have to be in a channel created by !ctf create."
+            await interaction.response.send_message(
+                "Ρε μα ενόμισες μυρίζουμε τα νύσσια μου? Βάλε ρε κουμπάρε μιά ημερομηνία του χαϊρκού!",
+                ephemeral=True,
             )
 
-    @ctf.command()
-    async def showcreds(self, ctx):
+    @app_commands.command()
+    @app_commands.check(in_ctf_channel)
+    async def showcreds(self, interaction: discord.Interaction):
         """
         Displays shared credentials for the team
         """
-        channel_name = str(ctx.channel.category)
-        ctf = CTF.objects.get({"name": channel_name})
+        ctf = self._get_channel_ctf(interaction)
         if not (ctf.username and ctf.password):
             raise CTFSharedCredentialsNotSet
         emb = discord.Embed(description=ctf.credentials(), colour=4387968)
-        await ctx.channel.send(embed=emb)
+        await interaction.response.send_message(embed=emb)
 
-    @showcreds.error
-    async def showcreds_error(self, ctx, error):
-        if isinstance(error, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-        elif isinstance(error, CTFSharedCredentialsNotSet):
-            await ctx.channel.send("This CTF has no shared credentials set!")
+    reminders = app_commands.Group(
+        name="reminders", description="Manage reminders for the CTF"
+    )
 
-    @ctf.group()
-    async def reminders(self, ctx):
+    @reminders.command()
+    async def list(self, interaction: discord.Interaction):
         """
-        Group of commands to manage reminders.
-        Displays existing reminders if called without a subcommand.
+        Displays existing reminders.
         """
-        if ctx.subcommand_passed is None:
-            # No subcommand passed
-            ctf = self._get_channel_ctf(ctx)
-            if ctf.pending_reminders:
-                await ctx.channel.send(
-                    "\n".join(
-                        "**{0})** {1}".format(idx + 1, r)
-                        for idx, r in enumerate(ctf.pending_reminders)
-                    )
+        ctf = self._get_channel_ctf(interaction)
+        if ctf.pending_reminders:
+            await interaction.response.send_message(
+                "\n".join(
+                    "**{0})** {1}".format(idx + 1, r)
+                    for idx, r in enumerate(ctf.pending_reminders)
                 )
-            else:
-                await ctx.send(
-                    "Εν έσσιει κανένα reminder ρε τσιάκκο... Εν να βάλεις όξα?"
-                )
-        elif ctx.invoked_subcommand is None:
-            self.help_command.context = ctx
-            await failed(ctx.message)
-            await ctx.send(
-                i18n._("**Invalid command passed**. See below for more help")
             )
-            await self.help_command.command_callback(ctx, command=str(ctx.command))
-            # subcomms = [sub_command for sub_command in ctx.command.all_commands]
-            # await ctx.send(
-            #     "Invalid command passed. Use !help for more info.\nAvailable subcommands are:\n```{0}```".format(
-            #         " ".join(subcomms)
-            #     )
-            # )
+        else:
+            await interaction.response.send_message(
+                "Εν έσσιει κανένα reminder ρε τσιάκκο... Εν να βάλεις όξα?",
+                ephemeral=True,
+            )
 
-    @ctf.command(name="countdown")
-    async def countdown(self, ctx):
+    @app_commands.command(name="countdown")
+    @app_commands.check(in_ctf_channel)
+    async def countdown(self, interaction: discord.Interaction):
         """
         Displays countdown until CTF starts. Requires a start date to be set.
         @raises MissingStartDateException if ctf.start_date is None
         """
-        ctf = self._get_channel_ctf(ctx)
+        ctf = self._get_channel_ctf(interaction)
 
         if not ctf.start_date:
             raise MissingStartDateException
 
         now = datetime.datetime.now()
         if now < ctf.start_date:
-            await ctx.channel.send(
+            await interaction.response.send_message(
                 "⏰   **" + td_format(ctf.start_date - now) + "** to start"
             )
         else:
             if ctf.end_date is None:
-                await ctx.channel.send("Ρε παίχτη μου αρκεψεν... ξύπνα!")
+                await interaction.response.send_message(
+                    "Ρε παίχτη μου αρκεψεν... ξύπνα!"
+                )
             elif now < ctf.end_date:
-                await ctx.channel.send(
+                await interaction.response.send_message(
                     "⏰   **" + td_format(ctf.end_date - now) + "** to finish"
                 )
             else:
-                await ctx.channel.send("Ρε παίχτη μου ετέλειωσεν... ξύπνα!")
+                await interaction.response.send_message(
+                    "Ρε παίχτη μου ετέλειωσεν... ξύπνα!"
+                )
 
     @reminders.command(name="add")
-    async def reminders_add(self, ctx, unit, amount):
+    async def reminders_add(
+        self, interaction: discord.Interaction, unit: str, amount: int
+    ):
         """
         Adds a new reminder. Unit can be any time unit (hours, minutes, days...)
         Negative amount parameters means adda reminder before the ctf starts.
         """
-        ctf = self._get_channel_ctf(ctx)
+        ctf = self._get_channel_ctf(interaction)
 
         if not ctf.start_date:
             raise MissingStartDateException
@@ -793,50 +738,36 @@ class Ctf(commands.Cog):
         ctf.pending_reminders.append(reminder_date)
         ctf.save()
 
-        await success(ctx.message)
+        await success(interaction)
 
     @reminders_add.error
     @countdown.error
-    async def reminders_add_error(self, ctx, error):
+    async def reminders_add_error(self, interaction: discord.Interaction, error):
         if isinstance(error.original, (ValueError, TypeError)):
-            await ctx.channel.send(
+            await interaction.response.send_message(
                 "Εν να σε αφήκω να καταλάβεις μόνος σου τι μαλακία έκαμες..."
             )
-        elif isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
-        elif isinstance(error.original, FewParametersException):
-            await ctx.channel.send("This command takes more parameters. Use !help")
-        elif isinstance(error.original, MissingStartDateException):
-            await ctx.channel.send(
-                "Φιλούδιν... πρέπει να βάλεις ενα start date (!ctf startdate ...) πρώτα!"
-            )
 
-    @reminders.command(name="rm", aliases=["remove"])
-    async def reminders_rm(self, ctx, reminder_idx):
+    @reminders.command(name="rm")
+    async def reminders_rm(self, interaction: discord.Interaction, reminder_idx: int):
         """
         Removes a reminder from the reminder list.
         """
-        ctf = self._get_channel_ctf(ctx)
+        ctf = self._get_channel_ctf(interaction)
         del ctf.pending_reminders[int(reminder_idx) - 1]
         ctf.save()
-        await ctx.send("Reminder list updated!")
+        await interaction.response.send_message("Reminder list updated!")
 
     @reminders_rm.error
-    async def reminders_rm_error(self, ctx, error):
+    async def reminders_rm_error(self, interaction: discord.Interaction, error):
         if isinstance(error.original, IndexError):
-            await ctx.channel.send(
+            await interaction.response.send_message(
                 "Εν να σε αφήκω να καταλάβεις μόνος σου τι μαλακία έκαμες..."
             )
-        elif isinstance(error.original, CTF.DoesNotExist):
-            await ctx.channel.send(
-                "For this command you have to be in a channel created by !ctf create."
-            )
         elif isinstance(error.original, ValueError):
-            await ctx.channel.send("Index μανα μου ... Index!")
+            await interaction.response.send_message("Index μανα μου ... Index!")
 
-    # @ctf.command()
+    # @app_commands.command()
     # async def reminders(self, ctx, param="auto"):
     #     ctf_obj = self._get_channel_ctf(ctx)
     # if param == "auto":
@@ -928,18 +859,42 @@ class Ctf(commands.Cog):
             except CTF.DoesNotExist:
                 continue
 
+    async def cog_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
+        logger.info("Error in CTF cog: %s", error)
+        respond = partial(interaction.response.send_message, ephemeral=True)
+        for exc_type in ovisbot.exceptions.OvisBotException.__subclasses__():
+            if isinstance(error.original, exc_type):
+                await respond(error.original.message)
+                break
+        else:
+            if isinstance(error.original, CTF.DoesNotExist):
+                await respond(
+                    "Εισαι τζαι εσού χαλασμένος όπως τα διαστημόπλοια του Κίτσιου... There is no such CTF name. Use `!status`"
+                )
+            else:
+                logger.error("Error in CTF cog: %s", error)
+                await respond("Ουπς. Κάτι επήε λάθος.")
+
 
 def change_tags(thread: discord.Thread, add: list[str] = [], remove: list[str] = []):
     new_tags = thread.applied_tags
     for t in new_tags:
         if t.name in remove:
             new_tags.remove(t)
-    new_tags += [x for x in thread.parent.available_tags if x.name in add]
+    forum_channel = thread.parent
+    if not isinstance(forum_channel, discord.ForumChannel):
+        raise NotInChallengeChannelException
+    new_tags += [x for x in forum_channel.available_tags if x.name in add]
     return new_tags
 
 
-def get_chall_name(ctx):
-    name = ctx.channel.name
+def get_chall_name(ctx: Union[Context, discord.Interaction]) -> str:
+    channel = ctx.channel
+    if not isinstance(channel, discord.Thread):
+        raise NotInChallengeChannelException
+    name = channel.name
     for emoji in EMOJI.values():
         if name.startswith(emoji + " - "):
             return name[len(emoji + " - ") :]
